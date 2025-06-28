@@ -24,7 +24,7 @@ const Navbar: React.FC = () => {
             <Link to="/" className="flex items-center space-x-2 group">
               <div className="transform group-hover:scale-110 transition-transform duration-300">
                 <div className="bg-gradient-to-br from-amber-100 to-orange-100 p-2 rounded-lg">
-                  <Truck className="h-8 w-8 text-amber-600" />
+                  <img src="/Logo for KBS Earthmovers - Bold Industrial Design.png" alt="KBS Earthmovers Logo" className="h-10 w-10 object-contain" />
                 </div>
               </div>
               <div className="text-xl font-bold text-gray-900">
