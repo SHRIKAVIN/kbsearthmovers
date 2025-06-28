@@ -8,19 +8,19 @@ const HomePage: React.FC = () => {
       icon: Truck,
       title: 'JCB Services',
       description: 'Heavy-duty excavation and construction work with modern JCB machines',
-      image: 'https://images.pexels.com/photos/1108572/pexels-photo-1108572.jpeg?auto=compress&cs=tinysrgb&w=800',
+      image: '/jcb.png',
     },
     {
       icon: Tractor,
       title: 'Tractor Rental',
       description: 'Reliable tractors for farming, land preparation, and agricultural needs',
-      image: 'https://images.pexels.com/photos/158028/bellingrath-gardens-alabama-landscape-scenic-158028.jpeg?auto=compress&cs=tinysrgb&w=800',
+      image: '/tractor.png',
     },
     {
       icon: Wheat,
       title: 'Harvester Services',
       description: 'Efficient harvesting solutions for various crops with modern equipment',
-      image: 'https://images.pexels.com/photos/2132180/pexels-photo-2132180.jpeg?auto=compress&cs=tinysrgb&w=800',
+      image: '/harvester.png',
     },
   ];
 
