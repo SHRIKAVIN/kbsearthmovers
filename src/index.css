@@ -1,0 +1,223 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .animate-fade-in-up {
+    animation: fadeInUp 1s ease-out;
+  }
+  
+  .animate-fade-in-down {
+    animation: fadeInDown 0.5s ease-out;
+  }
+  
+  .animate-slide-in-left {
+    animation: slideInLeft 0.8s ease-out;
+  }
+  
+  .animate-slide-in-right {
+    animation: slideInRight 0.8s ease-out;
+  }
+  
+  .animate-slide-in-up {
+    animation: slideInUp 0.8s ease-out;
+  }
+  
+  .animate-bounce-in {
+    animation: bounceIn 0.6s ease-out;
+  }
+  
+  .animate-shake {
+    animation: shake 0.5s ease-in-out;
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  .animate-slow-zoom {
+    animation: slowZoom 20s ease-in-out infinite;
+  }
+  
+  .animation-delay-300 {
+    animation-delay: 0.3s;
+  }
+  
+  .animation-delay-500 {
+    animation-delay: 0.5s;
+  }
+  
+  .animation-delay-700 {
+    animation-delay: 0.7s;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-5px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(5px);
+  }
+}
+
+@keyframes slowZoom {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #d97706, #f59e0b);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #b45309, #d97706);
+}
+
+/* Smooth transitions for all interactive elements */
+* {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  .animate-fade-in-up {
+    animation-duration: 0.8s;
+  }
+  
+  .animate-slide-in-left,
+  .animate-slide-in-right {
+    animation-duration: 0.6s;
+  }
+}
+
+/* Focus styles for accessibility */
+button:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid #f59e0b;
+  outline-offset: 2px;
+}
+
+/* Loading states */
+.loading-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Enhanced mobile touch targets */
+@media (max-width: 768px) {
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+  }
+}
