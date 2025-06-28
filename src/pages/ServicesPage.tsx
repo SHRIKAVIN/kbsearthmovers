@@ -8,7 +8,7 @@ const ServicesPage: React.FC = () => {
       icon: Truck,
       title: 'JCB Services',
       description: 'Professional excavation and construction work',
-      image: '/jcb.png',
+      image: 'https://images.pexels.com/photos/1108572/pexels-photo-1108572.jpeg?auto=compress&cs=tinysrgb&w=800',
       features: [
         'Site preparation and excavation',
         'Foundation digging',
@@ -28,7 +28,7 @@ const ServicesPage: React.FC = () => {
       icon: Tractor,
       title: 'Tractor Rental',
       description: 'Versatile agricultural and construction tractors',
-      image: '/tractor.png',
+      image: 'https://images.pexels.com/photos/158028/bellingrath-gardens-alabama-landscape-scenic-158028.jpeg?auto=compress&cs=tinysrgb&w=800',
       features: [
         'Land preparation and plowing',
         'Seeding and planting',
@@ -48,7 +48,7 @@ const ServicesPage: React.FC = () => {
       icon: Wheat,
       title: 'Harvester Services',
       description: 'Efficient crop harvesting solutions',
-      image: '/harvester.png',
+      image: 'https://images.pexels.com/photos/2132180/pexels-photo-2132180.jpeg?auto=compress&cs=tinysrgb&w=800',
       features: [
         'Rice harvesting',
         'Wheat and grain crops',
