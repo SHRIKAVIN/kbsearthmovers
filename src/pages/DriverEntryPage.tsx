@@ -284,17 +284,6 @@ const DriverEntryPage: React.FC = () => {
             </div>
           )}
         </div>
-
-        {/* Instructions */}
-        <div className="mt-6 sm:mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4 sm:p-6 animate-fade-in-up animation-delay-500">
-          <h3 className="text-lg font-semibold text-blue-900 mb-2">Instructions</h3>
-          <ul className="text-blue-800 space-y-1 text-sm sm:text-base">
-            <li>• Fill all fields completely and accurately</li>
-            <li>• Double-check all amounts before submitting</li>
-            <li>• Date and time are automatically set to current</li>
-            <li>• Contact admin if you encounter any issues</li>
-          </ul>
-        </div>
       </div>
     </div>
   );
