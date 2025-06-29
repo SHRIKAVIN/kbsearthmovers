@@ -61,6 +61,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       .on('postgres_changes', 
         { event: 'INSERT', schema: 'public', table: 'work_entries' },
         (payload) => {
+          console.log('New work entry detected:', payload);
           const newEntry = payload.new;
           const notification: Omit<Notification, 'id' | 'timestamp' | 'read'> = {
             title: 'New Work Entry',
@@ -79,9 +80,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Subscription status:', status);
+      });
 
     return () => {
+      console.log('Unsubscribing from notifications');
       subscription.unsubscribe();
     };
   }, []);
@@ -92,6 +96,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, [notifications]);
 
   const addNotification = (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
+    console.log('Adding notification:', notification);
     const newNotification: Notification = {
       ...notification,
       id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
@@ -100,6 +105,15 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     };
 
     setNotifications(prev => [newNotification, ...prev].slice(0, 50)); // Keep only last 50 notifications
+    
+    // Show browser notification if permission granted
+    if (Notification.permission === 'granted') {
+      new Notification(notification.title, {
+        body: notification.message,
+        icon: '/Logo for KBS Earthmovers - Bold Industrial Design.png',
+        badge: '/Logo for KBS Earthmovers - Bold Industrial Design.png'
+      });
+    }
   };
 
   const markAsRead = (id: string) => {

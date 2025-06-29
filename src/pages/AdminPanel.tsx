@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase, type WorkEntry } from '../lib/supabase';
 import { format, parseISO } from 'date-fns';
+import { useNotifications } from '../contexts/NotificationContext';
 import { Lock, Eye, Download, Filter, Plus, Edit2, Trash2, Search, User, LogOut, Save, X, Users, FileText, RefreshCw } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -19,6 +20,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   const [editingEntry, setEditingEntry] = useState<WorkEntry | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const { addNotification } = useNotifications();
   const [filters, setFilters] = useState({
     dateFrom: '',
     dateTo: '',
@@ -194,10 +196,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         
         // Refresh data after deletion
         await fetchEntries();
-        alert('Entry deleted successfully!');
+        addNotification({
+          title: 'Entry Deleted',
+          message: 'Work entry has been deleted successfully.',
+          type: 'success'
+        });
       } catch (error: any) {
         console.error('Delete error:', error);
-        alert('Error deleting entry: ' + error.message);
+        addNotification({
+          title: 'Delete Failed',
+          message: 'Error deleting entry: ' + error.message,
+          type: 'error'
+        });
       }
     }
   };
@@ -223,7 +233,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
           .eq('id', entry.id);
 
         if (error) throw error;
-        alert('Entry updated successfully!');
+        
+        addNotification({
+          title: 'Entry Updated',
+          message: 'Work entry has been updated successfully.',
+          type: 'success'
+        });
       } else {
         // Create new entry
         const { error } = await supabase
@@ -242,7 +257,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
           }]);
 
         if (error) throw error;
-        alert('Entry created successfully!');
+        
+        addNotification({
+          title: 'Entry Created',
+          message: 'New work entry has been created successfully.',
+          type: 'success'
+        });
       }
 
       setEditingEntry(null);
@@ -250,7 +270,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       await fetchEntries();
     } catch (error: any) {
       console.error('Save error:', error);
-      alert('Error saving entry: ' + error.message);
+      addNotification({
+        title: 'Save Failed',
+        message: 'Error saving entry: ' + error.message,
+        type: 'error'
+      });
     }
   };
 

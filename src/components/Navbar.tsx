@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Truck } from 'lucide-react';
-import ThemeToggle from './ThemeToggle';
 import NotificationPanel from './NotificationPanel';
 
 const Navbar: React.FC = () => {
@@ -19,18 +18,18 @@ const Navbar: React.FC = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="bg-white dark:bg-gray-900 shadow-lg sticky top-0 z-50 backdrop-blur-md bg-white/95 dark:bg-gray-900/95 transition-colors duration-300">
+    <nav className="bg-white shadow-lg sticky top-0 z-50 backdrop-blur-md bg-white/95">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2 group">
               <div className="transform group-hover:scale-110 transition-transform duration-300">
-                <div className="bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/50 dark:to-orange-900/50 p-2 rounded-lg">
+                <div className="bg-gradient-to-br from-amber-100 to-orange-100 p-2 rounded-lg">
                   <img src="/Logo for KBS Earthmovers - Bold Industrial Design.png" alt="KBS Earthmovers Logo" className="h-10 w-10 object-contain" />
                 </div>
               </div>
-              <div className="text-xl font-bold text-gray-900 dark:text-white">
-                <span className="text-amber-600 dark:text-amber-400">KBS</span> EARTHMOVERS
+              <div className="text-xl font-bold text-gray-900">
+                <span className="text-amber-600">KBS</span> EARTHMOVERS
               </div>
             </Link>
           </div>
@@ -44,8 +43,8 @@ const Navbar: React.FC = () => {
                   to={item.path}
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
                     isActive(item.path)
-                      ? 'bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/50 dark:to-orange-900/50 text-amber-800 dark:text-amber-200 shadow-md'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white hover:shadow-sm'
+                      ? 'bg-gradient-to-r from-amber-100 to-orange-100 text-amber-800 shadow-md'
+                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900 hover:shadow-sm'
                   }`}
                 >
                   {item.name}
@@ -57,13 +56,12 @@ const Navbar: React.FC = () => {
           {/* Right side controls */}
           <div className="flex items-center space-x-2">
             <NotificationPanel />
-            <ThemeToggle />
             
             {/* Mobile menu button */}
             <div className="md:hidden">
               <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300"
+                className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-all duration-300"
               >
                 {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </button>
@@ -74,7 +72,7 @@ const Navbar: React.FC = () => {
         {/* Mobile Navigation */}
         {isOpen && (
           <div className="md:hidden animate-fade-in-down">
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 shadow-lg">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t border-gray-200 shadow-lg">
               {navigation.map((item) => (
                 <Link
                   key={item.name}
@@ -82,8 +80,8 @@ const Navbar: React.FC = () => {
                   onClick={() => setIsOpen(false)}
                   className={`block px-3 py-2 rounded-md text-base font-medium transition-all duration-300 ${
                     isActive(item.path)
-                      ? 'bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/50 dark:to-orange-900/50 text-amber-800 dark:text-amber-200'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
+                      ? 'bg-gradient-to-r from-amber-100 to-orange-100 text-amber-800'
+                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                   }`}
                 >
                   {item.name}
