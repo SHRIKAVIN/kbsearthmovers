@@ -26,6 +26,25 @@ const NotificationPanel: React.FC = () => {
     setExpandedNotification(expandedNotification === id ? null : id);
   };
 
+  const handleBellClick = async () => {
+    // If notifications are not enabled and user clicks bell, try to enable them automatically
+    if (!isPermissionGranted && permissionState === 'default') {
+      try {
+        setIsRequestingPermission(true);
+        await requestPermission();
+        setIsOpen(true);
+        setShowSettings(true);
+      } catch (error) {
+        console.log('Auto-permission request failed, opening panel normally');
+        setIsOpen(true);
+      } finally {
+        setIsRequestingPermission(false);
+      }
+    } else {
+      setIsOpen(!isOpen);
+    }
+  };
+
   const handleSettingsClick = () => {
     setShowSettings(!showSettings);
     setPermissionError(null);
@@ -39,6 +58,8 @@ const NotificationPanel: React.FC = () => {
     
     try {
       console.log('User clicked enable notifications button');
+      
+      // Force a user gesture by creating a temporary button click event
       const granted = await requestPermission();
       
       if (granted) {
@@ -112,8 +133,11 @@ const NotificationPanel: React.FC = () => {
     <div className="relative">
       {/* Notification Bell */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors rounded-lg hover:bg-gray-100"
+        onClick={handleBellClick}
+        disabled={isRequestingPermission}
+        className={`relative p-2 text-gray-600 hover:text-gray-900 transition-colors rounded-lg hover:bg-gray-100 ${
+          isRequestingPermission ? 'opacity-50 cursor-not-allowed' : ''
+        } ${!isPermissionGranted && permissionState === 'default' ? 'animate-pulse' : ''}`}
         aria-label="Notifications"
       >
         <Bell className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -121,6 +145,16 @@ const NotificationPanel: React.FC = () => {
           <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center animate-pulse text-[10px] sm:text-xs font-medium">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
+        )}
+        {!isPermissionGranted && permissionState === 'default' && (
+          <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center animate-bounce">
+            !
+          </span>
+        )}
+        {isRequestingPermission && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+          </div>
         )}
       </button>
 
@@ -151,6 +185,25 @@ const NotificationPanel: React.FC = () => {
                 </button>
               </div>
             </div>
+
+            {/* Auto-show settings if notifications are not enabled */}
+            {(!isPermissionGranted && !showSettings) && (
+              <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-amber-800 font-medium">Enable Notifications</span>
+                  <button
+                    onClick={handleEnableNotifications}
+                    disabled={isRequestingPermission}
+                    className="text-xs bg-amber-600 hover:bg-amber-700 disabled:bg-amber-400 text-white px-3 py-1 rounded transition-colors"
+                  >
+                    {isRequestingPermission ? 'Requesting...' : 'Enable Now'}
+                  </button>
+                </div>
+                <p className="text-xs text-amber-700">
+                  Get instant alerts when new work entries are submitted
+                </p>
+              </div>
+            )}
 
             {/* Settings Panel */}
             {showSettings && (

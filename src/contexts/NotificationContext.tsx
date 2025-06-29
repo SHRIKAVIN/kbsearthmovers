@@ -301,21 +301,40 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       console.log('Requesting permission from user...');
       
-      // Request permission - this should trigger the browser's permission dialog
-      const permission = await new Promise<NotificationPermission>((resolve) => {
-        // Use the callback version as fallback for older browsers
+      // Create a promise that will handle both callback and promise-based APIs
+      const permission = await new Promise<NotificationPermission>((resolve, reject) => {
+        // Try the modern promise-based API first
         if (typeof Notification.requestPermission === 'function') {
-          const result = Notification.requestPermission();
-          if (result && typeof result.then === 'function') {
-            // Promise-based
-            result.then(resolve);
-          } else {
-            // Callback-based (older browsers)
-            Notification.requestPermission(resolve);
+          try {
+            const result = Notification.requestPermission();
+            
+            // Check if it returns a promise
+            if (result && typeof result.then === 'function') {
+              // Promise-based API (modern browsers)
+              result.then(resolve).catch(reject);
+            } else {
+              // Callback-based API (older browsers) - result is the permission
+              resolve(result as NotificationPermission);
+            }
+          } catch (error) {
+            // Fallback for very old browsers or errors
+            try {
+              // Try callback-based approach
+              Notification.requestPermission((perm) => {
+                resolve(perm);
+              });
+            } catch (callbackError) {
+              reject(callbackError);
+            }
           }
         } else {
-          resolve('denied');
+          reject(new Error('Notification.requestPermission is not available'));
         }
+        
+        // Timeout after 10 seconds in case the dialog doesn't appear
+        setTimeout(() => {
+          reject(new Error('Permission request timed out'));
+        }, 10000);
       });
 
       console.log('Permission result:', permission);
@@ -353,10 +372,18 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         console.log('Notification permission denied by user');
         throw new Error('Notification permission was denied. Please try again or enable it in your browser settings.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error requesting notification permission:', error);
       setPermissionState('denied');
-      throw new Error('Failed to request notification permission. Please try again or check your browser settings.');
+      
+      // Provide more specific error messages
+      if (error.message.includes('timed out')) {
+        throw new Error('Permission request timed out. Please try clicking the bell icon again.');
+      } else if (error.message.includes('not available')) {
+        throw new Error('Notifications are not supported in this browser.');
+      } else {
+        throw new Error('Failed to request notification permission. Please check your browser settings and try again.');
+      }
     }
   };
 
