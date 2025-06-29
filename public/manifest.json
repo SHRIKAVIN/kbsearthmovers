@@ -1,0 +1,21 @@
+{
+  "name": "KBS Earthmovers & Harvester",
+  "short_name": "KBS Earthmovers",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#fff7ed",
+  "theme_color": "#f59e0b",
+  "description": "Professional heavy machinery rental services. JCB, Tractor, and Harvester rentals with experienced operators.",
+  "icons": [
+    {
+      "src": "/Logo for KBS Earthmovers - Bold Industrial Design.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/Logo for KBS Earthmovers - Bold Industrial Design.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+} 
