@@ -356,7 +356,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Hours Driven</label>
                 <input
                   type="number"
-                  step="0.5"
+                  step="0.01"
                   min="0"
                   value={formData.hours_driven}
                   onChange={(e) => setFormData({...formData, hours_driven: Number(e.target.value)})}

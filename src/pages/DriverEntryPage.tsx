@@ -142,7 +142,7 @@ const DriverEntryPage: React.FC = () => {
               </label>
               <input
                 type="number"
-                step="0.5"
+                step="0.01"
                 min="0"
                 {...register('hours_driven', { 
                   required: 'Hours driven is required',
