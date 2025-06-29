@@ -511,7 +511,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 mb-6 sm:mb-8">
           {[
             { title: 'Total Entries', value: filteredEntries.length, color: 'blue' },
-            { title: 'Total Hours', value: totals.totalHours, color: 'green' },
+            { title: 'Total Hours', value: totals.totalHours.toFixed(2), color: 'green' },
             { title: 'Total Amount', value: `₹${totals.totalAmount.toLocaleString()}`, color: 'amber' },
             { title: 'Amount Received', value: `₹${totals.totalReceived.toLocaleString()}`, color: 'purple' },
             { title: 'Total Advance', value: `₹${totals.totalAdvance.toLocaleString()}`, color: 'indigo' },
@@ -670,7 +670,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                           {entry.machine_type}
                         </span>
                       </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">{entry.hours_driven}</td>
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">{Number(entry.hours_driven).toFixed(2)}</td>
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">₹{entry.total_amount.toLocaleString()}</td>
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-green-600 font-semibold">₹{entry.amount_received.toLocaleString()}</td>
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-semibold">₹{entry.advance_amount.toLocaleString()}</td>
