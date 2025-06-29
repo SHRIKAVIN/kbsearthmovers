@@ -50,6 +50,14 @@
   .animation-delay-700 {
     animation-delay: 0.7s;
   }
+
+  /* Line clamp utility for mobile */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
 }
 
 @keyframes fadeInUp {
@@ -257,4 +265,45 @@ html {
 
 body {
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Mobile notification panel improvements */
+@media (max-width: 640px) {
+  .notification-panel {
+    width: calc(100vw - 2rem);
+    max-width: 320px;
+    right: 1rem;
+  }
+  
+  .notification-item {
+    padding: 0.75rem;
+  }
+  
+  .notification-text {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+}
+
+/* Responsive text truncation */
+@media (max-width: 640px) {
+  .truncate-mobile {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* Better mobile form styling */
+@media (max-width: 640px) {
+  .mobile-form-input {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 0.75rem;
+  }
+  
+  .mobile-button {
+    padding: 0.875rem 1rem;
+    font-size: 1rem;
+  }
 }

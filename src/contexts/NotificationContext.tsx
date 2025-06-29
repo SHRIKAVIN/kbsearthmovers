@@ -54,6 +54,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       if ('permissions' in navigator) {
         navigator.permissions.query({ name: 'notifications' }).then((permission) => {
           permission.addEventListener('change', updatePermissionStatus);
+        }).catch(() => {
+          // Fallback for browsers that don't support permissions API
+          console.log('Permissions API not supported');
         });
       }
     }
@@ -258,7 +261,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const requestPermission = async (): Promise<boolean> => {
     if (!('Notification' in window)) {
       console.log('This browser does not support notifications');
-      return false;
+      throw new Error('This browser does not support notifications');
     }
 
     if (Notification.permission === 'granted') {
@@ -268,7 +271,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     if (Notification.permission === 'denied') {
       console.log('Notification permission was previously denied');
-      return false;
+      throw new Error('Notification permission was denied. Please enable it in your browser settings.');
     }
 
     try {
@@ -278,14 +281,14 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       
       if (granted) {
         console.log('Notification permission granted');
+        return true;
       } else {
         console.log('Notification permission denied');
+        throw new Error('Notification permission was denied. Please try again.');
       }
-      
-      return granted;
     } catch (error) {
       console.error('Error requesting notification permission:', error);
-      return false;
+      throw new Error('Failed to request notification permission. Please try again.');
     }
   };
 
