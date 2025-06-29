@@ -28,12 +28,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   });
 
   const driverNames = [
-    'Rajesh Kumar',
-    'Suresh Babu',
-    'Murugan S',
-    'Karthik R',
-    'Selvam M',
-    'Dinesh Kumar'
+    'Vignesh',
+    'Markandeyan',
+    'Vijayakumar',
+    'Mohan',
+    'Sakthi',
   ];
 
   const adminUsers = [
