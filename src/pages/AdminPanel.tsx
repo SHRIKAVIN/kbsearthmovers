@@ -242,10 +242,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
             rental_person_name: entry.rental_person_name,
             driver_name: entry.driver_name,
             machine_type: entry.machine_type,
-            hours_driven: entry.hours_driven,
-            total_amount: entry.total_amount,
-            amount_received: entry.amount_received,
-            advance_amount: entry.advance_amount,
+            hours_driven: entry.hours_driven || 0,
+            total_amount: entry.total_amount || 0,
+            amount_received: entry.amount_received || 0,
+            advance_amount: entry.advance_amount || 0,
             date: entry.date,
             time: entry.time,
             updated_at: new Date().toISOString()
@@ -278,10 +278,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
             rental_person_name: entry.rental_person_name,
             driver_name: entry.driver_name,
             machine_type: entry.machine_type,
-            hours_driven: entry.hours_driven,
-            total_amount: entry.total_amount,
-            amount_received: entry.amount_received,
-            advance_amount: entry.advance_amount,
+            hours_driven: entry.hours_driven || 0,
+            total_amount: entry.total_amount || 0,
+            amount_received: entry.amount_received || 0,
+            advance_amount: entry.advance_amount || 0,
             date: entry.date,
             time: entry.time || format(new Date(), 'HH:mm'),
             entry_type: 'admin'
@@ -301,8 +301,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
               rentalPerson: entry.rental_person_name,
               machineType: entry.machine_type,
               driver: entry.driver_name,
-              hours: entry.hours_driven,
-              totalAmount: entry.total_amount,
+              hours: entry.hours_driven || 0,
+              totalAmount: entry.total_amount || 0,
               date: entry.date,
               time: entry.time
             }
@@ -326,17 +326,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   const getChanges = (oldEntry: any, newEntry: any) => {
     const changes: string[] = [];
     
-    if (oldEntry?.hours_driven !== newEntry.hours_driven) {
-      changes.push(`Hours: ${oldEntry?.hours_driven || 0} → ${newEntry.hours_driven}`);
+    if (oldEntry?.hours_driven !== (newEntry.hours_driven || 0)) {
+      changes.push(`Hours: ${oldEntry?.hours_driven || 0} → ${newEntry.hours_driven || 0}`);
     }
-    if (oldEntry?.total_amount !== newEntry.total_amount) {
-      changes.push(`Total: ₹${oldEntry?.total_amount || 0} → ₹${newEntry.total_amount}`);
+    if (oldEntry?.total_amount !== (newEntry.total_amount || 0)) {
+      changes.push(`Total: ₹${oldEntry?.total_amount || 0} → ₹${newEntry.total_amount || 0}`);
     }
-    if (oldEntry?.amount_received !== newEntry.amount_received) {
-      changes.push(`Received: ₹${oldEntry?.amount_received || 0} → ₹${newEntry.amount_received}`);
+    if (oldEntry?.amount_received !== (newEntry.amount_received || 0)) {
+      changes.push(`Received: ₹${oldEntry?.amount_received || 0} → ₹${newEntry.amount_received || 0}`);
     }
-    if (oldEntry?.advance_amount !== newEntry.advance_amount) {
-      changes.push(`Advance: ₹${oldEntry?.advance_amount || 0} → ₹${newEntry.advance_amount}`);
+    if (oldEntry?.advance_amount !== (newEntry.advance_amount || 0)) {
+      changes.push(`Advance: ₹${oldEntry?.advance_amount || 0} → ₹${newEntry.advance_amount || 0}`);
     }
     
     return changes;
@@ -357,20 +357,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       if (entry) {
         return {
           ...entry,
-          hours_driven: entry.hours_driven ?? 0,
-          total_amount: entry.total_amount ?? 0,
-          amount_received: entry.amount_received ?? 0,
-          advance_amount: entry.advance_amount ?? 0
+          hours_driven: entry.hours_driven ?? undefined,
+          total_amount: entry.total_amount ?? undefined,
+          amount_received: entry.amount_received ?? undefined,
+          advance_amount: entry.advance_amount ?? undefined
         };
       }
       return {
         rental_person_name: '',
         driver_name: '',
         machine_type: 'JCB',
-        hours_driven: 0,
-        total_amount: 0,
-        amount_received: 0,
-        advance_amount: 0,
+        hours_driven: undefined,
+        total_amount: undefined,
+        amount_received: undefined,
+        advance_amount: undefined,
         date: format(new Date(), 'yyyy-MM-dd'),
         time: format(new Date(), 'HH:mm')
       };
@@ -450,8 +450,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                   type="number"
                   step="0.01"
                   min="0"
-                  value={formData.hours_driven}
-                  onChange={(e) => setFormData({...formData, hours_driven: Number(e.target.value)})}
+                  value={formData.hours_driven || ''}
+                  onChange={(e) => setFormData({...formData, hours_driven: e.target.value ? Number(e.target.value) : undefined})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                   placeholder="Enter hours driven"
                 />
@@ -462,8 +462,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                 <input
                   type="number"
                   min="0"
-                  value={formData.total_amount}
-                  onChange={(e) => setFormData({...formData, total_amount: Number(e.target.value)})}
+                  value={formData.total_amount || ''}
+                  onChange={(e) => setFormData({...formData, total_amount: e.target.value ? Number(e.target.value) : undefined})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                   placeholder="Enter total amount"
                 />
@@ -474,8 +474,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                 <input
                   type="number"
                   min="0"
-                  value={formData.amount_received}
-                  onChange={(e) => setFormData({...formData, amount_received: Number(e.target.value)})}
+                  value={formData.amount_received || ''}
+                  onChange={(e) => setFormData({...formData, amount_received: e.target.value ? Number(e.target.value) : undefined})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                   placeholder="Enter amount received"
                 />
@@ -486,8 +486,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                 <input
                   type="number"
                   min="0"
-                  value={formData.advance_amount}
-                  onChange={(e) => setFormData({...formData, advance_amount: Number(e.target.value)})}
+                  value={formData.advance_amount || ''}
+                  onChange={(e) => setFormData({...formData, advance_amount: e.target.value ? Number(e.target.value) : undefined})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                   placeholder="Enter advance amount"
                 />

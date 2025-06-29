@@ -24,13 +24,23 @@ const NotificationPanel: React.FC = () => {
   };
 
   const handleRequestPermission = async () => {
-    const granted = await requestPermission();
-    if (granted) {
-      // Show a test notification
-      new Notification('Notifications Enabled', {
-        body: 'You will now receive push notifications for new work entries.',
-        icon: '/Logo for KBS Earthmovers - Bold Industrial Design.png'
-      });
+    try {
+      const granted = await requestPermission();
+      if (granted) {
+        // Show a test notification
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification('Notifications Enabled', {
+            body: 'You will now receive push notifications for new work entries.',
+            icon: '/Logo for KBS Earthmovers - Bold Industrial Design.png',
+            tag: 'test-notification'
+          });
+        }
+      } else {
+        alert('Notification permission was denied. Please enable it in your browser settings.');
+      }
+    } catch (error) {
+      console.error('Error requesting notification permission:', error);
+      alert('Failed to request notification permission. Please try again.');
     }
   };
 
@@ -127,10 +137,15 @@ const NotificationPanel: React.FC = () => {
                 {!isPermissionGranted && (
                   <button
                     onClick={handleRequestPermission}
-                    className="w-full text-xs bg-amber-600 hover:bg-amber-700 text-white px-3 py-1 rounded transition-colors"
+                    className="w-full text-xs bg-amber-600 hover:bg-amber-700 text-white px-3 py-2 rounded transition-colors font-medium"
                   >
                     Enable Push Notifications
                   </button>
+                )}
+                {isPermissionGranted && (
+                  <div className="text-xs text-green-700 bg-green-50 p-2 rounded">
+                    ✓ Push notifications are enabled. You'll receive alerts for new entries.
+                  </div>
                 )}
               </div>
             )}

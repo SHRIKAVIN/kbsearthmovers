@@ -21,6 +21,13 @@ const DriverEntryPage: React.FC = () => {
 
   const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<Omit<WorkEntry, 'id' | 'created_at' | 'updated_at'>>({
     defaultValues: {
+      rental_person_name: '',
+      driver_name: '',
+      machine_type: 'JCB',
+      hours_driven: undefined,
+      total_amount: undefined,
+      amount_received: undefined,
+      advance_amount: undefined,
       date: format(new Date(), 'yyyy-MM-dd'),
       time: format(new Date(), 'HH:mm'),
       entry_type: 'driver'
@@ -35,12 +42,19 @@ const DriverEntryPage: React.FC = () => {
     setErrorMessage('');
 
     try {
+      // Convert undefined values to 0 for database insertion
+      const submitData = {
+        ...data,
+        hours_driven: data.hours_driven || 0,
+        total_amount: data.total_amount || 0,
+        amount_received: data.amount_received || 0,
+        advance_amount: data.advance_amount || 0,
+        entry_type: 'driver'
+      };
+
       const { error } = await supabase
         .from('work_entries')
-        .insert([{
-          ...data,
-          entry_type: 'driver'
-        }]);
+        .insert([submitData]);
 
       if (error) {
         throw error;
@@ -60,8 +74,8 @@ const DriverEntryPage: React.FC = () => {
           entryData: {
             rentalPerson: data.rental_person_name,
             machineType: data.machine_type,
-            hours: data.hours_driven,
-            totalAmount: data.total_amount,
+            hours: submitData.hours_driven,
+            totalAmount: submitData.total_amount,
             date: data.date,
             time: data.time
           }
@@ -72,10 +86,10 @@ const DriverEntryPage: React.FC = () => {
         rental_person_name: '',
         driver_name: '',
         machine_type: 'JCB',
-        hours_driven: 0,
-        total_amount: 0,
-        amount_received: 0,
-        advance_amount: 0,
+        hours_driven: undefined,
+        total_amount: undefined,
+        amount_received: undefined,
+        advance_amount: undefined,
         date: format(new Date(), 'yyyy-MM-dd'),
         time: format(new Date(), 'HH:mm'),
         entry_type: 'driver'
@@ -112,7 +126,7 @@ const DriverEntryPage: React.FC = () => {
             <div className="animate-slide-in-left">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <User className="inline h-4 w-4 mr-1" />
-                Rental Person Name
+                Rental Person Name *
               </label>
               <input
                 type="text"
@@ -129,7 +143,7 @@ const DriverEntryPage: React.FC = () => {
             <div className="animate-slide-in-right">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <User className="inline h-4 w-4 mr-1" />
-                Driver Name
+                Driver Name *
               </label>
               <select
                 {...register('driver_name', { required: 'Driver name is required' })}
@@ -175,7 +189,6 @@ const DriverEntryPage: React.FC = () => {
                 step="0.01"
                 min="0"
                 {...register('hours_driven', { 
-                  required: 'Hours driven is required',
                   min: { value: 0, message: 'Hours must be positive' }
                 })}
                 className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base bg-white text-gray-900"
@@ -197,11 +210,10 @@ const DriverEntryPage: React.FC = () => {
                   type="number"
                   min="0"
                   {...register('total_amount', { 
-                    required: 'Total amount is required',
                     min: { value: 0, message: 'Amount must be positive' }
                   })}
                   className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base bg-white text-gray-900"
-                  placeholder="0"
+                  placeholder="Enter total amount"
                 />
                 {errors.total_amount && (
                   <p className="mt-1 text-sm text-red-600 animate-shake">{errors.total_amount.message}</p>
@@ -217,11 +229,10 @@ const DriverEntryPage: React.FC = () => {
                   type="number"
                   min="0"
                   {...register('amount_received', { 
-                    required: 'Amount received is required',
                     min: { value: 0, message: 'Amount must be positive' }
                   })}
                   className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base bg-white text-gray-900"
-                  placeholder="0"
+                  placeholder="Enter amount received"
                 />
                 {errors.amount_received && (
                   <p className="mt-1 text-sm text-red-600 animate-shake">{errors.amount_received.message}</p>
@@ -237,11 +248,10 @@ const DriverEntryPage: React.FC = () => {
                   type="number"
                   min="0"
                   {...register('advance_amount', { 
-                    required: 'Advance amount is required',
                     min: { value: 0, message: 'Amount must be positive' }
                   })}
                   className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base bg-white text-gray-900"
-                  placeholder="0"
+                  placeholder="Enter advance amount"
                 />
                 {errors.advance_amount && (
                   <p className="mt-1 text-sm text-red-600 animate-shake">{errors.advance_amount.message}</p>
@@ -254,7 +264,7 @@ const DriverEntryPage: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <Calendar className="inline h-4 w-4 mr-1" />
-                  Date
+                  Date *
                 </label>
                 <input
                   type="date"
@@ -269,7 +279,7 @@ const DriverEntryPage: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <Timer className="inline h-4 w-4 mr-1" />
-                  Time
+                  Time *
                 </label>
                 <input
                   type="time"
@@ -290,8 +300,8 @@ const DriverEntryPage: React.FC = () => {
                   <p><strong>Client:</strong> {watchedValues.rental_person_name}</p>
                   <p><strong>Driver:</strong> {watchedValues.driver_name}</p>
                   <p><strong>Machine:</strong> {watchedValues.machine_type}</p>
-                  {watchedValues.hours_driven > 0 && <p><strong>Hours:</strong> {watchedValues.hours_driven}</p>}
-                  {watchedValues.total_amount > 0 && <p><strong>Total Amount:</strong> ₹{watchedValues.total_amount}</p>}
+                  {watchedValues.hours_driven && watchedValues.hours_driven > 0 && <p><strong>Hours:</strong> {watchedValues.hours_driven}</p>}
+                  {watchedValues.total_amount && watchedValues.total_amount > 0 && <p><strong>Total Amount:</strong> ₹{watchedValues.total_amount}</p>}
                 </div>
               </div>
             )}

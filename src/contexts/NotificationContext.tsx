@@ -42,9 +42,20 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [isPermissionGranted, setIsPermissionGranted] = useState(false);
 
   useEffect(() => {
-    // Check if browser supports notifications
+    // Check if browser supports notifications and update permission status
     if ('Notification' in window) {
-      setIsPermissionGranted(Notification.permission === 'granted');
+      const updatePermissionStatus = () => {
+        setIsPermissionGranted(Notification.permission === 'granted');
+      };
+      
+      updatePermissionStatus();
+      
+      // Listen for permission changes
+      if ('permissions' in navigator) {
+        navigator.permissions.query({ name: 'notifications' }).then((permission) => {
+          permission.addEventListener('change', updatePermissionStatus);
+        });
+      }
     }
 
     // Load notifications from localStorage
@@ -207,20 +218,24 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setNotifications(prev => [newNotification, ...prev].slice(0, 50)); // Keep only last 50 notifications
     
     // Show browser notification if permission granted
-    if (Notification.permission === 'granted') {
-      const browserNotification = new Notification(notification.title, {
-        body: notification.message,
-        icon: '/Logo for KBS Earthmovers - Bold Industrial Design.png',
-        badge: '/Logo for KBS Earthmovers - Bold Industrial Design.png',
-        tag: newNotification.id,
-        requireInteraction: false,
-        silent: false
-      });
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try {
+        const browserNotification = new Notification(notification.title, {
+          body: notification.message,
+          icon: '/Logo for KBS Earthmovers - Bold Industrial Design.png',
+          badge: '/Logo for KBS Earthmovers - Bold Industrial Design.png',
+          tag: newNotification.id,
+          requireInteraction: false,
+          silent: false
+        });
 
-      // Auto-close browser notification after 5 seconds
-      setTimeout(() => {
-        browserNotification.close();
-      }, 5000);
+        // Auto-close browser notification after 5 seconds
+        setTimeout(() => {
+          browserNotification.close();
+        }, 5000);
+      } catch (error) {
+        console.error('Error showing browser notification:', error);
+      }
     }
   };
 
@@ -251,14 +266,27 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       return true;
     }
 
-    if (Notification.permission !== 'denied') {
+    if (Notification.permission === 'denied') {
+      console.log('Notification permission was previously denied');
+      return false;
+    }
+
+    try {
       const permission = await Notification.requestPermission();
       const granted = permission === 'granted';
       setIsPermissionGranted(granted);
+      
+      if (granted) {
+        console.log('Notification permission granted');
+      } else {
+        console.log('Notification permission denied');
+      }
+      
       return granted;
+    } catch (error) {
+      console.error('Error requesting notification permission:', error);
+      return false;
     }
-
-    return false;
   };
 
   const unreadCount = notifications.filter(n => !n.read).length;
