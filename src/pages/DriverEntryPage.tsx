@@ -10,12 +10,11 @@ const DriverEntryPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState('');
 
   const driverNames = [
-    'Rajesh Kumar',
-    'Suresh Babu',
-    'Murugan S',
-    'Karthik R',
-    'Selvam M',
-    'Dinesh Kumar'
+    'Vignesh',
+    'Markandeyan',
+    'Vijayakumar',
+    'Mohan',
+    'Sakthi',
   ];
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<Omit<WorkEntry, 'id' | 'created_at' | 'updated_at'>>({
