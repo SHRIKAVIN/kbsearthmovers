@@ -25,6 +25,7 @@ interface NotificationContextType {
   unreadCount: number;
   requestPermission: () => Promise<boolean>;
   isPermissionGranted: boolean;
+  permissionState: 'default' | 'granted' | 'denied';
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -40,25 +41,33 @@ export const useNotifications = () => {
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isPermissionGranted, setIsPermissionGranted] = useState(false);
+  const [permissionState, setPermissionState] = useState<'default' | 'granted' | 'denied'>('default');
 
   useEffect(() => {
     // Check if browser supports notifications and update permission status
-    if ('Notification' in window) {
-      const updatePermissionStatus = () => {
-        setIsPermissionGranted(Notification.permission === 'granted');
-      };
-      
-      updatePermissionStatus();
-      
-      // Listen for permission changes
-      if ('permissions' in navigator) {
-        navigator.permissions.query({ name: 'notifications' }).then((permission) => {
-          permission.addEventListener('change', updatePermissionStatus);
-        }).catch(() => {
-          // Fallback for browsers that don't support permissions API
-          console.log('Permissions API not supported');
-        });
+    const updatePermissionStatus = () => {
+      if ('Notification' in window) {
+        const permission = Notification.permission;
+        setPermissionState(permission);
+        setIsPermissionGranted(permission === 'granted');
+        console.log('Notification permission status:', permission);
+      } else {
+        console.log('Notifications not supported in this browser');
+        setPermissionState('denied');
+        setIsPermissionGranted(false);
       }
+    };
+    
+    updatePermissionStatus();
+    
+    // Listen for permission changes (if supported)
+    if ('permissions' in navigator) {
+      navigator.permissions.query({ name: 'notifications' }).then((permission) => {
+        permission.addEventListener('change', updatePermissionStatus);
+        return () => permission.removeEventListener('change', updatePermissionStatus);
+      }).catch((error) => {
+        console.log('Permissions API not supported or failed:', error);
+      });
     }
 
     // Load notifications from localStorage
@@ -236,6 +245,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setTimeout(() => {
           browserNotification.close();
         }, 5000);
+
+        // Handle notification click
+        browserNotification.onclick = () => {
+          window.focus();
+          browserNotification.close();
+        };
       } catch (error) {
         console.error('Error showing browser notification:', error);
       }
@@ -259,36 +274,89 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   const requestPermission = async (): Promise<boolean> => {
+    console.log('Requesting notification permission...');
+    
+    // Check if notifications are supported
     if (!('Notification' in window)) {
-      console.log('This browser does not support notifications');
+      console.error('This browser does not support notifications');
       throw new Error('This browser does not support notifications');
     }
 
-    if (Notification.permission === 'granted') {
+    // Check current permission status
+    const currentPermission = Notification.permission;
+    console.log('Current permission status:', currentPermission);
+
+    if (currentPermission === 'granted') {
       setIsPermissionGranted(true);
+      setPermissionState('granted');
       return true;
     }
 
-    if (Notification.permission === 'denied') {
-      console.log('Notification permission was previously denied');
+    if (currentPermission === 'denied') {
+      console.error('Notification permission was previously denied');
+      setPermissionState('denied');
       throw new Error('Notification permission was denied. Please enable it in your browser settings.');
     }
 
     try {
-      const permission = await Notification.requestPermission();
+      console.log('Requesting permission from user...');
+      
+      // Request permission - this should trigger the browser's permission dialog
+      const permission = await new Promise<NotificationPermission>((resolve) => {
+        // Use the callback version as fallback for older browsers
+        if (typeof Notification.requestPermission === 'function') {
+          const result = Notification.requestPermission();
+          if (result && typeof result.then === 'function') {
+            // Promise-based
+            result.then(resolve);
+          } else {
+            // Callback-based (older browsers)
+            Notification.requestPermission(resolve);
+          }
+        } else {
+          resolve('denied');
+        }
+      });
+
+      console.log('Permission result:', permission);
+      
       const granted = permission === 'granted';
       setIsPermissionGranted(granted);
+      setPermissionState(permission);
       
       if (granted) {
-        console.log('Notification permission granted');
+        console.log('Notification permission granted successfully');
+        
+        // Show a test notification immediately
+        try {
+          const testNotification = new Notification('Notifications Enabled! 🎉', {
+            body: 'You will now receive push notifications for new work entries.',
+            icon: '/Logo for KBS Earthmovers - Bold Industrial Design.png',
+            tag: 'test-notification',
+            requireInteraction: false
+          });
+
+          setTimeout(() => {
+            testNotification.close();
+          }, 4000);
+
+          testNotification.onclick = () => {
+            window.focus();
+            testNotification.close();
+          };
+        } catch (testError) {
+          console.error('Error showing test notification:', testError);
+        }
+        
         return true;
       } else {
-        console.log('Notification permission denied');
-        throw new Error('Notification permission was denied. Please try again.');
+        console.log('Notification permission denied by user');
+        throw new Error('Notification permission was denied. Please try again or enable it in your browser settings.');
       }
     } catch (error) {
       console.error('Error requesting notification permission:', error);
-      throw new Error('Failed to request notification permission. Please try again.');
+      setPermissionState('denied');
+      throw new Error('Failed to request notification permission. Please try again or check your browser settings.');
     }
   };
 
@@ -303,7 +371,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       clearAllNotifications,
       unreadCount,
       requestPermission,
-      isPermissionGranted
+      isPermissionGranted,
+      permissionState
     }}>
       {children}
     </NotificationContext.Provider>

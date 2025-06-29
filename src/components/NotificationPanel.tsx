@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNotifications } from '../contexts/NotificationContext';
-import { Bell, X, Check, Trash2, Settings, User, Clock, Edit, Plus, Minus } from 'lucide-react';
+import { Bell, X, Check, Trash2, Settings, User, Clock, Edit, Plus, Minus, AlertTriangle, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 
 const NotificationPanel: React.FC = () => {
@@ -11,41 +11,46 @@ const NotificationPanel: React.FC = () => {
     clearNotification,
     clearAllNotifications,
     requestPermission,
-    isPermissionGranted
+    isPermissionGranted,
+    permissionState
   } = useNotifications();
   
   const [isOpen, setIsOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [expandedNotification, setExpandedNotification] = useState<string | null>(null);
   const [isRequestingPermission, setIsRequestingPermission] = useState(false);
+  const [permissionError, setPermissionError] = useState<string | null>(null);
 
   const handleNotificationClick = (id: string) => {
     markAsRead(id);
     setExpandedNotification(expandedNotification === id ? null : id);
   };
 
-  const handleSettingsClick = async () => {
-    if (!isPermissionGranted && !isRequestingPermission) {
-      setIsRequestingPermission(true);
-      try {
-        const granted = await requestPermission();
-        if (granted) {
-          // Show a test notification
-          if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification('Notifications Enabled', {
-              body: 'You will now receive push notifications for new work entries.',
-              icon: '/Logo for KBS Earthmovers - Bold Industrial Design.png',
-              tag: 'test-notification'
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Error requesting notification permission:', error);
-      } finally {
-        setIsRequestingPermission(false);
-      }
-    }
+  const handleSettingsClick = () => {
     setShowSettings(!showSettings);
+    setPermissionError(null);
+  };
+
+  const handleEnableNotifications = async () => {
+    if (isRequestingPermission) return;
+    
+    setIsRequestingPermission(true);
+    setPermissionError(null);
+    
+    try {
+      console.log('User clicked enable notifications button');
+      const granted = await requestPermission();
+      
+      if (granted) {
+        console.log('Permission granted successfully');
+        // Keep settings open to show success state
+      }
+    } catch (error: any) {
+      console.error('Permission request failed:', error);
+      setPermissionError(error.message || 'Failed to enable notifications');
+    } finally {
+      setIsRequestingPermission(false);
+    }
   };
 
   const getNotificationIcon = (type: string) => {
@@ -75,16 +80,45 @@ const NotificationPanel: React.FC = () => {
     }
   };
 
+  const getPermissionStatusInfo = () => {
+    switch (permissionState) {
+      case 'granted':
+        return {
+          status: 'Enabled',
+          color: 'bg-green-100 text-green-800',
+          icon: <CheckCircle className="h-4 w-4 text-green-600" />,
+          message: '✓ Push notifications are enabled. You\'ll receive alerts for new entries.'
+        };
+      case 'denied':
+        return {
+          status: 'Blocked',
+          color: 'bg-red-100 text-red-800',
+          icon: <AlertTriangle className="h-4 w-4 text-red-600" />,
+          message: 'Notifications are blocked. Please enable them in your browser settings.'
+        };
+      default:
+        return {
+          status: 'Disabled',
+          color: 'bg-yellow-100 text-yellow-800',
+          icon: <AlertTriangle className="h-4 w-4 text-yellow-600" />,
+          message: 'Click below to enable instant notifications for new work entries.'
+        };
+    }
+  };
+
+  const permissionInfo = getPermissionStatusInfo();
+
   return (
     <div className="relative">
       {/* Notification Bell */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors rounded-lg hover:bg-gray-100"
+        aria-label="Notifications"
       >
         <Bell className="h-5 w-5 sm:h-6 sm:w-6" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center animate-pulse text-[10px] sm:text-xs">
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center animate-pulse text-[10px] sm:text-xs font-medium">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -92,7 +126,7 @@ const NotificationPanel: React.FC = () => {
 
       {/* Notification Panel */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-[85vh] sm:max-h-[32rem] overflow-hidden">
+        <div className="notification-panel absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-[85vh] sm:max-h-[32rem] overflow-hidden">
           {/* Header */}
           <div className="p-3 sm:p-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
@@ -102,15 +136,16 @@ const NotificationPanel: React.FC = () => {
               <div className="flex items-center space-x-1 sm:space-x-2">
                 <button
                   onClick={handleSettingsClick}
-                  disabled={isRequestingPermission}
-                  className="p-1 text-gray-500 hover:text-gray-700 transition-colors disabled:opacity-50"
+                  className="p-1 text-gray-500 hover:text-gray-700 transition-colors"
                   title="Notification Settings"
+                  aria-label="Notification Settings"
                 >
                   <Settings className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => setIsOpen(false)}
                   className="p-1 text-gray-500 hover:text-gray-700 transition-colors"
+                  aria-label="Close notifications"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -121,58 +156,62 @@ const NotificationPanel: React.FC = () => {
             {showSettings && (
               <div className="mt-3 p-3 bg-gray-50 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-gray-700">Push Notifications</span>
-                  <span className={`text-xs px-2 py-1 rounded-full ${
-                    isPermissionGranted 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
-                  }`}>
-                    {isPermissionGranted ? 'Enabled' : 'Disabled'}
-                  </span>
+                  <span className="text-sm text-gray-700 font-medium">Push Notifications</span>
+                  <div className="flex items-center space-x-2">
+                    {permissionInfo.icon}
+                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${permissionInfo.color}`}>
+                      {permissionInfo.status}
+                    </span>
+                  </div>
                 </div>
                 
-                {!isPermissionGranted ? (
+                <div className={`text-xs p-2 rounded mb-3 ${
+                  permissionState === 'granted' ? 'text-green-700 bg-green-50' : 
+                  permissionState === 'denied' ? 'text-red-700 bg-red-50' : 
+                  'text-yellow-700 bg-yellow-50'
+                }`}>
+                  {permissionInfo.message}
+                </div>
+
+                {permissionState !== 'granted' && (
                   <div className="space-y-2">
                     <button
-                      onClick={async () => {
-                        setIsRequestingPermission(true);
-                        try {
-                          const granted = await requestPermission();
-                          if (granted) {
-                            // Show a test notification
-                            if ('Notification' in window && Notification.permission === 'granted') {
-                              new Notification('Notifications Enabled', {
-                                body: 'You will now receive push notifications for new work entries.',
-                                icon: '/Logo for KBS Earthmovers - Bold Industrial Design.png',
-                                tag: 'test-notification'
-                              });
-                            }
-                          }
-                        } catch (error) {
-                          console.error('Error requesting notification permission:', error);
-                        } finally {
-                          setIsRequestingPermission(false);
-                        }
-                      }}
-                      disabled={isRequestingPermission}
-                      className="w-full text-xs sm:text-sm bg-amber-600 hover:bg-amber-700 disabled:bg-amber-400 text-white px-3 py-2 rounded transition-colors font-medium disabled:cursor-not-allowed"
+                      onClick={handleEnableNotifications}
+                      disabled={isRequestingPermission || permissionState === 'denied'}
+                      className={`w-full text-xs sm:text-sm px-3 py-2 rounded transition-colors font-medium ${
+                        permissionState === 'denied' 
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : 'bg-amber-600 hover:bg-amber-700 disabled:bg-amber-400 text-white disabled:cursor-not-allowed'
+                      }`}
                     >
                       {isRequestingPermission ? (
                         <div className="flex items-center justify-center">
                           <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
-                          Requesting...
+                          Requesting Permission...
                         </div>
+                      ) : permissionState === 'denied' ? (
+                        'Blocked - Check Browser Settings'
                       ) : (
                         'Enable Push Notifications'
                       )}
                     </button>
-                    <p className="text-xs text-gray-600">
-                      Click to enable instant notifications for new work entries
-                    </p>
-                  </div>
-                ) : (
-                  <div className="text-xs text-green-700 bg-green-50 p-2 rounded">
-                    ✓ Push notifications are enabled. You'll receive alerts for new entries.
+                    
+                    {permissionError && (
+                      <div className="text-xs text-red-600 bg-red-50 p-2 rounded">
+                        {permissionError}
+                      </div>
+                    )}
+                    
+                    {permissionState === 'denied' && (
+                      <div className="text-xs text-gray-600">
+                        <p className="font-medium mb-1">To enable notifications:</p>
+                        <ol className="list-decimal list-inside space-y-1 text-xs">
+                          <li>Click the lock/info icon in your address bar</li>
+                          <li>Set "Notifications" to "Allow"</li>
+                          <li>Refresh this page</li>
+                        </ol>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -182,7 +221,7 @@ const NotificationPanel: React.FC = () => {
             {notifications.length > 0 && (
               <button
                 onClick={clearAllNotifications}
-                className="mt-2 text-xs text-red-600 hover:text-red-800 flex items-center"
+                className="mt-2 text-xs text-red-600 hover:text-red-800 flex items-center transition-colors"
               >
                 <Trash2 className="h-3 w-3 mr-1" />
                 Clear All
@@ -196,13 +235,14 @@ const NotificationPanel: React.FC = () => {
               <div className="p-4 text-center text-gray-500">
                 <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
                 <p className="text-sm">No notifications yet</p>
+                <p className="text-xs text-gray-400 mt-1">You'll see work entry updates here</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-200">
                 {notifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-3 hover:bg-gray-50 transition-colors cursor-pointer ${
+                    className={`notification-item p-3 hover:bg-gray-50 transition-colors cursor-pointer ${
                       !notification.read ? 'bg-blue-50' : ''
                     }`}
                     onClick={() => handleNotificationClick(notification.id)}
@@ -211,7 +251,7 @@ const NotificationPanel: React.FC = () => {
                       <div className="flex-1 min-w-0 pr-2">
                         <div className="flex items-center mb-1">
                           <span className="mr-2 text-sm">{getNotificationIcon(notification.type)}</span>
-                          <h4 className="text-sm font-medium text-gray-900 truncate">
+                          <h4 className="notification-text text-sm font-medium text-gray-900 truncate">
                             {notification.title}
                           </h4>
                           {!notification.read && (
@@ -227,7 +267,7 @@ const NotificationPanel: React.FC = () => {
                             </div>
                             <div className="flex items-center text-xs text-gray-600 flex-wrap">
                               <User className="h-3 w-3 mr-1 flex-shrink-0" />
-                              <span className="font-medium truncate max-w-20 sm:max-w-none">{notification.details.performer}</span>
+                              <span className="font-medium truncate-mobile">{notification.details.performer}</span>
                               <span className="mx-1">•</span>
                               <span className={`px-1 py-0.5 rounded text-xs flex-shrink-0 ${
                                 notification.details.performerType === 'admin' 
@@ -240,7 +280,7 @@ const NotificationPanel: React.FC = () => {
                           </div>
                         )}
                         
-                        <p className="text-xs text-gray-600 mb-1 line-clamp-2">
+                        <p className="notification-text text-xs text-gray-600 mb-1 line-clamp-2">
                           {notification.message}
                         </p>
                         
@@ -257,10 +297,10 @@ const NotificationPanel: React.FC = () => {
                               {notification.details.entryData.driver && (
                                 <div className="truncate"><strong>Driver:</strong> {notification.details.entryData.driver}</div>
                               )}
-                              {notification.details.entryData.hours && (
+                              {notification.details.entryData.hours !== undefined && (
                                 <div><strong>Hours:</strong> {notification.details.entryData.hours}</div>
                               )}
-                              {notification.details.entryData.totalAmount && (
+                              {notification.details.entryData.totalAmount !== undefined && (
                                 <div><strong>Amount:</strong> ₹{notification.details.entryData.totalAmount}</div>
                               )}
                               {notification.details.entryData.date && (
@@ -302,6 +342,7 @@ const NotificationPanel: React.FC = () => {
                             }}
                             className="p-1 text-gray-400 hover:text-green-600 transition-colors"
                             title="Mark as read"
+                            aria-label="Mark as read"
                           >
                             <Check className="h-3 w-3" />
                           </button>
@@ -313,6 +354,7 @@ const NotificationPanel: React.FC = () => {
                           }}
                           className="p-1 text-gray-400 hover:text-red-600 transition-colors"
                           title="Remove notification"
+                          aria-label="Remove notification"
                         >
                           <X className="h-3 w-3" />
                         </button>
