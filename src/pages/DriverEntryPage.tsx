@@ -19,13 +19,15 @@ const DriverEntryPage: React.FC = () => {
     'Sakthi',
   ];
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<Omit<WorkEntry, 'id' | 'created_at' | 'updated_at'>>({
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<Omit<WorkEntry, 'id' | 'created_at' | 'updated_at'>>({
     defaultValues: {
       date: format(new Date(), 'yyyy-MM-dd'),
       time: format(new Date(), 'HH:mm'),
       entry_type: 'driver'
     }
   });
+
+  const watchedValues = watch();
 
   const onSubmit = async (data: Omit<WorkEntry, 'id' | 'created_at' | 'updated_at'>) => {
     setIsSubmitting(true);
@@ -46,11 +48,24 @@ const DriverEntryPage: React.FC = () => {
 
       setSubmitStatus('success');
       
-      // Add local notification
+      // Add local notification with detailed information
       addNotification({
         title: 'Entry Submitted Successfully',
-        message: `Work entry for ${data.rental_person_name} has been submitted successfully.`,
-        type: 'success'
+        message: `${data.driver_name} submitted work entry for ${data.rental_person_name}`,
+        type: 'success',
+        details: {
+          action: 'created',
+          performer: data.driver_name,
+          performerType: 'driver',
+          entryData: {
+            rentalPerson: data.rental_person_name,
+            machineType: data.machine_type,
+            hours: data.hours_driven,
+            totalAmount: data.total_amount,
+            date: data.date,
+            time: data.time
+          }
+        }
       });
       
       reset({
@@ -266,6 +281,20 @@ const DriverEntryPage: React.FC = () => {
                 )}
               </div>
             </div>
+
+            {/* Preview Summary */}
+            {watchedValues.rental_person_name && watchedValues.driver_name && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 animate-fade-in-up">
+                <h4 className="text-sm font-medium text-amber-800 mb-2">Entry Preview</h4>
+                <div className="text-xs text-amber-700 space-y-1">
+                  <p><strong>Client:</strong> {watchedValues.rental_person_name}</p>
+                  <p><strong>Driver:</strong> {watchedValues.driver_name}</p>
+                  <p><strong>Machine:</strong> {watchedValues.machine_type}</p>
+                  {watchedValues.hours_driven > 0 && <p><strong>Hours:</strong> {watchedValues.hours_driven}</p>}
+                  {watchedValues.total_amount > 0 && <p><strong>Total Amount:</strong> ₹{watchedValues.total_amount}</p>}
+                </div>
+              </div>
+            )}
 
             {/* Submit Button */}
             <button

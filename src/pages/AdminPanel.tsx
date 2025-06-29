@@ -47,7 +47,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     fetchEntries();
     // Set up real-time subscription
     const subscription = supabase
-      .channel('work_entries_changes')
+      .channel('admin_work_entries_changes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'work_entries' },
         () => {
@@ -82,7 +82,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       setEntries(data || []);
     } catch (error: any) {
       console.error('Error fetching entries:', error.message);
-      alert('Error fetching entries: ' + error.message);
+      addNotification({
+        title: 'Fetch Error',
+        message: 'Error fetching entries: ' + error.message,
+        type: 'error'
+      });
     } finally {
       setLoading(false);
     }
@@ -184,7 +188,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     doc.save(`KBS_Work_Entries_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   };
 
-  const deleteEntry = async (id: string) => {
+  const deleteEntry = async (id: string, entryData: WorkEntry) => {
     if (confirm('Are you sure you want to delete this entry?')) {
       try {
         const { error } = await supabase
@@ -194,13 +198,26 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
 
         if (error) throw error;
         
-        // Refresh data after deletion
-        await fetchEntries();
+        // Add notification with details
         addNotification({
           title: 'Entry Deleted',
-          message: 'Work entry has been deleted successfully.',
-          type: 'success'
+          message: `Work entry for ${entryData.rental_person_name} has been deleted`,
+          type: 'warning',
+          details: {
+            action: 'deleted',
+            performer: adminUser,
+            performerType: 'admin',
+            entryData: {
+              rentalPerson: entryData.rental_person_name,
+              machineType: entryData.machine_type,
+              driver: entryData.driver_name,
+              date: entryData.date
+            }
+          }
         });
+        
+        // Refresh data after deletion
+        await fetchEntries();
       } catch (error: any) {
         console.error('Delete error:', error);
         addNotification({
@@ -215,6 +232,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   const saveEntry = async (entry: Partial<WorkEntry>) => {
     try {
       if (entry.id) {
+        // Get original entry for comparison
+        const originalEntry = entries.find(e => e.id === entry.id);
+        
         // Update existing entry
         const { error } = await supabase
           .from('work_entries')
@@ -236,8 +256,19 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         
         addNotification({
           title: 'Entry Updated',
-          message: 'Work entry has been updated successfully.',
-          type: 'success'
+          message: `Work entry for ${entry.rental_person_name} has been updated`,
+          type: 'success',
+          details: {
+            action: 'updated',
+            performer: adminUser,
+            performerType: 'admin',
+            entryData: {
+              rentalPerson: entry.rental_person_name,
+              machineType: entry.machine_type,
+              driver: entry.driver_name,
+              changes: getChanges(originalEntry, entry)
+            }
+          }
         });
       } else {
         // Create new entry
@@ -260,8 +291,22 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         
         addNotification({
           title: 'Entry Created',
-          message: 'New work entry has been created successfully.',
-          type: 'success'
+          message: `New work entry for ${entry.rental_person_name} has been created`,
+          type: 'success',
+          details: {
+            action: 'created',
+            performer: adminUser,
+            performerType: 'admin',
+            entryData: {
+              rentalPerson: entry.rental_person_name,
+              machineType: entry.machine_type,
+              driver: entry.driver_name,
+              hours: entry.hours_driven,
+              totalAmount: entry.total_amount,
+              date: entry.date,
+              time: entry.time
+            }
+          }
         });
       }
 
@@ -276,6 +321,25 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         type: 'error'
       });
     }
+  };
+
+  const getChanges = (oldEntry: any, newEntry: any) => {
+    const changes: string[] = [];
+    
+    if (oldEntry?.hours_driven !== newEntry.hours_driven) {
+      changes.push(`Hours: ${oldEntry?.hours_driven || 0} → ${newEntry.hours_driven}`);
+    }
+    if (oldEntry?.total_amount !== newEntry.total_amount) {
+      changes.push(`Total: ₹${oldEntry?.total_amount || 0} → ₹${newEntry.total_amount}`);
+    }
+    if (oldEntry?.amount_received !== newEntry.amount_received) {
+      changes.push(`Received: ₹${oldEntry?.amount_received || 0} → ₹${newEntry.amount_received}`);
+    }
+    if (oldEntry?.advance_amount !== newEntry.advance_amount) {
+      changes.push(`Advance: ₹${oldEntry?.advance_amount || 0} → ₹${newEntry.advance_amount}`);
+    }
+    
+    return changes;
   };
 
   const calculateTotals = () => {
@@ -317,7 +381,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       
       // Validate required fields
       if (!formData.rental_person_name || !formData.driver_name || !formData.date) {
-        alert('Please fill in all required fields');
+        addNotification({
+          title: 'Validation Error',
+          message: 'Please fill in all required fields',
+          type: 'error'
+        });
         return;
       }
 
@@ -720,7 +788,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                             <Edit2 className="h-4 w-4" />
                           </button>
                           <button
-                            onClick={() => deleteEntry(entry.id!)}
+                            onClick={() => deleteEntry(entry.id!, entry)}
                             className="text-red-600 hover:text-red-900 transition-colors"
                             title="Delete entry"
                           >

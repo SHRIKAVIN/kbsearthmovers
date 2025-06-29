@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNotifications } from '../contexts/NotificationContext';
-import { Bell, X, Check, Trash2, Settings } from 'lucide-react';
+import { Bell, X, Check, Trash2, Settings, User, Clock, Edit, Plus, Minus } from 'lucide-react';
 import { format } from 'date-fns';
 
 const NotificationPanel: React.FC = () => {
@@ -16,9 +16,11 @@ const NotificationPanel: React.FC = () => {
   
   const [isOpen, setIsOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [expandedNotification, setExpandedNotification] = useState<string | null>(null);
 
   const handleNotificationClick = (id: string) => {
     markAsRead(id);
+    setExpandedNotification(expandedNotification === id ? null : id);
   };
 
   const handleRequestPermission = async () => {
@@ -38,6 +40,24 @@ const NotificationPanel: React.FC = () => {
       case 'warning': return '⚠️';
       case 'error': return '❌';
       default: return 'ℹ️';
+    }
+  };
+
+  const getActionIcon = (action: string) => {
+    switch (action) {
+      case 'created': return <Plus className="h-3 w-3" />;
+      case 'updated': return <Edit className="h-3 w-3" />;
+      case 'deleted': return <Minus className="h-3 w-3" />;
+      default: return <Bell className="h-3 w-3" />;
+    }
+  };
+
+  const getActionColor = (action: string) => {
+    switch (action) {
+      case 'created': return 'text-green-600 bg-green-100';
+      case 'updated': return 'text-blue-600 bg-blue-100';
+      case 'deleted': return 'text-red-600 bg-red-100';
+      default: return 'text-gray-600 bg-gray-100';
     }
   };
 
@@ -67,7 +87,7 @@ const NotificationPanel: React.FC = () => {
 
       {/* Notification Panel */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-96 overflow-hidden">
+        <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-[32rem] overflow-hidden">
           {/* Header */}
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
@@ -128,7 +148,7 @@ const NotificationPanel: React.FC = () => {
           </div>
 
           {/* Notifications List */}
-          <div className="max-h-64 overflow-y-auto">
+          <div className="max-h-80 overflow-y-auto">
             {notifications.length === 0 ? (
               <div className="p-4 text-center text-gray-500">
                 <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
@@ -155,13 +175,81 @@ const NotificationPanel: React.FC = () => {
                             <div className="ml-2 w-2 h-2 bg-blue-500 rounded-full"></div>
                           )}
                         </div>
+                        
+                        {/* Performer Info */}
+                        {notification.details && (
+                          <div className="flex items-center mb-2">
+                            <div className={`p-1 rounded-full mr-2 ${getActionColor(notification.details.action)}`}>
+                              {getActionIcon(notification.details.action)}
+                            </div>
+                            <div className="flex items-center text-xs text-gray-600">
+                              <User className="h-3 w-3 mr-1" />
+                              <span className="font-medium">{notification.details.performer}</span>
+                              <span className="mx-1">•</span>
+                              <span className={`px-1 py-0.5 rounded text-xs ${
+                                notification.details.performerType === 'admin' 
+                                  ? 'bg-purple-100 text-purple-700' 
+                                  : 'bg-blue-100 text-blue-700'
+                              }`}>
+                                {notification.details.performerType}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                        
                         <p className="text-xs text-gray-600 mb-1">
                           {notification.message}
                         </p>
-                        <p className="text-xs text-gray-400">
-                          {format(notification.timestamp, 'MMM dd, HH:mm')}
-                        </p>
+                        
+                        {/* Expanded Details */}
+                        {expandedNotification === notification.id && notification.details?.entryData && (
+                          <div className="mt-2 p-2 bg-gray-50 rounded text-xs">
+                            <div className="grid grid-cols-2 gap-1">
+                              {notification.details.entryData.rentalPerson && (
+                                <div><strong>Client:</strong> {notification.details.entryData.rentalPerson}</div>
+                              )}
+                              {notification.details.entryData.machineType && (
+                                <div><strong>Machine:</strong> {notification.details.entryData.machineType}</div>
+                              )}
+                              {notification.details.entryData.driver && (
+                                <div><strong>Driver:</strong> {notification.details.entryData.driver}</div>
+                              )}
+                              {notification.details.entryData.hours && (
+                                <div><strong>Hours:</strong> {notification.details.entryData.hours}</div>
+                              )}
+                              {notification.details.entryData.totalAmount && (
+                                <div><strong>Amount:</strong> ₹{notification.details.entryData.totalAmount}</div>
+                              )}
+                              {notification.details.entryData.date && (
+                                <div><strong>Date:</strong> {notification.details.entryData.date}</div>
+                              )}
+                            </div>
+                            {notification.details.entryData.changes && notification.details.entryData.changes.length > 0 && (
+                              <div className="mt-2 pt-2 border-t border-gray-200">
+                                <strong>Changes:</strong>
+                                <ul className="mt-1 space-y-1">
+                                  {notification.details.entryData.changes.map((change: string, index: number) => (
+                                    <li key={index} className="text-xs text-gray-600">• {change}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        
+                        <div className="flex items-center justify-between mt-1">
+                          <p className="text-xs text-gray-400 flex items-center">
+                            <Clock className="h-3 w-3 mr-1" />
+                            {format(notification.timestamp, 'MMM dd, HH:mm')}
+                          </p>
+                          {notification.details && (
+                            <span className="text-xs text-gray-500">
+                              {expandedNotification === notification.id ? 'Click to collapse' : 'Click for details'}
+                            </span>
+                          )}
+                        </div>
                       </div>
+                      
                       <div className="flex items-center space-x-1 ml-2">
                         {!notification.read && (
                           <button
