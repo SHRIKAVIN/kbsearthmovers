@@ -230,22 +230,6 @@ textarea:focus {
   }
 }
 
-/* Notification animations */
-@keyframes slideInFromRight {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-.notification-enter {
-  animation: slideInFromRight 0.3s ease-out;
-}
-
 /* Better selection styles */
 ::selection {
   background-color: #f59e0b;
@@ -265,24 +249,6 @@ html {
 
 body {
   transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-/* Mobile notification panel improvements */
-@media (max-width: 640px) {
-  .notification-panel {
-    width: calc(100vw - 2rem);
-    max-width: 320px;
-    right: 1rem;
-  }
-  
-  .notification-item {
-    padding: 0.75rem;
-  }
-  
-  .notification-text {
-    font-size: 0.875rem;
-    line-height: 1.25rem;
-  }
 }
 
 /* Responsive text truncation */

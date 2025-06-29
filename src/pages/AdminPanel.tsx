@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase, type WorkEntry } from '../lib/supabase';
 import { format, parseISO } from 'date-fns';
-import { useNotifications } from '../contexts/NotificationContext';
 import { Lock, Eye, Download, Filter, Plus, Edit2, Trash2, Search, User, LogOut, Save, X, Users, FileText, RefreshCw } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -20,7 +19,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   const [editingEntry, setEditingEntry] = useState<WorkEntry | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const { addNotification } = useNotifications();
   const [filters, setFilters] = useState({
     dateFrom: '',
     dateTo: '',
@@ -82,11 +80,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       setEntries(data || []);
     } catch (error: any) {
       console.error('Error fetching entries:', error.message);
-      addNotification({
-        title: 'Fetch Error',
-        message: 'Error fetching entries: ' + error.message,
-        type: 'error'
-      });
+      alert('Error fetching entries: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -198,33 +192,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
 
         if (error) throw error;
         
-        // Add notification with details
-        addNotification({
-          title: 'Entry Deleted',
-          message: `Work entry for ${entryData.rental_person_name} has been deleted`,
-          type: 'warning',
-          details: {
-            action: 'deleted',
-            performer: adminUser,
-            performerType: 'admin',
-            entryData: {
-              rentalPerson: entryData.rental_person_name,
-              machineType: entryData.machine_type,
-              driver: entryData.driver_name,
-              date: entryData.date
-            }
-          }
-        });
-        
         // Refresh data after deletion
         await fetchEntries();
+        alert('Entry deleted successfully!');
       } catch (error: any) {
         console.error('Delete error:', error);
-        addNotification({
-          title: 'Delete Failed',
-          message: 'Error deleting entry: ' + error.message,
-          type: 'error'
-        });
+        alert('Error deleting entry: ' + error.message);
       }
     }
   };
@@ -232,9 +205,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   const saveEntry = async (entry: Partial<WorkEntry>) => {
     try {
       if (entry.id) {
-        // Get original entry for comparison
-        const originalEntry = entries.find(e => e.id === entry.id);
-        
         // Update existing entry
         const { error } = await supabase
           .from('work_entries')
@@ -253,23 +223,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
           .eq('id', entry.id);
 
         if (error) throw error;
-        
-        addNotification({
-          title: 'Entry Updated',
-          message: `Work entry for ${entry.rental_person_name} has been updated`,
-          type: 'success',
-          details: {
-            action: 'updated',
-            performer: adminUser,
-            performerType: 'admin',
-            entryData: {
-              rentalPerson: entry.rental_person_name,
-              machineType: entry.machine_type,
-              driver: entry.driver_name,
-              changes: getChanges(originalEntry, entry)
-            }
-          }
-        });
+        alert('Entry updated successfully!');
       } else {
         // Create new entry
         const { error } = await supabase
@@ -288,26 +242,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
           }]);
 
         if (error) throw error;
-        
-        addNotification({
-          title: 'Entry Created',
-          message: `New work entry for ${entry.rental_person_name} has been created`,
-          type: 'success',
-          details: {
-            action: 'created',
-            performer: adminUser,
-            performerType: 'admin',
-            entryData: {
-              rentalPerson: entry.rental_person_name,
-              machineType: entry.machine_type,
-              driver: entry.driver_name,
-              hours: entry.hours_driven || 0,
-              totalAmount: entry.total_amount || 0,
-              date: entry.date,
-              time: entry.time
-            }
-          }
-        });
+        alert('Entry created successfully!');
       }
 
       setEditingEntry(null);
@@ -315,31 +250,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       await fetchEntries();
     } catch (error: any) {
       console.error('Save error:', error);
-      addNotification({
-        title: 'Save Failed',
-        message: 'Error saving entry: ' + error.message,
-        type: 'error'
-      });
+      alert('Error saving entry: ' + error.message);
     }
-  };
-
-  const getChanges = (oldEntry: any, newEntry: any) => {
-    const changes: string[] = [];
-    
-    if (oldEntry?.hours_driven !== (newEntry.hours_driven || 0)) {
-      changes.push(`Hours: ${oldEntry?.hours_driven || 0} → ${newEntry.hours_driven || 0}`);
-    }
-    if (oldEntry?.total_amount !== (newEntry.total_amount || 0)) {
-      changes.push(`Total: ₹${oldEntry?.total_amount || 0} → ₹${newEntry.total_amount || 0}`);
-    }
-    if (oldEntry?.amount_received !== (newEntry.amount_received || 0)) {
-      changes.push(`Received: ₹${oldEntry?.amount_received || 0} → ₹${newEntry.amount_received || 0}`);
-    }
-    if (oldEntry?.advance_amount !== (newEntry.advance_amount || 0)) {
-      changes.push(`Advance: ₹${oldEntry?.advance_amount || 0} → ₹${newEntry.advance_amount || 0}`);
-    }
-    
-    return changes;
   };
 
   const calculateTotals = () => {
@@ -381,11 +293,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       
       // Validate required fields
       if (!formData.rental_person_name || !formData.driver_name || !formData.date) {
-        addNotification({
-          title: 'Validation Error',
-          message: 'Please fill in all required fields',
-          type: 'error'
-        });
+        alert('Please fill in all required fields');
         return;
       }
 

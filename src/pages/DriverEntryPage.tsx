@@ -2,14 +2,12 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
 import { supabase, type WorkEntry } from '../lib/supabase';
-import { useNotifications } from '../contexts/NotificationContext';
 import { CheckCircle, AlertCircle, User, Truck, Clock, DollarSign, Calendar, Timer } from 'lucide-react';
 
 const DriverEntryPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'success' | 'error' | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
-  const { addNotification } = useNotifications();
 
   const driverNames = [
     'Vignesh',
@@ -62,26 +60,6 @@ const DriverEntryPage: React.FC = () => {
 
       setSubmitStatus('success');
       
-      // Add local notification with detailed information
-      addNotification({
-        title: 'Entry Submitted Successfully',
-        message: `${data.driver_name} submitted work entry for ${data.rental_person_name}`,
-        type: 'success',
-        details: {
-          action: 'created',
-          performer: data.driver_name,
-          performerType: 'driver',
-          entryData: {
-            rentalPerson: data.rental_person_name,
-            machineType: data.machine_type,
-            hours: submitData.hours_driven,
-            totalAmount: submitData.total_amount,
-            date: data.date,
-            time: data.time
-          }
-        }
-      });
-      
       reset({
         rental_person_name: '',
         driver_name: '',
@@ -97,11 +75,6 @@ const DriverEntryPage: React.FC = () => {
     } catch (error: any) {
       setSubmitStatus('error');
       setErrorMessage(error.message || 'Failed to submit entry');
-      addNotification({
-        title: 'Submission Failed',
-        message: error.message || 'Failed to submit work entry. Please try again.',
-        type: 'error'
-      });
     } finally {
       setIsSubmitting(false);
     }
