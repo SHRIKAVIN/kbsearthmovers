@@ -131,11 +131,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       'Rental Person': entry.rental_person_name,
       'Driver': entry.driver_name,
       'Machine Type': entry.machine_type,
-      'Hours Driven': entry.hours_driven,
-      'Total Amount': entry.total_amount,
-      'Amount Received': entry.amount_received,
-      'Advance Amount': entry.advance_amount,
-      'Balance': entry.total_amount - entry.amount_received,
+      'Hours Driven': Number(entry.hours_driven).toFixed(2),
+      'Total Amount': '₹' + Number(entry.total_amount).toLocaleString('en-IN'),
+      'Amount Received': '₹' + Number(entry.amount_received).toLocaleString('en-IN'),
+      'Advance Amount': '₹' + Number(entry.advance_amount).toLocaleString('en-IN'),
+      'Balance': '₹' + Number(entry.total_amount - entry.amount_received - entry.advance_amount).toLocaleString('en-IN'),
       'Entry Type': entry.entry_type,
       'Created At': entry.created_at ? format(parseISO(entry.created_at), 'dd/MM/yyyy HH:mm') : ''
     })));
@@ -163,11 +163,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       entry.rental_person_name,
       entry.driver_name,
       entry.machine_type,
-      entry.hours_driven.toString(),
-      `₹${entry.total_amount}`,
-      `₹${entry.amount_received}`,
-      `₹${entry.advance_amount}`,
-      `₹${entry.total_amount - entry.amount_received}`,
+      Number(entry.hours_driven).toFixed(2),
+      '₹' + Number(entry.total_amount).toLocaleString('en-IN'),
+      '₹' + Number(entry.amount_received).toLocaleString('en-IN'),
+      '₹' + Number(entry.advance_amount).toLocaleString('en-IN'),
+      '₹' + Number(entry.total_amount - entry.amount_received - entry.advance_amount).toLocaleString('en-IN'),
       entry.entry_type
     ]);
 
