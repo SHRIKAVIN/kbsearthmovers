@@ -260,7 +260,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       totalReceived: acc.totalReceived + entry.amount_received,
       totalAdvance: acc.totalAdvance + entry.advance_amount,
       totalHours: acc.totalHours + entry.hours_driven,
-      totalBalance: acc.totalBalance + (entry.total_amount - entry.amount_received)
+      totalBalance: acc.totalBalance + (entry.total_amount - entry.amount_received - entry.advance_amount)
     }), { totalAmount: 0, totalReceived: 0, totalAdvance: 0, totalHours: 0, totalBalance: 0 });
   };
 
@@ -269,20 +269,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       if (entry) {
         return {
           ...entry,
-          hours_driven: entry.hours_driven || '',
-          total_amount: entry.total_amount || '',
-          amount_received: entry.amount_received || '',
-          advance_amount: entry.advance_amount || ''
+          hours_driven: entry.hours_driven ?? 0,
+          total_amount: entry.total_amount ?? 0,
+          amount_received: entry.amount_received ?? 0,
+          advance_amount: entry.advance_amount ?? 0
         };
       }
       return {
         rental_person_name: '',
         driver_name: '',
         machine_type: 'JCB',
-        hours_driven: '',
-        total_amount: '',
-        amount_received: '',
-        advance_amount: '',
+        hours_driven: 0,
+        total_amount: 0,
+        amount_received: 0,
+        advance_amount: 0,
         date: format(new Date(), 'yyyy-MM-dd'),
         time: format(new Date(), 'HH:mm')
       };
@@ -297,16 +297,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         return;
       }
 
-      // Convert string values to numbers for numeric fields
-      const processedData = {
-        ...formData,
-        hours_driven: parseFloat(formData.hours_driven as string) || 0,
-        total_amount: parseFloat(formData.total_amount as string) || 0,
-        amount_received: parseFloat(formData.amount_received as string) || 0,
-        advance_amount: parseFloat(formData.advance_amount as string) || 0
-      };
-
-      onSave(processedData);
+      onSave(formData);
     };
 
     return (
@@ -368,7 +359,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                   step="0.5"
                   min="0"
                   value={formData.hours_driven}
-                  onChange={(e) => setFormData({...formData, hours_driven: e.target.value})}
+                  onChange={(e) => setFormData({...formData, hours_driven: Number(e.target.value)})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                   placeholder="Enter hours driven"
                 />
@@ -380,7 +371,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                   type="number"
                   min="0"
                   value={formData.total_amount}
-                  onChange={(e) => setFormData({...formData, total_amount: e.target.value})}
+                  onChange={(e) => setFormData({...formData, total_amount: Number(e.target.value)})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                   placeholder="Enter total amount"
                 />
@@ -392,7 +383,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                   type="number"
                   min="0"
                   value={formData.amount_received}
-                  onChange={(e) => setFormData({...formData, amount_received: e.target.value})}
+                  onChange={(e) => setFormData({...formData, amount_received: Number(e.target.value)})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                   placeholder="Enter amount received"
                 />
@@ -404,7 +395,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                   type="number"
                   min="0"
                   value={formData.advance_amount}
-                  onChange={(e) => setFormData({...formData, advance_amount: e.target.value})}
+                  onChange={(e) => setFormData({...formData, advance_amount: Number(e.target.value)})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                   placeholder="Enter advance amount"
                 />
@@ -523,6 +514,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
             { title: 'Total Hours', value: totals.totalHours, color: 'green' },
             { title: 'Total Amount', value: `₹${totals.totalAmount.toLocaleString()}`, color: 'amber' },
             { title: 'Amount Received', value: `₹${totals.totalReceived.toLocaleString()}`, color: 'purple' },
+            { title: 'Total Advance', value: `₹${totals.totalAdvance.toLocaleString()}`, color: 'indigo' },
             { title: 'Balance Due', value: `₹${totals.totalBalance.toLocaleString()}`, color: 'red' }
           ].map((stat, index) => (
             <div key={index} className={`bg-white p-4 sm:p-6 rounded-lg shadow-lg animate-fade-in-up`} style={{animationDelay: `${index * 0.1}s`}}>
@@ -652,6 +644,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                     <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hours</th>
                     <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
                     <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Received</th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Advance</th>
                     <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Balance</th>
                     <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                     <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -680,9 +673,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">{entry.hours_driven}</td>
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">₹{entry.total_amount.toLocaleString()}</td>
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-green-600 font-semibold">₹{entry.amount_received.toLocaleString()}</td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-semibold">
-                        <span className={entry.total_amount - entry.amount_received > 0 ? 'text-red-600' : 'text-green-600'}>
-                          ₹{(entry.total_amount - entry.amount_received).toLocaleString()}
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-semibold">₹{entry.advance_amount.toLocaleString()}</td>
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap font-semibold">
+                        <span className={entry.total_amount - entry.amount_received - entry.advance_amount > 0 ? 'text-red-600' : 'text-green-600'}>
+                          ₹{(entry.total_amount - entry.amount_received - entry.advance_amount).toLocaleString()}
                         </span>
                       </td>
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
