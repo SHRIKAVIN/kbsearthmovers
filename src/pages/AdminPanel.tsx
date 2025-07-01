@@ -124,6 +124,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     setFilteredEntries(filtered);
   };
 
+  const formatCurrency = (amount: number): string => {
+    return `Rs.${amount.toLocaleString('en-IN')}`;
+  };
+
   const exportToExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(filteredEntries.map(entry => ({
       'Date': entry.date,
@@ -132,10 +136,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       'Driver': entry.driver_name,
       'Machine Type': entry.machine_type,
       'Hours Driven': Number(entry.hours_driven).toFixed(2),
-      'Total Amount': '₹' + Number(entry.total_amount).toLocaleString('en-IN'),
-      'Amount Received': '₹' + Number(entry.amount_received).toLocaleString('en-IN'),
-      'Advance Amount': '₹' + Number(entry.advance_amount).toLocaleString('en-IN'),
-      'Balance': '₹' + Number(entry.total_amount - entry.amount_received - entry.advance_amount).toLocaleString('en-IN'),
+      'Total Amount': formatCurrency(Number(entry.total_amount)),
+      'Amount Received': formatCurrency(Number(entry.amount_received)),
+      'Advance Amount': formatCurrency(Number(entry.advance_amount)),
+      'Balance': formatCurrency(Number(entry.total_amount - entry.amount_received - entry.advance_amount)),
       'Entry Type': entry.entry_type,
       'Created At': entry.created_at ? format(parseISO(entry.created_at), 'dd/MM/yyyy HH:mm') : ''
     })));
@@ -156,7 +160,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     doc.text(`Generated on: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 20, 40);
     doc.text(`Total Entries: ${filteredEntries.length}`, 20, 50);
 
-    // Table data
+    // Table data with proper currency formatting
     const tableData = filteredEntries.map(entry => [
       entry.date,
       entry.time || 'N/A',
@@ -164,10 +168,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       entry.driver_name,
       entry.machine_type,
       Number(entry.hours_driven).toFixed(2),
-      '₹' + Number(entry.total_amount).toLocaleString('en-IN'),
-      '₹' + Number(entry.amount_received).toLocaleString('en-IN'),
-      '₹' + Number(entry.advance_amount).toLocaleString('en-IN'),
-      '₹' + Number(entry.total_amount - entry.amount_received - entry.advance_amount).toLocaleString('en-IN'),
+      formatCurrency(Number(entry.total_amount)),
+      formatCurrency(Number(entry.amount_received)),
+      formatCurrency(Number(entry.advance_amount)),
+      formatCurrency(Number(entry.total_amount - entry.amount_received - entry.advance_amount)),
       entry.entry_type
     ]);
 
