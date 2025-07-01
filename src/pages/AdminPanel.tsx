@@ -608,7 +608,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-wrap gap-4 mb-6 sm:mb-8">
+        <div className="hidden sm:flex flex-wrap gap-4 mb-6 sm:mb-8">
           <button
             onClick={() => setShowAddForm(true)}
             className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center transition-all duration-300 transform hover:scale-105"
