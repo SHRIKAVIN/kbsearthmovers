@@ -26,6 +26,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     driver: '',
     search: ''
   });
+  const [dateSortOrder, setDateSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const driverNames = [
     'Vignesh',
@@ -62,6 +63,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   useEffect(() => {
     applyFilters();
   }, [entries, filters, activeTab]);
+
+  // Automatically toggle sort order when date range changes
+  useEffect(() => {
+    if (filters.dateFrom || filters.dateTo) {
+      setDateSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.dateFrom, filters.dateTo]);
 
   const fetchEntries = async () => {
     setLoading(true);
@@ -120,6 +129,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         entry.driver_name.toLowerCase().includes(filters.search.toLowerCase())
       );
     }
+
+    // Sort by date according to dateSortOrder
+    filtered.sort((a, b) => {
+      if (dateSortOrder === 'desc') {
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      } else {
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
+      }
+    });
 
     setFilteredEntries(filtered);
   };
