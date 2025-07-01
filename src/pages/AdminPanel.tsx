@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase, type WorkEntry } from '../lib/supabase';
 import { format, parseISO } from 'date-fns';
 import { Lock, Eye, Download, Filter, Plus, Edit2, Trash2, Search, User, LogOut, Save, X, Users, FileText, RefreshCw } from 'lucide-react';
@@ -27,6 +27,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     search: ''
   });
   const [dateSortOrder, setDateSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [showStickyBar, setShowStickyBar] = useState(false);
+  const [showingStickyBar, setShowingStickyBar] = useState(false);
+  const [stickyBarAnimation, setStickyBarAnimation] = useState('animate-fade-in-up');
+  const tableRef = useRef<HTMLDivElement>(null);
 
   const driverNames = [
     'Vignesh',
@@ -63,6 +67,38 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   useEffect(() => {
     applyFilters();
   }, [entries, filters, activeTab]);
+
+  useEffect(() => {
+    const handleObserver = (entries: IntersectionObserverEntry[]) => {
+      if (entries[0].isIntersecting) {
+        setShowStickyBar(true);
+      } else {
+        setShowStickyBar(false);
+      }
+    };
+    const observer = new window.IntersectionObserver(handleObserver, {
+      root: null,
+      threshold: 0.1,
+    });
+    if (tableRef.current) {
+      observer.observe(tableRef.current);
+    }
+    return () => {
+      if (tableRef.current) observer.unobserve(tableRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (showStickyBar) {
+      setShowingStickyBar(true);
+      setStickyBarAnimation('animate-fade-in-up');
+    } else if (showingStickyBar) {
+      setStickyBarAnimation('animate-fade-out-down');
+      const timeout = setTimeout(() => setShowingStickyBar(false), 500);
+      return () => clearTimeout(timeout);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showStickyBar]);
 
   const fetchEntries = async () => {
     setLoading(true);
@@ -633,7 +669,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         </div>
 
         {/* Entries Table */}
-        <div className="bg-white shadow rounded-lg overflow-hidden animate-fade-in-up animation-delay-700">
+        <div ref={tableRef} className="bg-white shadow rounded-lg overflow-hidden animate-fade-in-up animation-delay-700">
           <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
             <h2 className="text-xl font-semibold text-gray-900">
               Work Entries ({activeTab === 'all' ? 'All' : activeTab === 'driver' ? 'Driver' : 'Admin'}) - {filteredEntries.length} entries
@@ -729,17 +765,19 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         )}
 
         {/* Add a sticky bottom bar for main actions on mobile */}
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 flex justify-around items-center py-2 sm:hidden shadow-lg">
-          <button onClick={() => setShowAddForm(true)} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center mobile-button">
-            <Plus className="h-4 w-4 mr-2" />Add Entry
-          </button>
-          <button onClick={exportToExcel} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center mobile-button">
-            <Download className="h-4 w-4 mr-2" />Excel
-          </button>
-          <button onClick={exportToPDF} className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center mobile-button">
-            <Download className="h-4 w-4 mr-2" />PDF
-          </button>
-        </div>
+        {showingStickyBar && (
+          <div className={`fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 flex justify-around items-center py-2 sm:hidden shadow-lg ${stickyBarAnimation}`}>
+            <button onClick={() => setShowAddForm(true)} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center mobile-button">
+              <Plus className="h-4 w-4 mr-2" />Add Entry
+            </button>
+            <button onClick={exportToExcel} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center mobile-button">
+              <Download className="h-4 w-4 mr-2" />Excel
+            </button>
+            <button onClick={exportToPDF} className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center mobile-button">
+              <Download className="h-4 w-4 mr-2" />PDF
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
