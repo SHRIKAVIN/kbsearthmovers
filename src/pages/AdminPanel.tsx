@@ -644,7 +644,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         </div>
 
         {/* Action Buttons */}
-        <div className="hidden sm:flex flex-wrap gap-4 mb-6 sm:mb-8">
+        <div className="flex flex-wrap gap-4 mb-6 sm:mb-8">
           <button
             onClick={() => setShowAddForm(true)}
             className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center transition-all duration-300 transform hover:scale-105"
@@ -762,21 +762,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
             onSave={saveEntry}
             onCancel={() => setEditingEntry(null)}
           />
-        )}
-
-        {/* Add a sticky bottom bar for main actions on mobile */}
-        {showingStickyBar && (
-          <div className={`fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 flex justify-around items-center py-2 sm:hidden shadow-lg ${stickyBarAnimation}`}>
-            <button onClick={() => setShowAddForm(true)} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center mobile-button">
-              <Plus className="h-4 w-4 mr-2" />Add Entry
-            </button>
-            <button onClick={exportToExcel} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center mobile-button">
-              <Download className="h-4 w-4 mr-2" />Excel
-            </button>
-            <button onClick={exportToPDF} className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center mobile-button">
-              <Download className="h-4 w-4 mr-2" />PDF
-            </button>
-          </div>
         )}
       </div>
     </div>
