@@ -180,6 +180,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       'Time': entry.time || 'N/A',
       'Rental Person': entry.rental_person_name,
       'Driver': entry.driver_name,
+      'Broker': entry.broker || '-',
       'Machine Type': entry.machine_type,
       'Hours Driven': Number(entry.hours_driven).toFixed(2),
       'Total Amount': formatCurrency(Number(entry.total_amount)),
@@ -212,6 +213,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       entry.time || 'N/A',
       entry.rental_person_name,
       entry.driver_name,
+      entry.broker || '-',
       entry.machine_type,
       Number(entry.hours_driven).toFixed(2),
       formatCurrency(Number(entry.total_amount)),
@@ -222,7 +224,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     ]);
 
     (doc as any).autoTable({
-      head: [['Date', 'Time', 'Rental Person', 'Driver', 'Machine', 'Hours', 'Total', 'Received', 'Advance', 'Balance', 'Type']],
+      head: [['Date', 'Time', 'Rental Person', 'Driver', 'Broker', 'Machine', 'Hours', 'Total', 'Received', 'Advance', 'Balance', 'Type']],
       body: tableData,
       startY: 60,
       styles: { fontSize: 7 },
@@ -690,6 +692,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                     <th className="px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap">Time</th>
                     <th className="px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap truncate-mobile">Rental Person</th>
                     <th className="px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap truncate-mobile">Driver</th>
+                    <th className="px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap truncate-mobile">Broker</th>
                     <th className="px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap">Machine</th>
                     <th className="px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap">Hours</th>
                     <th className="px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap">Total</th>
@@ -707,6 +710,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                       <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">{entry.time || 'N/A'}</td>
                       <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 truncate-mobile">{entry.rental_person_name}</td>
                       <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 truncate-mobile">{entry.driver_name}</td>
+                      <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 truncate-mobile">{entry.broker || '-'}</td>
                       <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 text-xs font-semibold rounded-full ${entry.machine_type === 'JCB' ? 'bg-blue-100 text-blue-800' : entry.machine_type === 'Tractor' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>{entry.machine_type}</span>
                       </td>

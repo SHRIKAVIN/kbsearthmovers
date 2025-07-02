@@ -13,14 +13,14 @@ const DriverEntryPage: React.FC = () => {
     'Vignesh',
     'Markandeyan',
     'Vijayakumar',
-    'Mohan',
-    'Sakthi',
+    'Sakthi / Mohan',
   ];
 
-  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<Omit<WorkEntry, 'id' | 'created_at' | 'updated_at'>>({
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<Omit<WorkEntry, 'id' | 'created_at' | 'updated_at'> & { broker?: string }>({
     defaultValues: {
       rental_person_name: '',
       driver_name: '',
+      broker: '',
       machine_type: 'JCB',
       hours_driven: undefined,
       total_amount: undefined,
@@ -34,7 +34,7 @@ const DriverEntryPage: React.FC = () => {
 
   const watchedValues = watch();
 
-  const onSubmit = async (data: Omit<WorkEntry, 'id' | 'created_at' | 'updated_at'>) => {
+  const onSubmit = async (data: any) => {
     setIsSubmitting(true);
     setSubmitStatus(null);
     setErrorMessage('');
@@ -47,7 +47,8 @@ const DriverEntryPage: React.FC = () => {
         total_amount: data.total_amount || 0,
         amount_received: data.amount_received || 0,
         advance_amount: data.advance_amount || 0,
-        entry_type: 'driver'
+        entry_type: 'driver',
+        broker: data.broker || '',
       };
 
       const { error } = await supabase
@@ -63,6 +64,7 @@ const DriverEntryPage: React.FC = () => {
       reset({
         rental_person_name: '',
         driver_name: '',
+        broker: '',
         machine_type: 'JCB',
         hours_driven: undefined,
         total_amount: undefined,
@@ -130,6 +132,19 @@ const DriverEntryPage: React.FC = () => {
               {errors.driver_name && (
                 <p className="mt-1 text-sm text-red-600 animate-shake">{errors.driver_name.message}</p>
               )}
+            </div>
+
+            {/* Broker Field */}
+            <div className="animate-slide-in-left">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Broker
+              </label>
+              <input
+                type="text"
+                {...register('broker')}
+                className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base bg-white text-gray-900"
+                placeholder="Enter broker name (if any)"
+              />
             </div>
 
             {/* Machine Type */}

@@ -36,6 +36,7 @@ export type WorkEntry = {
   id?: string;
   rental_person_name: string;
   driver_name: string;
+  broker?: string;
   machine_type: 'JCB' | 'Tractor' | 'Harvester';
   hours_driven: number;
   total_amount: number;
