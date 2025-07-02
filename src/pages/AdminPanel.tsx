@@ -269,6 +269,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
           .update({
             rental_person_name: entry.rental_person_name,
             driver_name: entry.driver_name,
+            broker: entry.broker || '',
             machine_type: entry.machine_type,
             hours_driven: entry.hours_driven || 0,
             total_amount: entry.total_amount || 0,
@@ -289,6 +290,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
           .insert([{
             rental_person_name: entry.rental_person_name,
             driver_name: entry.driver_name,
+            broker: entry.broker || '',
             machine_type: entry.machine_type,
             hours_driven: entry.hours_driven || 0,
             total_amount: entry.total_amount || 0,
@@ -330,12 +332,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
           hours_driven: entry.hours_driven ?? undefined,
           total_amount: entry.total_amount ?? undefined,
           amount_received: entry.amount_received ?? undefined,
-          advance_amount: entry.advance_amount ?? undefined
+          advance_amount: entry.advance_amount ?? undefined,
+          broker: entry.broker ?? '',
         };
       }
       return {
         rental_person_name: '',
         driver_name: '',
+        broker: '',
         machine_type: 'JCB',
         hours_driven: undefined,
         total_amount: undefined,
@@ -395,6 +399,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                     <option key={index} value={name}>{name}</option>
                   ))}
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Broker</label>
+                <input
+                  type="text"
+                  value={formData.broker || ''}
+                  onChange={(e) => setFormData({...formData, broker: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  placeholder="Enter broker name (if any)"
+                />
               </div>
 
               <div>
