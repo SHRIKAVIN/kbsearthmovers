@@ -37,8 +37,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     'Vignesh',
     'Markandeyan',
     'Vijayakumar',
-    'Mohan',
-    'Sakthi',
+    'Sakthi / Mohan',
   ];
 
   const adminUsers = [
