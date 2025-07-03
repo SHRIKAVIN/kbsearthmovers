@@ -52,7 +52,7 @@ export type WorkEntry = {
 export type BrokerEntry = {
   id?: string;
   broker_name: string;
-  total_hours: number;
+  total_hours: string;
   total_amount: number;
   amount_received: number;
   date: string;

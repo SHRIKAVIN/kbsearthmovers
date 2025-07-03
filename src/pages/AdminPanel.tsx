@@ -346,7 +346,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         entry.driver_name,
         entry.broker || '-',
         entry.machine_type,
-        Number(entry.hours_driven).toFixed(2),
+        typeof entry.hours_driven === 'number' ? entry.hours_driven.toFixed(2) : entry.hours_driven,
         formatCurrency(Number(entry.total_amount)),
         formatCurrency(Number(entry.amount_received)),
         formatCurrency(Number(entry.advance_amount)),
@@ -554,24 +554,75 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     }
   };
 
+  // Helper: sum H.MM strings or floats as total hours/minutes
+  function sumHourMinuteStrings(entries: any[], field: string) {
+    let totalMinutes = 0;
+    console.log('Summing broker hours:', entries.map(e => e[field]));
+    for (const entry of entries) {
+      let val = entry[field];
+      if (!val && val !== 0) continue; // skip empty/undefined/null
+      if (typeof val === 'number') val = val.toFixed(2); // convert number to string with 2 decimals
+      const [h, m] = val.split('.');
+      const hours = parseInt(h || '0', 10);
+      const minutes = parseInt((m || '0').padEnd(2, '0').slice(0, 2), 10);
+      totalMinutes += hours * 60 + minutes;
+    }
+    const totalHours = Math.floor(totalMinutes / 60);
+    const remMinutes = totalMinutes % 60;
+    return `${totalHours}.${remMinutes.toString().padStart(2, '0')}`;
+  }
+
   const calculateTotals = () => {
-    return filteredEntries.reduce((acc, entry) => ({
+    const totals = filteredEntries.reduce((acc, entry) => ({
       totalAmount: acc.totalAmount + entry.total_amount,
       totalReceived: acc.totalReceived + entry.amount_received,
       totalAdvance: acc.totalAdvance + entry.advance_amount,
-      totalHours: acc.totalHours + entry.hours_driven,
       totalBalance: acc.totalBalance + (entry.total_amount - entry.amount_received - entry.advance_amount)
-    }), { totalAmount: 0, totalReceived: 0, totalAdvance: 0, totalHours: 0, totalBalance: 0 });
+    }), { totalAmount: 0, totalReceived: 0, totalAdvance: 0, totalBalance: 0 });
+    return {
+      ...totals,
+      totalHours: sumHourMinuteStrings(filteredEntries, 'hours_driven')
+    };
   };
 
   const calculateBrokerTotals = () => {
-    return filteredBrokerEntries.reduce((acc, entry) => ({
+    const totals = filteredBrokerEntries.reduce((acc, entry) => ({
       totalAmount: acc.totalAmount + entry.total_amount,
       totalReceived: acc.totalReceived + entry.amount_received,
-      totalHours: acc.totalHours + entry.total_hours,
       totalBalance: acc.totalBalance + (entry.total_amount - entry.amount_received)
-    }), { totalAmount: 0, totalReceived: 0, totalHours: 0, totalBalance: 0 });
+    }), { totalAmount: 0, totalReceived: 0, totalBalance: 0 });
+    return {
+      ...totals,
+      totalHours: sumHourMinuteStrings(filteredBrokerEntries, 'total_hours')
+    };
   };
+
+  function formatDecimalHours(value: number) {
+    if (typeof value !== 'number' || isNaN(value)) return '0.00';
+    const [h, m] = value.toString().split('.').map(Number);
+    const totalMinutes = (h || 0) * 60 + ((m || 0) * 6);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return `${hours}.${minutes.toString().padStart(2, '0')}`;
+  }
+
+  // Helper: parse H.MM string to float hours (e.g., '2.20' => 2 + 20/60)
+  function parseHourMinuteInput(val: string): number {
+    if (!val) return 0;
+    const [h, m] = val.split('.');
+    const hours = parseInt(h || '0', 10);
+    const minutes = parseInt((m || '0').padEnd(2, '0').slice(0, 2), 10); // always 2 digits
+    if (minutes >= 60) return hours + 59 / 60; // clamp to 59 min
+    return hours + minutes / 60;
+  }
+
+  // Helper: format float hours to H.MM string
+  function floatToHourMinuteString(val: number): string {
+    if (typeof val !== 'number' || isNaN(val)) return '0.00';
+    const hours = Math.floor(val);
+    const minutes = Math.round((val - hours) * 60);
+    return `${hours}.${minutes.toString().padStart(2, '0')}`;
+  }
 
   const EntryForm = ({ entry, onSave, onCancel }: { entry?: WorkEntry | null, onSave: (entry: Partial<WorkEntry>) => void, onCancel: () => void }) => {
     const [formData, setFormData] = useState<Partial<WorkEntry>>(() => {
@@ -768,18 +819,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   };
 
   const BrokerEntryForm = ({ entry, onSave, onCancel }: { entry?: BrokerEntry | null, onSave: (entry: Partial<BrokerEntry>) => void, onCancel: () => void }) => {
-    const [formData, setFormData] = useState<Partial<BrokerEntry>>(() => {
+    const [formData, setFormData] = useState<Partial<BrokerEntry & { total_hours_str?: string }>>(() => {
       if (entry) {
         return {
           ...entry,
-          total_hours: entry.total_hours ?? undefined,
+          total_hours_str: entry.total_hours ? entry.total_hours.toString() : '',
           total_amount: entry.total_amount ?? undefined,
           amount_received: entry.amount_received ?? undefined,
         };
       }
       return {
         broker_name: '',
-        total_hours: undefined,
+        total_hours_str: '',
         total_amount: undefined,
         amount_received: undefined,
         date: format(new Date(), 'yyyy-MM-dd'),
@@ -789,14 +840,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
 
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
-      
-      // Validate required fields
       if (!formData.broker_name || !formData.date) {
         alert('Please fill in all required fields');
         return;
       }
-
-      onSave(formData);
+      // Save total_hours as a string
+      const total_hours = formData.total_hours_str || '';
+      onSave({ ...formData, total_hours });
     };
 
     return (
@@ -826,13 +876,28 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Total Hours</label>
                 <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={formData.total_hours || ''}
-                  onChange={(e) => setFormData({...formData, total_hours: e.target.value ? Number(e.target.value) : undefined})}
+                  type="text"
+                  value={formData.total_hours_str || ''}
+                  onChange={(e) => {
+                    // Only allow numbers and up to 2 decimals
+                    const val = e.target.value.replace(/[^0-9.]/g, '');
+                    // Prevent more than one decimal
+                    if ((val.match(/\./g) || []).length > 1) return;
+                    // Prevent minutes >= 60
+                    const [h, m] = val.split('.');
+                    if (m && parseInt(m.padEnd(2, '0').slice(0, 2), 10) >= 60) return;
+                    setFormData({ ...formData, total_hours_str: val });
+                  }}
+                  onBlur={(e) => {
+                    let val = e.target.value;
+                    if (!val) return;
+                    const [h, m] = val.split('.');
+                    // Always pad minutes to two digits
+                    const formatted = h + '.' + (m ? m.padEnd(2, '0').slice(0, 2) : '00');
+                    setFormData({ ...formData, total_hours_str: formatted });
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                  placeholder="Enter total hours"
+                  placeholder="Enter total hours (e.g. 2.20 for 2hr 20min)"
                 />
               </div>
 
@@ -973,7 +1038,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
             {[
               { title: 'Total Entries', value: filteredBrokerEntries.length, color: 'blue' },
-              { title: 'Total Hours', value: brokerTotals.totalHours.toFixed(2), color: 'green' },
+              { title: 'Total Hours', value: brokerTotals.totalHours, color: 'green' },
               { title: 'Total Amount', value: `₹${brokerTotals.totalAmount.toLocaleString()}`, color: 'amber' },
               { title: 'Amount Received', value: `₹${brokerTotals.totalReceived.toLocaleString()}`, color: 'purple' },
               { title: 'Balance Due', value: `₹${brokerTotals.totalBalance.toLocaleString()}`, color: 'red' }
@@ -988,7 +1053,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 mb-6 sm:mb-8">
             {[
               { title: 'Total Entries', value: filteredEntries.length, color: 'blue' },
-              { title: 'Total Hours', value: totals.totalHours.toFixed(2), color: 'green' },
+              { title: 'Total Hours', value: totals.totalHours, color: 'green' },
               { title: 'Total Amount', value: `₹${totals.totalAmount.toLocaleString()}`, color: 'amber' },
               { title: 'Amount Received', value: `₹${totals.totalReceived.toLocaleString()}`, color: 'purple' },
               { title: 'Total Advance', value: `₹${totals.totalAdvance.toLocaleString()}`, color: 'indigo' },
@@ -1210,7 +1275,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                         <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{format(parseISO(entry.date), 'dd/MM/yyyy')}</td>
                         <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 border-r border-gray-200">{entry.time || 'N/A'}</td>
                         <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{entry.broker_name}</td>
-                        <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{Number(entry.total_hours).toFixed(2)}</td>
+                        <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{entry.total_hours}</td>
                         <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 font-semibold border-r border-gray-200">₹{entry.total_amount.toLocaleString()}</td>
                         <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-green-600 font-semibold border-r border-gray-200">₹{entry.amount_received.toLocaleString()}</td>
                         <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap font-semibold text-xs sm:text-sm border-r border-gray-200">
@@ -1295,7 +1360,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                         <td className="w-32 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap border-r border-gray-200">
                           <span className={`px-2 py-1 text-xs font-semibold rounded-full ${entry.machine_type === 'JCB' ? 'bg-blue-100 text-blue-800' : entry.machine_type === 'Tractor' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>{entry.machine_type}</span>
                         </td>
-                        <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{Number(entry.hours_driven).toFixed(2)}</td>
+                        <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{typeof entry.hours_driven === 'number' ? entry.hours_driven.toFixed(2) : entry.hours_driven}</td>
                         <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 font-semibold border-r border-gray-200">₹{entry.total_amount.toLocaleString()}</td>
                         <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-green-600 font-semibold border-r border-gray-200">₹{entry.amount_received.toLocaleString()}</td>
                         <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-blue-600 font-semibold border-r border-gray-200">₹{entry.advance_amount.toLocaleString()}</td>
