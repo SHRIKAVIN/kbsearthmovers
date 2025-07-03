@@ -17,7 +17,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   const [filteredEntries, setFilteredEntries] = useState<WorkEntry[]>([]);
   const [filteredBrokerEntries, setFilteredBrokerEntries] = useState<BrokerEntry[]>([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'driver' | 'admin' | 'all' | 'brokers'>('all');
+  const [activeTab, setActiveTab] = useState<'driver' | 'admin' | 'all' | 'broker'>('all');
   const [editingEntry, setEditingEntry] = useState<WorkEntry | null>(null);
   const [editingBrokerEntry, setEditingBrokerEntry] = useState<BrokerEntry | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -88,7 +88,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   }, []);
 
   useEffect(() => {
-    if (activeTab === 'brokers') {
+    if (activeTab === 'broker') {
       applyBrokerFilters();
     } else {
       applyFilters();
@@ -181,7 +181,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     let filtered = [...entries];
 
     // Filter by tab
-    if (activeTab !== 'all' && activeTab !== 'brokers') {
+    if (activeTab !== 'all') {
       filtered = filtered.filter(entry => entry.entry_type === activeTab);
     }
 
@@ -256,11 +256,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   };
 
   const formatCurrency = (amount: number): string => {
-    return `₹${amount.toLocaleString('en-IN')}`;
+    return `Rs.${amount.toLocaleString('en-IN')}`;
   };
 
   const exportToExcel = () => {
-    if (activeTab === 'brokers') {
+    if (activeTab === 'broker') {
       const worksheet = XLSX.utils.json_to_sheet(filteredBrokerEntries.map(entry => ({
         'Date': entry.date,
         'Time': entry.time || 'N/A',
@@ -306,7 +306,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     doc.text('KBS EARTHMOVERS & HARVESTER', 20, 20);
     doc.setFontSize(12);
     
-    if (activeTab === 'brokers') {
+    if (activeTab === 'broker') {
       doc.text('Broker Entries Report', 20, 30);
       doc.text(`Generated on: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 20, 40);
       doc.text(`Total Entries: ${filteredBrokerEntries.length}`, 20, 50);
@@ -461,7 +461,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   const saveBrokerEntry = async (entry: Partial<BrokerEntry>) => {
     try {
       if (entry.id) {
-        // Update existing broker entry
+        // Update existing broker entry - don't include updated_at since it doesn't exist
         const { error } = await supabase
           .from('broker_entries')
           .update({
@@ -470,8 +470,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
             total_amount: entry.total_amount || 0,
             amount_received: entry.amount_received || 0,
             date: entry.date,
-            time: entry.time,
-            updated_at: new Date().toISOString()
+            time: entry.time
           })
           .eq('id', entry.id);
 
@@ -864,7 +863,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-              <p className="text-gray-600">Manage work entries, broker entries and generate reports</p>
+              <p className="text-gray-600">Manage work entries and generate reports</p>
               <div className="flex items-center mt-2 text-sm text-amber-600">
                 <User className="h-4 w-4 mr-1" />
                 <span>Welcome, {adminUser}</span>
@@ -898,11 +897,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                 { key: 'all', label: 'All Entries', icon: FileText, count: entries.length },
                 { key: 'driver', label: 'Driver Entries', icon: Users, count: entries.filter(e => e.entry_type === 'driver').length },
                 { key: 'admin', label: 'Admin Entries', icon: User, count: entries.filter(e => e.entry_type === 'admin').length },
-                { key: 'brokers', label: 'Broker Entries', icon: Briefcase, count: brokerEntries.length }
+                { key: 'broker', label: 'Broker Entries', icon: Briefcase, count: brokerEntries.length }
               ].map((tab) => (
                 <button
                   key={tab.key}
-                  onClick={() => setActiveTab(tab.key as 'driver' | 'admin' | 'all' | 'brokers')}
+                  onClick={() => setActiveTab(tab.key as 'driver' | 'admin' | 'all' | 'broker')}
                   className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center transition-all duration-300 ${
                     activeTab === tab.key
                       ? 'border-amber-500 text-amber-600'
@@ -918,8 +917,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         </div>
 
         {/* Stats Cards */}
-        {activeTab === 'brokers' ? (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        {activeTab === 'broker' ? (
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 mb-6 sm:mb-8">
             {[
               { title: 'Total Entries', value: filteredBrokerEntries.length, color: 'blue' },
               { title: 'Total Hours', value: brokerTotals.totalHours.toFixed(2), color: 'green' },
@@ -934,7 +933,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 sm:gap-6 mb-6 sm:mb-8">
             {[
               { title: 'Total Entries', value: filteredEntries.length, color: 'blue' },
               { title: 'Total Hours', value: totals.totalHours.toFixed(2), color: 'green' },
@@ -957,7 +956,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
             <Filter className="h-5 w-5 mr-2" />
             Filters
           </h2>
-          {activeTab === 'brokers' ? (
+          {activeTab === 'broker' ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">From Date</label>
@@ -1083,14 +1082,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
 
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-4 mb-6 sm:mb-8">
-          {activeTab === 'brokers' ? (
-            <button
-              onClick={() => setShowAddBrokerForm(true)}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center transition-all duration-300 transform hover:scale-105"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Broker Entry
-            </button>
+          {activeTab === 'broker' ? (
+            <>
+              <button
+                onClick={() => setShowAddBrokerForm(true)}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center transition-all duration-300 transform hover:scale-105"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Broker Entry
+              </button>
+            </>
           ) : (
             <button
               onClick={() => setShowAddForm(true)}
@@ -1120,8 +1121,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         <div ref={tableRef} className="bg-white shadow rounded-lg overflow-hidden animate-fade-in-up animation-delay-700">
           <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
             <h2 className="text-xl font-semibold text-gray-900">
-              {activeTab === 'brokers' ? `Broker Entries - ${filteredBrokerEntries.length} entries` : 
-               `Work Entries (${activeTab === 'all' ? 'All' : activeTab === 'driver' ? 'Driver' : 'Admin'}) - ${filteredEntries.length} entries`}
+              {activeTab === 'broker' ? `Broker Entries - ${filteredBrokerEntries.length} entries` : `Work Entries (${activeTab === 'all' ? 'All' : activeTab === 'driver' ? 'Driver' : 'Admin'}) - ${filteredEntries.length} entries`}
             </h2>
           </div>
           
@@ -1132,13 +1132,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
             </div>
           ) : (
             <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
-              {activeTab === 'brokers' ? (
+              {activeTab === 'broker' ? (
                 <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
                   <thead className="bg-gray-50 sticky top-0 z-10">
                     <tr>
                       <th className="w-24 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Date</th>
                       <th className="w-20 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Time</th>
-                      <th className="w-40 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200 truncate-mobile">Broker Name</th>
+                      <th className="w-40 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Broker Name</th>
                       <th className="w-20 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Hours</th>
                       <th className="w-28 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Total</th>
                       <th className="w-28 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Received</th>
@@ -1151,7 +1151,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                       <tr key={entry.id} className="hover:bg-gray-50 transition-colors">
                         <td className="w-24 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{format(parseISO(entry.date), 'dd/MM/yyyy')}</td>
                         <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 border-r border-gray-200">{entry.time || 'N/A'}</td>
-                        <td className="w-40 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 truncate-mobile border-r border-gray-200">{entry.broker_name}</td>
+                        <td className="w-40 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{entry.broker_name}</td>
                         <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{Number(entry.total_hours).toFixed(2)}</td>
                         <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 font-semibold border-r border-gray-200">₹{entry.total_amount.toLocaleString()}</td>
                         <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-green-600 font-semibold border-r border-gray-200">₹{entry.amount_received.toLocaleString()}</td>
@@ -1162,10 +1162,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                         </td>
                         <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                           <div className="flex space-x-2">
-                            <button onClick={() => setEditingBrokerEntry(entry)} className="text-amber-600 hover:text-amber-900 transition-colors mobile-button" title="Edit broker entry">
+                            <button onClick={() => setEditingBrokerEntry(entry)} className="text-amber-600 hover:text-amber-900 transition-colors" title="Edit entry">
                               <Edit2 className="h-4 w-4" />
                             </button>
-                            <button onClick={() => deleteBrokerEntry(entry.id!)} className="text-red-600 hover:text-red-900 transition-colors mobile-button" title="Delete broker entry">
+                            <button onClick={() => deleteBrokerEntry(entry.id!)} className="text-red-600 hover:text-red-900 transition-colors" title="Delete entry">
                               <Trash2 className="h-4 w-4" />
                             </button>
                           </div>
@@ -1232,12 +1232,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                 </table>
               )}
               
-              {((activeTab === 'brokers' && filteredBrokerEntries.length === 0) || (activeTab !== 'brokers' && filteredEntries.length === 0)) && (
+              {(activeTab === 'broker' ? filteredBrokerEntries.length === 0 : filteredEntries.length === 0) && (
                 <div className="text-center py-8">
                   <p className="text-gray-500">
-                    {activeTab === 'brokers' ? 
-                      (brokerEntries.length === 0 ? 'No broker entries found. Add your first broker entry!' : 'No broker entries found matching your filters.') :
-                      (entries.length === 0 ? 'No entries found. Add your first entry!' : 'No entries found matching your filters.')
+                    {activeTab === 'broker' 
+                      ? (brokerEntries.length === 0 ? 'No broker entries found. Add your first broker entry!' : 'No broker entries found matching your filters.')
+                      : (entries.length === 0 ? 'No entries found. Add your first entry!' : 'No entries found matching your filters.')
                     }
                   </p>
                 </div>
