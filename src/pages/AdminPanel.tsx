@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase, type WorkEntry } from '../lib/supabase';
+import { supabase, type WorkEntry, type BrokerEntry } from '../lib/supabase';
 import { format, parseISO } from 'date-fns';
-import { Lock, Eye, Download, Filter, Plus, Edit2, Trash2, Search, User, LogOut, Save, X, Users, FileText, RefreshCw } from 'lucide-react';
+import { Lock, Eye, Download, Filter, Plus, Edit2, Trash2, Search, User, LogOut, Save, X, Users, FileText, RefreshCw, Briefcase } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -13,11 +13,15 @@ interface AdminPanelProps {
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   const [entries, setEntries] = useState<WorkEntry[]>([]);
+  const [brokerEntries, setBrokerEntries] = useState<BrokerEntry[]>([]);
   const [filteredEntries, setFilteredEntries] = useState<WorkEntry[]>([]);
+  const [filteredBrokerEntries, setFilteredBrokerEntries] = useState<BrokerEntry[]>([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'driver' | 'admin' | 'all'>('all');
+  const [activeTab, setActiveTab] = useState<'driver' | 'admin' | 'all' | 'brokers'>('all');
   const [editingEntry, setEditingEntry] = useState<WorkEntry | null>(null);
+  const [editingBrokerEntry, setEditingBrokerEntry] = useState<BrokerEntry | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showAddBrokerForm, setShowAddBrokerForm] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [filters, setFilters] = useState({
     dateFrom: '',
@@ -25,6 +29,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     machineType: '',
     driver: '',
     broker: '',
+    search: ''
+  });
+  const [brokerFilters, setBrokerFilters] = useState({
+    dateFrom: '',
+    dateTo: '',
+    brokerName: '',
     search: ''
   });
   const [dateSortOrder, setDateSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -48,8 +58,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
 
   useEffect(() => {
     fetchEntries();
-    // Set up real-time subscription
-    const subscription = supabase
+    fetchBrokerEntries();
+    // Set up real-time subscription for work entries
+    const workEntriesSubscription = supabase
       .channel('admin_work_entries_changes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'work_entries' },
@@ -59,14 +70,30 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       )
       .subscribe();
 
+    // Set up real-time subscription for broker entries
+    const brokerEntriesSubscription = supabase
+      .channel('admin_broker_entries_changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'broker_entries' },
+        () => {
+          fetchBrokerEntries();
+        }
+      )
+      .subscribe();
+
     return () => {
-      subscription.unsubscribe();
+      workEntriesSubscription.unsubscribe();
+      brokerEntriesSubscription.unsubscribe();
     };
   }, []);
 
   useEffect(() => {
-    applyFilters();
-  }, [entries, filters, activeTab]);
+    if (activeTab === 'brokers') {
+      applyBrokerFilters();
+    } else {
+      applyFilters();
+    }
+  }, [entries, brokerEntries, filters, brokerFilters, activeTab]);
 
   useEffect(() => {
     const handleObserver = (entries: IntersectionObserverEntry[]) => {
@@ -123,9 +150,30 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     }
   };
 
+  const fetchBrokerEntries = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('broker_entries')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
+      console.log('Fetched broker entries:', data);
+      setBrokerEntries(data || []);
+    } catch (error: any) {
+      console.error('Error fetching broker entries:', error.message);
+      alert('Error fetching broker entries: ' + error.message);
+    }
+  };
+
   const refreshData = async () => {
     setRefreshing(true);
     await fetchEntries();
+    await fetchBrokerEntries();
     setRefreshing(false);
   };
 
@@ -133,7 +181,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     let filtered = [...entries];
 
     // Filter by tab
-    if (activeTab !== 'all') {
+    if (activeTab !== 'all' && activeTab !== 'brokers') {
       filtered = filtered.filter(entry => entry.entry_type === activeTab);
     }
 
@@ -175,30 +223,79 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     setFilteredEntries(filtered);
   };
 
+  const applyBrokerFilters = () => {
+    let filtered = [...brokerEntries];
+
+    if (brokerFilters.dateFrom) {
+      filtered = filtered.filter(entry => entry.date >= brokerFilters.dateFrom);
+    }
+    if (brokerFilters.dateTo) {
+      filtered = filtered.filter(entry => entry.date <= brokerFilters.dateTo);
+    }
+    if (brokerFilters.brokerName) {
+      filtered = filtered.filter(entry => 
+        entry.broker_name.toLowerCase().includes(brokerFilters.brokerName.toLowerCase())
+      );
+    }
+    if (brokerFilters.search) {
+      filtered = filtered.filter(entry => 
+        entry.broker_name.toLowerCase().includes(brokerFilters.search.toLowerCase())
+      );
+    }
+
+    // Sort by date according to dateSortOrder
+    filtered.sort((a, b) => {
+      if (dateSortOrder === 'desc') {
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      } else {
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
+      }
+    });
+
+    setFilteredBrokerEntries(filtered);
+  };
+
   const formatCurrency = (amount: number): string => {
-    return `Rs.${amount.toLocaleString('en-IN')}`;
+    return `₹${amount.toLocaleString('en-IN')}`;
   };
 
   const exportToExcel = () => {
-    const worksheet = XLSX.utils.json_to_sheet(filteredEntries.map(entry => ({
-      'Date': entry.date,
-      'Time': entry.time || 'N/A',
-      'Rental Person': entry.rental_person_name,
-      'Driver': entry.driver_name,
-      'Broker': entry.broker || '-',
-      'Machine Type': entry.machine_type,
-      'Hours Driven': Number(entry.hours_driven).toFixed(2),
-      'Total Amount': formatCurrency(Number(entry.total_amount)),
-      'Amount Received': formatCurrency(Number(entry.amount_received)),
-      'Advance Amount': formatCurrency(Number(entry.advance_amount)),
-      'Balance': formatCurrency(Number(entry.total_amount - entry.amount_received - entry.advance_amount)),
-      'Entry Type': entry.entry_type,
-      'Created At': entry.created_at ? format(parseISO(entry.created_at), 'dd/MM/yyyy HH:mm') : ''
-    })));
+    if (activeTab === 'brokers') {
+      const worksheet = XLSX.utils.json_to_sheet(filteredBrokerEntries.map(entry => ({
+        'Date': entry.date,
+        'Time': entry.time || 'N/A',
+        'Broker Name': entry.broker_name,
+        'Total Hours': Number(entry.total_hours).toFixed(2),
+        'Total Amount': formatCurrency(Number(entry.total_amount)),
+        'Amount Received': formatCurrency(Number(entry.amount_received)),
+        'Balance': formatCurrency(Number(entry.total_amount - entry.amount_received)),
+        'Created At': entry.created_at ? format(parseISO(entry.created_at), 'dd/MM/yyyy HH:mm') : ''
+      })));
 
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Work Entries');
-    XLSX.writeFile(workbook, `KBS_Work_Entries_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Broker Entries');
+      XLSX.writeFile(workbook, `KBS_Broker_Entries_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    } else {
+      const worksheet = XLSX.utils.json_to_sheet(filteredEntries.map(entry => ({
+        'Date': entry.date,
+        'Time': entry.time || 'N/A',
+        'Rental Person': entry.rental_person_name,
+        'Driver': entry.driver_name,
+        'Broker': entry.broker || '-',
+        'Machine Type': entry.machine_type,
+        'Hours Driven': Number(entry.hours_driven).toFixed(2),
+        'Total Amount': formatCurrency(Number(entry.total_amount)),
+        'Amount Received': formatCurrency(Number(entry.amount_received)),
+        'Advance Amount': formatCurrency(Number(entry.advance_amount)),
+        'Balance': formatCurrency(Number(entry.total_amount - entry.amount_received - entry.advance_amount)),
+        'Entry Type': entry.entry_type,
+        'Created At': entry.created_at ? format(parseISO(entry.created_at), 'dd/MM/yyyy HH:mm') : ''
+      })));
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Work Entries');
+      XLSX.writeFile(workbook, `KBS_Work_Entries_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    }
   };
 
   const exportToPDF = () => {
@@ -208,35 +305,63 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     doc.setFontSize(20);
     doc.text('KBS EARTHMOVERS & HARVESTER', 20, 20);
     doc.setFontSize(12);
-    doc.text('Work Entries Report', 20, 30);
-    doc.text(`Generated on: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 20, 40);
-    doc.text(`Total Entries: ${filteredEntries.length}`, 20, 50);
+    
+    if (activeTab === 'brokers') {
+      doc.text('Broker Entries Report', 20, 30);
+      doc.text(`Generated on: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 20, 40);
+      doc.text(`Total Entries: ${filteredBrokerEntries.length}`, 20, 50);
 
-    // Table data with proper currency formatting
-    const tableData = filteredEntries.map(entry => [
-      entry.date,
-      entry.time || 'N/A',
-      entry.rental_person_name,
-      entry.driver_name,
-      entry.broker || '-',
-      entry.machine_type,
-      Number(entry.hours_driven).toFixed(2),
-      formatCurrency(Number(entry.total_amount)),
-      formatCurrency(Number(entry.amount_received)),
-      formatCurrency(Number(entry.advance_amount)),
-      formatCurrency(Number(entry.total_amount - entry.amount_received - entry.advance_amount)),
-      entry.entry_type
-    ]);
+      // Table data with proper currency formatting
+      const tableData = filteredBrokerEntries.map(entry => [
+        entry.date,
+        entry.time || 'N/A',
+        entry.broker_name,
+        Number(entry.total_hours).toFixed(2),
+        formatCurrency(Number(entry.total_amount)),
+        formatCurrency(Number(entry.amount_received)),
+        formatCurrency(Number(entry.total_amount - entry.amount_received))
+      ]);
 
-    (doc as any).autoTable({
-      head: [['Date', 'Time', 'Rental Person', 'Driver', 'Broker', 'Machine', 'Hours', 'Total', 'Received', 'Advance', 'Balance', 'Type']],
-      body: tableData,
-      startY: 60,
-      styles: { fontSize: 7 },
-      headStyles: { fillColor: [245, 158, 11] }
-    });
+      (doc as any).autoTable({
+        head: [['Date', 'Time', 'Broker Name', 'Hours', 'Total', 'Received', 'Balance']],
+        body: tableData,
+        startY: 60,
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [245, 158, 11] }
+      });
 
-    doc.save(`KBS_Work_Entries_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+      doc.save(`KBS_Broker_Entries_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    } else {
+      doc.text('Work Entries Report', 20, 30);
+      doc.text(`Generated on: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 20, 40);
+      doc.text(`Total Entries: ${filteredEntries.length}`, 20, 50);
+
+      // Table data with proper currency formatting
+      const tableData = filteredEntries.map(entry => [
+        entry.date,
+        entry.time || 'N/A',
+        entry.rental_person_name,
+        entry.driver_name,
+        entry.broker || '-',
+        entry.machine_type,
+        Number(entry.hours_driven).toFixed(2),
+        formatCurrency(Number(entry.total_amount)),
+        formatCurrency(Number(entry.amount_received)),
+        formatCurrency(Number(entry.advance_amount)),
+        formatCurrency(Number(entry.total_amount - entry.amount_received - entry.advance_amount)),
+        entry.entry_type
+      ]);
+
+      (doc as any).autoTable({
+        head: [['Date', 'Time', 'Rental Person', 'Driver', 'Broker', 'Machine', 'Hours', 'Total', 'Received', 'Advance', 'Balance', 'Type']],
+        body: tableData,
+        startY: 60,
+        styles: { fontSize: 7 },
+        headStyles: { fillColor: [245, 158, 11] }
+      });
+
+      doc.save(`KBS_Work_Entries_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    }
   };
 
   const deleteEntry = async (id: string, entryData: WorkEntry) => {
@@ -255,6 +380,26 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       } catch (error: any) {
         console.error('Delete error:', error);
         alert('Error deleting entry: ' + error.message);
+      }
+    }
+  };
+
+  const deleteBrokerEntry = async (id: string) => {
+    if (confirm('Are you sure you want to delete this broker entry?')) {
+      try {
+        const { error } = await supabase
+          .from('broker_entries')
+          .delete()
+          .eq('id', id);
+
+        if (error) throw error;
+        
+        // Refresh data after deletion
+        await fetchBrokerEntries();
+        alert('Broker entry deleted successfully!');
+      } catch (error: any) {
+        console.error('Delete error:', error);
+        alert('Error deleting broker entry: ' + error.message);
       }
     }
   };
@@ -313,6 +458,51 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     }
   };
 
+  const saveBrokerEntry = async (entry: Partial<BrokerEntry>) => {
+    try {
+      if (entry.id) {
+        // Update existing broker entry
+        const { error } = await supabase
+          .from('broker_entries')
+          .update({
+            broker_name: entry.broker_name,
+            total_hours: entry.total_hours || 0,
+            total_amount: entry.total_amount || 0,
+            amount_received: entry.amount_received || 0,
+            date: entry.date,
+            time: entry.time,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', entry.id);
+
+        if (error) throw error;
+        alert('Broker entry updated successfully!');
+      } else {
+        // Create new broker entry
+        const { error } = await supabase
+          .from('broker_entries')
+          .insert([{
+            broker_name: entry.broker_name,
+            total_hours: entry.total_hours || 0,
+            total_amount: entry.total_amount || 0,
+            amount_received: entry.amount_received || 0,
+            date: entry.date,
+            time: entry.time || format(new Date(), 'HH:mm')
+          }]);
+
+        if (error) throw error;
+        alert('Broker entry created successfully!');
+      }
+
+      setEditingBrokerEntry(null);
+      setShowAddBrokerForm(false);
+      await fetchBrokerEntries();
+    } catch (error: any) {
+      console.error('Save broker entry error:', error);
+      alert('Error saving broker entry: ' + error.message);
+    }
+  };
+
   const calculateTotals = () => {
     return filteredEntries.reduce((acc, entry) => ({
       totalAmount: acc.totalAmount + entry.total_amount,
@@ -321,6 +511,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       totalHours: acc.totalHours + entry.hours_driven,
       totalBalance: acc.totalBalance + (entry.total_amount - entry.amount_received - entry.advance_amount)
     }), { totalAmount: 0, totalReceived: 0, totalAdvance: 0, totalHours: 0, totalBalance: 0 });
+  };
+
+  const calculateBrokerTotals = () => {
+    return filteredBrokerEntries.reduce((acc, entry) => ({
+      totalAmount: acc.totalAmount + entry.total_amount,
+      totalReceived: acc.totalReceived + entry.amount_received,
+      totalHours: acc.totalHours + entry.total_hours,
+      totalBalance: acc.totalBalance + (entry.total_amount - entry.amount_received)
+    }), { totalAmount: 0, totalReceived: 0, totalHours: 0, totalBalance: 0 });
   };
 
   const EntryForm = ({ entry, onSave, onCancel }: { entry?: WorkEntry | null, onSave: (entry: Partial<WorkEntry>) => void, onCancel: () => void }) => {
@@ -517,7 +716,145 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     );
   };
 
+  const BrokerEntryForm = ({ entry, onSave, onCancel }: { entry?: BrokerEntry | null, onSave: (entry: Partial<BrokerEntry>) => void, onCancel: () => void }) => {
+    const [formData, setFormData] = useState<Partial<BrokerEntry>>(() => {
+      if (entry) {
+        return {
+          ...entry,
+          total_hours: entry.total_hours ?? undefined,
+          total_amount: entry.total_amount ?? undefined,
+          amount_received: entry.amount_received ?? undefined,
+        };
+      }
+      return {
+        broker_name: '',
+        total_hours: undefined,
+        total_amount: undefined,
+        amount_received: undefined,
+        date: format(new Date(), 'yyyy-MM-dd'),
+        time: format(new Date(), 'HH:mm')
+      };
+    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      
+      // Validate required fields
+      if (!formData.broker_name || !formData.date) {
+        alert('Please fill in all required fields');
+        return;
+      }
+
+      onSave(formData);
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-semibold">{entry ? 'Edit Broker Entry' : 'Add New Broker Entry'}</h3>
+            <button onClick={onCancel} className="text-gray-500 hover:text-gray-700">
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Broker Name *</label>
+                <input
+                  type="text"
+                  value={formData.broker_name || ''}
+                  onChange={(e) => setFormData({...formData, broker_name: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  placeholder="Enter broker name"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Total Hours</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.total_hours || ''}
+                  onChange={(e) => setFormData({...formData, total_hours: e.target.value ? Number(e.target.value) : undefined})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  placeholder="Enter total hours"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Total Amount (₹)</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={formData.total_amount || ''}
+                  onChange={(e) => setFormData({...formData, total_amount: e.target.value ? Number(e.target.value) : undefined})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  placeholder="Enter total amount"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Amount Received (₹)</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={formData.amount_received || ''}
+                  onChange={(e) => setFormData({...formData, amount_received: e.target.value ? Number(e.target.value) : undefined})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  placeholder="Enter amount received"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
+                <input
+                  type="date"
+                  value={formData.date || ''}
+                  onChange={(e) => setFormData({...formData, date: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
+                <input
+                  type="time"
+                  value={formData.time || ''}
+                  onChange={(e) => setFormData({...formData, time: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-4 mt-6">
+              <button
+                type="button"
+                onClick={onCancel}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-md transition-colors flex items-center"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Save Broker Entry
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  };
+
   const totals = calculateTotals();
+  const brokerTotals = calculateBrokerTotals();
 
   return (
     <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
@@ -527,7 +864,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-              <p className="text-gray-600">Manage work entries and generate reports</p>
+              <p className="text-gray-600">Manage work entries, broker entries and generate reports</p>
               <div className="flex items-center mt-2 text-sm text-amber-600">
                 <User className="h-4 w-4 mr-1" />
                 <span>Welcome, {adminUser}</span>
@@ -560,11 +897,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
               {[
                 { key: 'all', label: 'All Entries', icon: FileText, count: entries.length },
                 { key: 'driver', label: 'Driver Entries', icon: Users, count: entries.filter(e => e.entry_type === 'driver').length },
-                { key: 'admin', label: 'Admin Entries', icon: User, count: entries.filter(e => e.entry_type === 'admin').length }
+                { key: 'admin', label: 'Admin Entries', icon: User, count: entries.filter(e => e.entry_type === 'admin').length },
+                { key: 'brokers', label: 'Broker Entries', icon: Briefcase, count: brokerEntries.length }
               ].map((tab) => (
                 <button
                   key={tab.key}
-                  onClick={() => setActiveTab(tab.key as 'driver' | 'admin' | 'all')}
+                  onClick={() => setActiveTab(tab.key as 'driver' | 'admin' | 'all' | 'brokers')}
                   className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center transition-all duration-300 ${
                     activeTab === tab.key
                       ? 'border-amber-500 text-amber-600'
@@ -580,21 +918,38 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          {[
-            { title: 'Total Entries', value: filteredEntries.length, color: 'blue' },
-            { title: 'Total Hours', value: totals.totalHours.toFixed(2), color: 'green' },
-            { title: 'Total Amount', value: `₹${totals.totalAmount.toLocaleString()}`, color: 'amber' },
-            { title: 'Amount Received', value: `₹${totals.totalReceived.toLocaleString()}`, color: 'purple' },
-            { title: 'Total Advance', value: `₹${totals.totalAdvance.toLocaleString()}`, color: 'indigo' },
-            { title: 'Balance Due', value: `₹${totals.totalBalance.toLocaleString()}`, color: 'red' }
-          ].map((stat, index) => (
-            <div key={index} className={`bg-white p-4 sm:p-6 rounded-lg shadow-lg animate-fade-in-up`} style={{animationDelay: `${index * 0.1}s`}}>
-              <h3 className="text-xs sm:text-sm font-medium text-gray-500">{stat.title}</h3>
-              <p className={`text-lg sm:text-2xl font-bold text-${stat.color}-600`}>{stat.value}</p>
-            </div>
-          ))}
-        </div>
+        {activeTab === 'brokers' ? (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+            {[
+              { title: 'Total Entries', value: filteredBrokerEntries.length, color: 'blue' },
+              { title: 'Total Hours', value: brokerTotals.totalHours.toFixed(2), color: 'green' },
+              { title: 'Total Amount', value: `₹${brokerTotals.totalAmount.toLocaleString()}`, color: 'amber' },
+              { title: 'Amount Received', value: `₹${brokerTotals.totalReceived.toLocaleString()}`, color: 'purple' },
+              { title: 'Balance Due', value: `₹${brokerTotals.totalBalance.toLocaleString()}`, color: 'red' }
+            ].map((stat, index) => (
+              <div key={index} className={`bg-white p-4 sm:p-6 rounded-lg shadow-lg animate-fade-in-up`} style={{animationDelay: `${index * 0.1}s`}}>
+                <h3 className="text-xs sm:text-sm font-medium text-gray-500">{stat.title}</h3>
+                <p className={`text-lg sm:text-2xl font-bold text-${stat.color}-600`}>{stat.value}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 mb-6 sm:mb-8">
+            {[
+              { title: 'Total Entries', value: filteredEntries.length, color: 'blue' },
+              { title: 'Total Hours', value: totals.totalHours.toFixed(2), color: 'green' },
+              { title: 'Total Amount', value: `₹${totals.totalAmount.toLocaleString()}`, color: 'amber' },
+              { title: 'Amount Received', value: `₹${totals.totalReceived.toLocaleString()}`, color: 'purple' },
+              { title: 'Total Advance', value: `₹${totals.totalAdvance.toLocaleString()}`, color: 'indigo' },
+              { title: 'Balance Due', value: `₹${totals.totalBalance.toLocaleString()}`, color: 'red' }
+            ].map((stat, index) => (
+              <div key={index} className={`bg-white p-4 sm:p-6 rounded-lg shadow-lg animate-fade-in-up`} style={{animationDelay: `${index * 0.1}s`}}>
+                <h3 className="text-xs sm:text-sm font-medium text-gray-500">{stat.title}</h3>
+                <p className={`text-lg sm:text-2xl font-bold text-${stat.color}-600`}>{stat.value}</p>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Filters */}
         <div className="bg-white shadow rounded-lg p-4 sm:p-6 mb-6 sm:mb-8 animate-fade-in-up animation-delay-500">
@@ -602,88 +957,149 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
             <Filter className="h-5 w-5 mr-2" />
             Filters
           </h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">From Date</label>
-              <input
-                type="date"
-                value={filters.dateFrom}
-                onChange={(e) => setFilters({...filters, dateFrom: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
-              />
+          {activeTab === 'brokers' ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">From Date</label>
+                <input
+                  type="date"
+                  value={brokerFilters.dateFrom}
+                  onChange={(e) => setBrokerFilters({...brokerFilters, dateFrom: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">To Date</label>
+                <input
+                  type="date"
+                  value={brokerFilters.dateTo}
+                  onChange={(e) => setBrokerFilters({...brokerFilters, dateTo: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Broker Name</label>
+                <input
+                  type="text"
+                  value={brokerFilters.brokerName}
+                  onChange={(e) => setBrokerFilters({...brokerFilters, brokerName: e.target.value})}
+                  placeholder="Broker name"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                <input
+                  type="text"
+                  value={brokerFilters.search}
+                  onChange={(e) => setBrokerFilters({...brokerFilters, search: e.target.value})}
+                  placeholder="Search entries"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
+                />
+              </div>
+              <div className="flex items-end">
+                <button
+                  onClick={() => setBrokerFilters({dateFrom: '', dateTo: '', brokerName: '', search: ''})}
+                  className="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md transition-colors text-sm"
+                >
+                  Clear Filters
+                </button>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">To Date</label>
-              <input
-                type="date"
-                value={filters.dateTo}
-                onChange={(e) => setFilters({...filters, dateTo: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
-              />
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">From Date</label>
+                <input
+                  type="date"
+                  value={filters.dateFrom}
+                  onChange={(e) => setFilters({...filters, dateFrom: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">To Date</label>
+                <input
+                  type="date"
+                  value={filters.dateTo}
+                  onChange={(e) => setFilters({...filters, dateTo: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Machine Type</label>
+                <select
+                  value={filters.machineType}
+                  onChange={(e) => setFilters({...filters, machineType: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
+                >
+                  <option value="">All Machines</option>
+                  <option value="JCB">JCB</option>
+                  <option value="Tractor">Tractor</option>
+                  <option value="Harvester">Harvester</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Driver</label>
+                <input
+                  type="text"
+                  value={filters.driver}
+                  onChange={(e) => setFilters({...filters, driver: e.target.value})}
+                  placeholder="Driver name"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Broker</label>
+                <input
+                  type="text"
+                  value={filters.broker}
+                  onChange={(e) => setFilters({...filters, broker: e.target.value})}
+                  placeholder="Broker name"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                <input
+                  type="text"
+                  value={filters.search}
+                  onChange={(e) => setFilters({...filters, search: e.target.value})}
+                  placeholder="Search entries"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
+                />
+              </div>
+              <div className="flex items-end">
+                <button
+                  onClick={() => setFilters({dateFrom: '', dateTo: '', machineType: '', driver: '', broker: '', search: ''})}
+                  className="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md transition-colors text-sm"
+                >
+                  Clear Filters
+                </button>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Machine Type</label>
-              <select
-                value={filters.machineType}
-                onChange={(e) => setFilters({...filters, machineType: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
-              >
-                <option value="">All Machines</option>
-                <option value="JCB">JCB</option>
-                <option value="Tractor">Tractor</option>
-                <option value="Harvester">Harvester</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Driver</label>
-              <input
-                type="text"
-                value={filters.driver}
-                onChange={(e) => setFilters({...filters, driver: e.target.value})}
-                placeholder="Driver name"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Broker</label>
-              <input
-                type="text"
-                value={filters.broker}
-                onChange={(e) => setFilters({...filters, broker: e.target.value})}
-                placeholder="Broker name"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
-              <input
-                type="text"
-                value={filters.search}
-                onChange={(e) => setFilters({...filters, search: e.target.value})}
-                placeholder="Search entries"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
-              />
-            </div>
-            <div className="flex items-end">
-              <button
-                onClick={() => setFilters({dateFrom: '', dateTo: '', machineType: '', driver: '', broker: '', search: ''})}
-                className="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md transition-colors text-sm"
-              >
-                Clear Filters
-              </button>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-4 mb-6 sm:mb-8">
-          <button
-            onClick={() => setShowAddForm(true)}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center transition-all duration-300 transform hover:scale-105"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Entry
-          </button>
+          {activeTab === 'brokers' ? (
+            <button
+              onClick={() => setShowAddBrokerForm(true)}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center transition-all duration-300 transform hover:scale-105"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Broker Entry
+            </button>
+          ) : (
+            <button
+              onClick={() => setShowAddForm(true)}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center transition-all duration-300 transform hover:scale-105"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Entry
+            </button>
+          )}
           <button
             onClick={exportToExcel}
             className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center transition-all duration-300 transform hover:scale-105"
@@ -704,7 +1120,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         <div ref={tableRef} className="bg-white shadow rounded-lg overflow-hidden animate-fade-in-up animation-delay-700">
           <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
             <h2 className="text-xl font-semibold text-gray-900">
-              Work Entries ({activeTab === 'all' ? 'All' : activeTab === 'driver' ? 'Driver' : 'Admin'}) - {filteredEntries.length} entries
+              {activeTab === 'brokers' ? `Broker Entries - ${filteredBrokerEntries.length} entries` : 
+               `Work Entries (${activeTab === 'all' ? 'All' : activeTab === 'driver' ? 'Driver' : 'Admin'}) - ${filteredEntries.length} entries`}
             </h2>
           </div>
           
@@ -715,66 +1132,113 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
             </div>
           ) : (
             <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
-              <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
-                <thead className="bg-gray-50 sticky top-0 z-10">
-                  <tr>
-                    <th className="w-24 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Date</th>
-                    <th className="w-20 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Time</th>
-                    <th className="w-40 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200 truncate-mobile">Rental Person</th>
-                    <th className="w-32 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200 truncate-mobile">Driver</th>
-                    <th className="w-32 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200 truncate-mobile">Broker</th>
-                    <th className="w-32 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Machine</th>
-                    <th className="w-20 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Hours</th>
-                    <th className="w-28 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Total</th>
-                    <th className="w-28 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Received</th>
-                    <th className="w-28 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Advance</th>
-                    <th className="w-28 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Balance</th>
-                    <th className="w-20 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Type</th>
-                    <th className="w-20 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredEntries.map((entry) => (
-                    <tr key={entry.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="w-24 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{format(parseISO(entry.date), 'dd/MM/yyyy')}</td>
-                      <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 border-r border-gray-200">{entry.time || 'N/A'}</td>
-                      <td className="w-40 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 truncate-mobile border-r border-gray-200">{entry.rental_person_name}</td>
-                      <td className="w-32 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 truncate-mobile border-r border-gray-200">{entry.driver_name}</td>
-                      <td className="w-32 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 truncate-mobile border-r border-gray-200">{entry.broker || '-'}</td>
-                      <td className="w-32 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap border-r border-gray-200">
-                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${entry.machine_type === 'JCB' ? 'bg-blue-100 text-blue-800' : entry.machine_type === 'Tractor' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>{entry.machine_type}</span>
-                      </td>
-                      <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{Number(entry.hours_driven).toFixed(2)}</td>
-                      <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 font-semibold border-r border-gray-200">₹{entry.total_amount.toLocaleString()}</td>
-                      <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-green-600 font-semibold border-r border-gray-200">₹{entry.amount_received.toLocaleString()}</td>
-                      <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-blue-600 font-semibold border-r border-gray-200">₹{entry.advance_amount.toLocaleString()}</td>
-                      <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap font-semibold text-xs sm:text-sm border-r border-gray-200">
-                        <span className={entry.total_amount - entry.amount_received - entry.advance_amount > 0 ? 'text-red-600' : 'text-green-600'}>
-                          ₹{(entry.total_amount - entry.amount_received - entry.advance_amount).toLocaleString()}
-                        </span>
-                      </td>
-                      <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap border-r border-gray-200">
-                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${entry.entry_type === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}`}>{entry.entry_type}</span>
-                      </td>
-                      <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
-                        <div className="flex space-x-2">
-                          <button onClick={() => setEditingEntry(entry)} className="text-amber-600 hover:text-amber-900 transition-colors mobile-button" title="Edit entry">
-                            <Edit2 className="h-4 w-4" />
-                          </button>
-                          <button onClick={() => deleteEntry(entry.id!, entry)} className="text-red-600 hover:text-red-900 transition-colors mobile-button" title="Delete entry">
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </td>
+              {activeTab === 'brokers' ? (
+                <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
+                  <thead className="bg-gray-50 sticky top-0 z-10">
+                    <tr>
+                      <th className="w-24 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Date</th>
+                      <th className="w-20 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Time</th>
+                      <th className="w-40 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200 truncate-mobile">Broker Name</th>
+                      <th className="w-20 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Hours</th>
+                      <th className="w-28 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Total</th>
+                      <th className="w-28 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Received</th>
+                      <th className="w-28 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Balance</th>
+                      <th className="w-20 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredBrokerEntries.map((entry) => (
+                      <tr key={entry.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="w-24 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{format(parseISO(entry.date), 'dd/MM/yyyy')}</td>
+                        <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 border-r border-gray-200">{entry.time || 'N/A'}</td>
+                        <td className="w-40 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 truncate-mobile border-r border-gray-200">{entry.broker_name}</td>
+                        <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{Number(entry.total_hours).toFixed(2)}</td>
+                        <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 font-semibold border-r border-gray-200">₹{entry.total_amount.toLocaleString()}</td>
+                        <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-green-600 font-semibold border-r border-gray-200">₹{entry.amount_received.toLocaleString()}</td>
+                        <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap font-semibold text-xs sm:text-sm border-r border-gray-200">
+                          <span className={entry.total_amount - entry.amount_received > 0 ? 'text-red-600' : 'text-green-600'}>
+                            ₹{(entry.total_amount - entry.amount_received).toLocaleString()}
+                          </span>
+                        </td>
+                        <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                          <div className="flex space-x-2">
+                            <button onClick={() => setEditingBrokerEntry(entry)} className="text-amber-600 hover:text-amber-900 transition-colors mobile-button" title="Edit broker entry">
+                              <Edit2 className="h-4 w-4" />
+                            </button>
+                            <button onClick={() => deleteBrokerEntry(entry.id!)} className="text-red-600 hover:text-red-900 transition-colors mobile-button" title="Delete broker entry">
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
+                  <thead className="bg-gray-50 sticky top-0 z-10">
+                    <tr>
+                      <th className="w-24 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Date</th>
+                      <th className="w-20 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Time</th>
+                      <th className="w-40 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200 truncate-mobile">Rental Person</th>
+                      <th className="w-32 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200 truncate-mobile">Driver</th>
+                      <th className="w-32 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200 truncate-mobile">Broker</th>
+                      <th className="w-32 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Machine</th>
+                      <th className="w-20 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Hours</th>
+                      <th className="w-28 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Total</th>
+                      <th className="w-28 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Received</th>
+                      <th className="w-28 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Advance</th>
+                      <th className="w-28 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Balance</th>
+                      <th className="w-20 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Type</th>
+                      <th className="w-20 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredEntries.map((entry) => (
+                      <tr key={entry.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="w-24 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{format(parseISO(entry.date), 'dd/MM/yyyy')}</td>
+                        <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 border-r border-gray-200">{entry.time || 'N/A'}</td>
+                        <td className="w-40 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 truncate-mobile border-r border-gray-200">{entry.rental_person_name}</td>
+                        <td className="w-32 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 truncate-mobile border-r border-gray-200">{entry.driver_name}</td>
+                        <td className="w-32 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 truncate-mobile border-r border-gray-200">{entry.broker || '-'}</td>
+                        <td className="w-32 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap border-r border-gray-200">
+                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${entry.machine_type === 'JCB' ? 'bg-blue-100 text-blue-800' : entry.machine_type === 'Tractor' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>{entry.machine_type}</span>
+                        </td>
+                        <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{Number(entry.hours_driven).toFixed(2)}</td>
+                        <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 font-semibold border-r border-gray-200">₹{entry.total_amount.toLocaleString()}</td>
+                        <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-green-600 font-semibold border-r border-gray-200">₹{entry.amount_received.toLocaleString()}</td>
+                        <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-blue-600 font-semibold border-r border-gray-200">₹{entry.advance_amount.toLocaleString()}</td>
+                        <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap font-semibold text-xs sm:text-sm border-r border-gray-200">
+                          <span className={entry.total_amount - entry.amount_received - entry.advance_amount > 0 ? 'text-red-600' : 'text-green-600'}>
+                            ₹{(entry.total_amount - entry.amount_received - entry.advance_amount).toLocaleString()}
+                          </span>
+                        </td>
+                        <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap border-r border-gray-200">
+                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${entry.entry_type === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}`}>{entry.entry_type}</span>
+                        </td>
+                        <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                          <div className="flex space-x-2">
+                            <button onClick={() => setEditingEntry(entry)} className="text-amber-600 hover:text-amber-900 transition-colors mobile-button" title="Edit entry">
+                              <Edit2 className="h-4 w-4" />
+                            </button>
+                            <button onClick={() => deleteEntry(entry.id!, entry)} className="text-red-600 hover:text-red-900 transition-colors mobile-button" title="Delete entry">
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
               
-              {filteredEntries.length === 0 && (
+              {((activeTab === 'brokers' && filteredBrokerEntries.length === 0) || (activeTab !== 'brokers' && filteredEntries.length === 0)) && (
                 <div className="text-center py-8">
                   <p className="text-gray-500">
-                    {entries.length === 0 ? 'No entries found. Add your first entry!' : 'No entries found matching your filters.'}
+                    {activeTab === 'brokers' ? 
+                      (brokerEntries.length === 0 ? 'No broker entries found. Add your first broker entry!' : 'No broker entries found matching your filters.') :
+                      (entries.length === 0 ? 'No entries found. Add your first entry!' : 'No entries found matching your filters.')
+                    }
                   </p>
                 </div>
               )}
@@ -790,11 +1254,26 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
           />
         )}
 
+        {showAddBrokerForm && (
+          <BrokerEntryForm
+            onSave={saveBrokerEntry}
+            onCancel={() => setShowAddBrokerForm(false)}
+          />
+        )}
+
         {editingEntry && (
           <EntryForm
             entry={editingEntry}
             onSave={saveEntry}
             onCancel={() => setEditingEntry(null)}
+          />
+        )}
+
+        {editingBrokerEntry && (
+          <BrokerEntryForm
+            entry={editingBrokerEntry}
+            onSave={saveBrokerEntry}
+            onCancel={() => setEditingBrokerEntry(null)}
           />
         )}
       </div>

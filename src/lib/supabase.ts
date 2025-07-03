@@ -49,6 +49,18 @@ export type WorkEntry = {
   updated_at?: string;
 };
 
+export type BrokerEntry = {
+  id?: string;
+  broker_name: string;
+  total_hours: number;
+  total_amount: number;
+  amount_received: number;
+  date: string;
+  time: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
 export type AdminUser = {
   id?: string;
   username: string;
