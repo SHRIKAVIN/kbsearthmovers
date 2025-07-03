@@ -370,16 +370,19 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     if (confirm('Are you sure you want to delete this entry?')) {
       try {
         console.log('Deleting work entry with ID:', id);
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('work_entries')
           .delete()
-          .eq('id', id);
-
+          .eq('id', id)
+          .select();
+        console.log('Delete result:', { data, error });
         if (error) {
           console.error('Delete error:', error);
           throw error;
         }
-        
+        if (Array.isArray(data) && data.length === 0) {
+          console.warn('No rows deleted. Check if the ID exists and RLS policies.');
+        }
         console.log('Work entry deleted successfully');
         await fetchEntries();
         alert('Entry deleted successfully!');
@@ -394,16 +397,19 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     if (confirm('Are you sure you want to delete this broker entry?')) {
       try {
         console.log('Deleting broker entry with ID:', id);
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('broker_entries')
           .delete()
-          .eq('id', id);
-
+          .eq('id', id)
+          .select();
+        console.log('Delete broker result:', { data, error });
         if (error) {
           console.error('Delete broker entry error:', error);
           throw error;
         }
-        
+        if (Array.isArray(data) && data.length === 0) {
+          console.warn('No broker rows deleted. Check if the ID exists and RLS policies.');
+        }
         console.log('Broker entry deleted successfully');
         await fetchBrokerEntries();
         alert('Broker entry deleted successfully!');
@@ -419,7 +425,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       if (entry.id) {
         // Update existing entry
         console.log('Updating work entry:', entry);
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('work_entries')
           .update({
             rental_person_name: entry.rental_person_name,
@@ -434,11 +440,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
             time: entry.time,
             updated_at: new Date().toISOString()
           })
-          .eq('id', entry.id);
-
+          .eq('id', entry.id)
+          .select();
+        console.log('Update result:', { data, error });
         if (error) {
           console.error('Update work entry error:', error);
           throw error;
+        }
+        if (Array.isArray(data) && data.length === 0) {
+          console.warn('No rows updated. Check if the ID exists and RLS policies.');
         }
         console.log('Work entry updated successfully');
         alert('Entry updated successfully!');
@@ -491,20 +501,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
           date: entry.date,
           time: entry.time
         };
-        
         console.log('Update data:', updateData);
-        
         const { data, error } = await supabase
           .from('broker_entries')
           .update(updateData)
           .eq('id', entry.id)
           .select();
-
+        console.log('Update broker result:', { data, error });
         if (error) {
           console.error('Update broker entry error:', error);
           throw error;
         }
-        
+        if (Array.isArray(data) && data.length === 0) {
+          console.warn('No broker rows updated. Check if the ID exists and RLS policies.');
+        }
         console.log('Broker entry updated successfully:', data);
         alert('Broker entry updated successfully!');
       } else {
