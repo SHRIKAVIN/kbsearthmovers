@@ -17,7 +17,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   const [filteredEntries, setFilteredEntries] = useState<WorkEntry[]>([]);
   const [filteredBrokerEntries, setFilteredBrokerEntries] = useState<BrokerEntry[]>([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'driver' | 'admin' | 'all' | 'broker'>('all');
+  const [activeTab, setActiveTab] = useState<'driver' | 'admin' | 'all' | 'brokers'>('all');
   const [editingEntry, setEditingEntry] = useState<WorkEntry | null>(null);
   const [editingBrokerEntry, setEditingBrokerEntry] = useState<BrokerEntry | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -59,8 +59,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   useEffect(() => {
     fetchEntries();
     fetchBrokerEntries();
-    // Set up real-time subscription for work entries
-    const workEntriesSubscription = supabase
+    // Set up real-time subscription
+    const subscription = supabase
       .channel('admin_work_entries_changes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'work_entries' },
@@ -68,11 +68,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
           fetchEntries();
         }
       )
-      .subscribe();
-
-    // Set up real-time subscription for broker entries
-    const brokerEntriesSubscription = supabase
-      .channel('admin_broker_entries_changes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'broker_entries' },
         () => {
@@ -82,18 +77,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       .subscribe();
 
     return () => {
-      workEntriesSubscription.unsubscribe();
-      brokerEntriesSubscription.unsubscribe();
+      subscription.unsubscribe();
     };
   }, []);
 
   useEffect(() => {
-    if (activeTab === 'broker') {
-      applyBrokerFilters();
-    } else {
-      applyFilters();
-    }
-  }, [entries, brokerEntries, filters, brokerFilters, activeTab]);
+    applyFilters();
+  }, [entries, filters, activeTab]);
+
+  useEffect(() => {
+    applyBrokerFilters();
+  }, [brokerEntries, brokerFilters]);
 
   useEffect(() => {
     const handleObserver = (entries: IntersectionObserverEntry[]) => {
@@ -158,7 +152,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Supabase error:', error);
+        console.error('Supabase broker entries error:', error);
         throw error;
       }
       
@@ -181,7 +175,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     let filtered = [...entries];
 
     // Filter by tab
-    if (activeTab !== 'all') {
+    if (activeTab !== 'all' && activeTab !== 'brokers') {
       filtered = filtered.filter(entry => entry.entry_type === activeTab);
     }
 
@@ -260,7 +254,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   };
 
   const exportToExcel = () => {
-    if (activeTab === 'broker') {
+    if (activeTab === 'brokers') {
       const worksheet = XLSX.utils.json_to_sheet(filteredBrokerEntries.map(entry => ({
         'Date': entry.date,
         'Time': entry.time || 'N/A',
@@ -306,7 +300,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     doc.text('KBS EARTHMOVERS & HARVESTER', 20, 20);
     doc.setFontSize(12);
     
-    if (activeTab === 'broker') {
+    if (activeTab === 'brokers') {
       doc.text('Broker Entries Report', 20, 30);
       doc.text(`Generated on: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 20, 40);
       doc.text(`Total Entries: ${filteredBrokerEntries.length}`, 20, 50);
@@ -387,18 +381,23 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   const deleteBrokerEntry = async (id: string) => {
     if (confirm('Are you sure you want to delete this broker entry?')) {
       try {
+        console.log('Deleting broker entry with ID:', id);
         const { error } = await supabase
           .from('broker_entries')
           .delete()
           .eq('id', id);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Delete broker entry error:', error);
+          throw error;
+        }
         
+        console.log('Broker entry deleted successfully');
         // Refresh data after deletion
         await fetchBrokerEntries();
         alert('Broker entry deleted successfully!');
       } catch (error: any) {
-        console.error('Delete error:', error);
+        console.error('Delete broker entry error:', error);
         alert('Error deleting broker entry: ' + error.message);
       }
     }
@@ -460,36 +459,56 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
 
   const saveBrokerEntry = async (entry: Partial<BrokerEntry>) => {
     try {
+      console.log('Saving broker entry:', entry);
+      
       if (entry.id) {
-        // Update existing broker entry - don't include updated_at since it doesn't exist
+        // Update existing broker entry
+        const updateData = {
+          broker_name: entry.broker_name,
+          total_hours: entry.total_hours || 0,
+          total_amount: entry.total_amount || 0,
+          amount_received: entry.amount_received || 0,
+          date: entry.date,
+          time: entry.time
+        };
+        
+        console.log('Updating broker entry with data:', updateData);
+        
         const { error } = await supabase
           .from('broker_entries')
-          .update({
-            broker_name: entry.broker_name,
-            total_hours: entry.total_hours || 0,
-            total_amount: entry.total_amount || 0,
-            amount_received: entry.amount_received || 0,
-            date: entry.date,
-            time: entry.time
-          })
+          .update(updateData)
           .eq('id', entry.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Update broker entry error:', error);
+          throw error;
+        }
+        
+        console.log('Broker entry updated successfully');
         alert('Broker entry updated successfully!');
       } else {
         // Create new broker entry
+        const insertData = {
+          broker_name: entry.broker_name,
+          total_hours: entry.total_hours || 0,
+          total_amount: entry.total_amount || 0,
+          amount_received: entry.amount_received || 0,
+          date: entry.date,
+          time: entry.time || format(new Date(), 'HH:mm')
+        };
+        
+        console.log('Inserting new broker entry with data:', insertData);
+        
         const { error } = await supabase
           .from('broker_entries')
-          .insert([{
-            broker_name: entry.broker_name,
-            total_hours: entry.total_hours || 0,
-            total_amount: entry.total_amount || 0,
-            amount_received: entry.amount_received || 0,
-            date: entry.date,
-            time: entry.time || format(new Date(), 'HH:mm')
-          }]);
+          .insert([insertData]);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Insert broker entry error:', error);
+          throw error;
+        }
+        
+        console.log('Broker entry created successfully');
         alert('Broker entry created successfully!');
       }
 
@@ -897,11 +916,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                 { key: 'all', label: 'All Entries', icon: FileText, count: entries.length },
                 { key: 'driver', label: 'Driver Entries', icon: Users, count: entries.filter(e => e.entry_type === 'driver').length },
                 { key: 'admin', label: 'Admin Entries', icon: User, count: entries.filter(e => e.entry_type === 'admin').length },
-                { key: 'broker', label: 'Broker Entries', icon: Briefcase, count: brokerEntries.length }
+                { key: 'brokers', label: 'Broker Entries', icon: Briefcase, count: brokerEntries.length }
               ].map((tab) => (
                 <button
                   key={tab.key}
-                  onClick={() => setActiveTab(tab.key as 'driver' | 'admin' | 'all' | 'broker')}
+                  onClick={() => setActiveTab(tab.key as 'driver' | 'admin' | 'all' | 'brokers')}
                   className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center transition-all duration-300 ${
                     activeTab === tab.key
                       ? 'border-amber-500 text-amber-600'
@@ -917,8 +936,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         </div>
 
         {/* Stats Cards */}
-        {activeTab === 'broker' ? (
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        {activeTab === 'brokers' ? (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
             {[
               { title: 'Total Entries', value: filteredBrokerEntries.length, color: 'blue' },
               { title: 'Total Hours', value: brokerTotals.totalHours.toFixed(2), color: 'green' },
@@ -933,7 +952,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 mb-6 sm:mb-8">
             {[
               { title: 'Total Entries', value: filteredEntries.length, color: 'blue' },
               { title: 'Total Hours', value: totals.totalHours.toFixed(2), color: 'green' },
@@ -956,7 +975,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
             <Filter className="h-5 w-5 mr-2" />
             Filters
           </h2>
-          {activeTab === 'broker' ? (
+          
+          {activeTab === 'brokers' ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">From Date</label>
@@ -1082,7 +1102,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
 
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-4 mb-6 sm:mb-8">
-          {activeTab === 'broker' ? (
+          {activeTab === 'brokers' ? (
             <>
               <button
                 onClick={() => setShowAddBrokerForm(true)}
@@ -1091,48 +1111,65 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                 <Plus className="h-4 w-4 mr-2" />
                 Add Broker Entry
               </button>
+              <button
+                onClick={exportToExcel}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center transition-all duration-300 transform hover:scale-105"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export Excel
+              </button>
+              <button
+                onClick={exportToPDF}
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center transition-all duration-300 transform hover:scale-105"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export PDF
+              </button>
             </>
           ) : (
-            <button
-              onClick={() => setShowAddForm(true)}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center transition-all duration-300 transform hover:scale-105"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Entry
-            </button>
+            <>
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center transition-all duration-300 transform hover:scale-105"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Entry
+              </button>
+              <button
+                onClick={exportToExcel}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center transition-all duration-300 transform hover:scale-105"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export Excel
+              </button>
+              <button
+                onClick={exportToPDF}
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center transition-all duration-300 transform hover:scale-105"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export PDF
+              </button>
+            </>
           )}
-          <button
-            onClick={exportToExcel}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center transition-all duration-300 transform hover:scale-105"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Export Excel
-          </button>
-          <button
-            onClick={exportToPDF}
-            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center transition-all duration-300 transform hover:scale-105"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Export PDF
-          </button>
         </div>
 
-        {/* Entries Table */}
-        <div ref={tableRef} className="bg-white shadow rounded-lg overflow-hidden animate-fade-in-up animation-delay-700">
-          <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">
-              {activeTab === 'broker' ? `Broker Entries - ${filteredBrokerEntries.length} entries` : `Work Entries (${activeTab === 'all' ? 'All' : activeTab === 'driver' ? 'Driver' : 'Admin'}) - ${filteredEntries.length} entries`}
-            </h2>
-          </div>
-          
-          {loading ? (
-            <div className="p-8 text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Loading entries...</p>
+        {/* Tables */}
+        {activeTab === 'brokers' ? (
+          // Broker Entries Table
+          <div ref={tableRef} className="bg-white shadow rounded-lg overflow-hidden animate-fade-in-up animation-delay-700">
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">
+                Broker Entries - {filteredBrokerEntries.length} entries
+              </h2>
             </div>
-          ) : (
-            <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
-              {activeTab === 'broker' ? (
+            
+            {loading ? (
+              <div className="p-8 text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto"></div>
+                <p className="mt-4 text-gray-600">Loading entries...</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
                 <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
                   <thead className="bg-gray-50 sticky top-0 z-10">
                     <tr>
@@ -1174,7 +1211,33 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                     ))}
                   </tbody>
                 </table>
-              ) : (
+                
+                {filteredBrokerEntries.length === 0 && (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">
+                      {brokerEntries.length === 0 ? 'No broker entries found. Add your first entry!' : 'No broker entries found matching your filters.'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
+          // Work Entries Table
+          <div ref={tableRef} className="bg-white shadow rounded-lg overflow-hidden animate-fade-in-up animation-delay-700">
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">
+                Work Entries ({activeTab === 'all' ? 'All' : activeTab === 'driver' ? 'Driver' : 'Admin'}) - {filteredEntries.length} entries
+              </h2>
+            </div>
+            
+            {loading ? (
+              <div className="p-8 text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto"></div>
+                <p className="mt-4 text-gray-600">Loading entries...</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
                 <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
                   <thead className="bg-gray-50 sticky top-0 z-10">
                     <tr>
@@ -1230,21 +1293,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                     ))}
                   </tbody>
                 </table>
-              )}
-              
-              {(activeTab === 'broker' ? filteredBrokerEntries.length === 0 : filteredEntries.length === 0) && (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">
-                    {activeTab === 'broker' 
-                      ? (brokerEntries.length === 0 ? 'No broker entries found. Add your first broker entry!' : 'No broker entries found matching your filters.')
-                      : (entries.length === 0 ? 'No entries found. Add your first entry!' : 'No entries found matching your filters.')
-                    }
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+                
+                {filteredEntries.length === 0 && (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">
+                      {entries.length === 0 ? 'No entries found. Add your first entry!' : 'No entries found matching your filters.'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Modals */}
         {showAddForm && (
@@ -1254,18 +1314,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
           />
         )}
 
-        {showAddBrokerForm && (
-          <BrokerEntryForm
-            onSave={saveBrokerEntry}
-            onCancel={() => setShowAddBrokerForm(false)}
-          />
-        )}
-
         {editingEntry && (
           <EntryForm
             entry={editingEntry}
             onSave={saveEntry}
             onCancel={() => setEditingEntry(null)}
+          />
+        )}
+
+        {showAddBrokerForm && (
+          <BrokerEntryForm
+            onSave={saveBrokerEntry}
+            onCancel={() => setShowAddBrokerForm(false)}
           />
         )}
 
