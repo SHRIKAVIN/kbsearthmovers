@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase, type WorkEntry, type BrokerEntry } from '../lib/supabase';
 import { format, parseISO } from 'date-fns';
-import { Lock, Eye, Download, Filter, Plus, Edit2, Trash2, Search, User, LogOut, Save, X, Users, FileText, RefreshCw, Briefcase } from 'lucide-react';
+import { Lock, Eye, Download, Filter, Plus, Edit2, Trash2, Search, User, LogOut, Save, X, Users, FileText, RefreshCw, Building2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -59,25 +59,34 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   useEffect(() => {
     fetchEntries();
     fetchBrokerEntries();
-    // Set up real-time subscription
-    const subscription = supabase
+    
+    // Set up real-time subscription for work entries
+    const workEntriesSubscription = supabase
       .channel('admin_work_entries_changes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'work_entries' },
         () => {
+          console.log('Work entries changed, refetching...');
           fetchEntries();
         }
       )
+      .subscribe();
+
+    // Set up real-time subscription for broker entries
+    const brokerEntriesSubscription = supabase
+      .channel('admin_broker_entries_changes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'broker_entries' },
         () => {
+          console.log('Broker entries changed, refetching...');
           fetchBrokerEntries();
         }
       )
       .subscribe();
 
     return () => {
-      subscription.unsubscribe();
+      workEntriesSubscription.unsubscribe();
+      brokerEntriesSubscription.unsubscribe();
     };
   }, []);
 
@@ -124,21 +133,22 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   const fetchEntries = async () => {
     setLoading(true);
     try {
+      console.log('Fetching work entries...');
       const { data, error } = await supabase
         .from('work_entries')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Supabase error:', error);
+        console.error('Supabase error fetching work entries:', error);
         throw error;
       }
       
-      console.log('Fetched entries:', data);
+      console.log('Fetched work entries:', data);
       setEntries(data || []);
     } catch (error: any) {
-      console.error('Error fetching entries:', error.message);
-      alert('Error fetching entries: ' + error.message);
+      console.error('Error fetching work entries:', error.message);
+      alert('Error fetching work entries: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -146,13 +156,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
 
   const fetchBrokerEntries = async () => {
     try {
+      console.log('Fetching broker entries...');
       const { data, error } = await supabase
         .from('broker_entries')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Supabase broker entries error:', error);
+        console.error('Supabase error fetching broker entries:', error);
         throw error;
       }
       
@@ -166,8 +177,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
 
   const refreshData = async () => {
     setRefreshing(true);
-    await fetchEntries();
-    await fetchBrokerEntries();
+    await Promise.all([fetchEntries(), fetchBrokerEntries()]);
     setRefreshing(false);
   };
 
@@ -323,8 +333,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         styles: { fontSize: 8 },
         headStyles: { fillColor: [245, 158, 11] }
       });
-
-      doc.save(`KBS_Broker_Entries_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
     } else {
       doc.text('Work Entries Report', 20, 30);
       doc.text(`Generated on: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 20, 40);
@@ -353,22 +361,26 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         styles: { fontSize: 7 },
         headStyles: { fillColor: [245, 158, 11] }
       });
-
-      doc.save(`KBS_Work_Entries_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
     }
+
+    doc.save(`KBS_${activeTab === 'brokers' ? 'Broker' : 'Work'}_Entries_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   };
 
   const deleteEntry = async (id: string, entryData: WorkEntry) => {
     if (confirm('Are you sure you want to delete this entry?')) {
       try {
+        console.log('Deleting work entry with ID:', id);
         const { error } = await supabase
           .from('work_entries')
           .delete()
           .eq('id', id);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Delete error:', error);
+          throw error;
+        }
         
-        // Refresh data after deletion
+        console.log('Work entry deleted successfully');
         await fetchEntries();
         alert('Entry deleted successfully!');
       } catch (error: any) {
@@ -393,7 +405,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         }
         
         console.log('Broker entry deleted successfully');
-        // Refresh data after deletion
         await fetchBrokerEntries();
         alert('Broker entry deleted successfully!');
       } catch (error: any) {
@@ -407,6 +418,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     try {
       if (entry.id) {
         // Update existing entry
+        console.log('Updating work entry:', entry);
         const { error } = await supabase
           .from('work_entries')
           .update({
@@ -424,10 +436,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
           })
           .eq('id', entry.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Update work entry error:', error);
+          throw error;
+        }
+        console.log('Work entry updated successfully');
         alert('Entry updated successfully!');
       } else {
         // Create new entry
+        console.log('Creating new work entry:', entry);
         const { error } = await supabase
           .from('work_entries')
           .insert([{
@@ -444,7 +461,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
             entry_type: 'admin'
           }]);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Create work entry error:', error);
+          throw error;
+        }
+        console.log('Work entry created successfully');
         alert('Entry created successfully!');
       }
 
@@ -452,63 +473,65 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       setShowAddForm(false);
       await fetchEntries();
     } catch (error: any) {
-      console.error('Save error:', error);
+      console.error('Save work entry error:', error);
       alert('Error saving entry: ' + error.message);
     }
   };
 
   const saveBrokerEntry = async (entry: Partial<BrokerEntry>) => {
     try {
-      console.log('Saving broker entry:', entry);
-      
       if (entry.id) {
         // Update existing broker entry
+        console.log('Updating broker entry:', entry);
         const updateData = {
           broker_name: entry.broker_name,
-          total_hours: entry.total_hours || 0,
-          total_amount: entry.total_amount || 0,
-          amount_received: entry.amount_received || 0,
+          total_hours: Number(entry.total_hours) || 0,
+          total_amount: Number(entry.total_amount) || 0,
+          amount_received: Number(entry.amount_received) || 0,
           date: entry.date,
           time: entry.time
         };
         
-        console.log('Updating broker entry with data:', updateData);
+        console.log('Update data:', updateData);
         
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('broker_entries')
           .update(updateData)
-          .eq('id', entry.id);
+          .eq('id', entry.id)
+          .select();
 
         if (error) {
           console.error('Update broker entry error:', error);
           throw error;
         }
         
-        console.log('Broker entry updated successfully');
+        console.log('Broker entry updated successfully:', data);
         alert('Broker entry updated successfully!');
       } else {
         // Create new broker entry
+        console.log('Creating new broker entry:', entry);
         const insertData = {
           broker_name: entry.broker_name,
-          total_hours: entry.total_hours || 0,
-          total_amount: entry.total_amount || 0,
-          amount_received: entry.amount_received || 0,
+          total_hours: Number(entry.total_hours) || 0,
+          total_amount: Number(entry.total_amount) || 0,
+          amount_received: Number(entry.amount_received) || 0,
           date: entry.date,
           time: entry.time || format(new Date(), 'HH:mm')
         };
         
-        console.log('Inserting new broker entry with data:', insertData);
+        console.log('Insert data:', insertData);
         
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('broker_entries')
-          .insert([insertData]);
+          .insert([insertData])
+          .select();
 
         if (error) {
-          console.error('Insert broker entry error:', error);
+          console.error('Create broker entry error:', error);
           throw error;
         }
         
-        console.log('Broker entry created successfully');
+        console.log('Broker entry created successfully:', data);
         alert('Broker entry created successfully!');
       }
 
@@ -916,7 +939,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                 { key: 'all', label: 'All Entries', icon: FileText, count: entries.length },
                 { key: 'driver', label: 'Driver Entries', icon: Users, count: entries.filter(e => e.entry_type === 'driver').length },
                 { key: 'admin', label: 'Admin Entries', icon: User, count: entries.filter(e => e.entry_type === 'admin').length },
-                { key: 'brokers', label: 'Broker Entries', icon: Briefcase, count: brokerEntries.length }
+                { key: 'brokers', label: 'Broker Entries', icon: Building2, count: brokerEntries.length }
               ].map((tab) => (
                 <button
                   key={tab.key}
@@ -970,13 +993,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         )}
 
         {/* Filters */}
-        <div className="bg-white shadow rounded-lg p-4 sm:p-6 mb-6 sm:mb-8 animate-fade-in-up animation-delay-500">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-            <Filter className="h-5 w-5 mr-2" />
-            Filters
-          </h2>
-          
-          {activeTab === 'brokers' ? (
+        {activeTab === 'brokers' ? (
+          <div className="bg-white shadow rounded-lg p-4 sm:p-6 mb-6 sm:mb-8 animate-fade-in-up animation-delay-500">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+              <Filter className="h-5 w-5 mr-2" />
+              Broker Filters
+            </h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">From Date</label>
@@ -1025,7 +1047,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                 </button>
               </div>
             </div>
-          ) : (
+          </div>
+        ) : (
+          <div className="bg-white shadow rounded-lg p-4 sm:p-6 mb-6 sm:mb-8 animate-fade-in-up animation-delay-500">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+              <Filter className="h-5 w-5 mr-2" />
+              Filters
+            </h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">From Date</label>
@@ -1097,8 +1125,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                 </button>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-4 mb-6 sm:mb-8">
@@ -1111,51 +1139,34 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                 <Plus className="h-4 w-4 mr-2" />
                 Add Broker Entry
               </button>
-              <button
-                onClick={exportToExcel}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center transition-all duration-300 transform hover:scale-105"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export Excel
-              </button>
-              <button
-                onClick={exportToPDF}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center transition-all duration-300 transform hover:scale-105"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export PDF
-              </button>
             </>
           ) : (
-            <>
-              <button
-                onClick={() => setShowAddForm(true)}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center transition-all duration-300 transform hover:scale-105"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Entry
-              </button>
-              <button
-                onClick={exportToExcel}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center transition-all duration-300 transform hover:scale-105"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export Excel
-              </button>
-              <button
-                onClick={exportToPDF}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center transition-all duration-300 transform hover:scale-105"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export PDF
-              </button>
-            </>
+            <button
+              onClick={() => setShowAddForm(true)}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center transition-all duration-300 transform hover:scale-105"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Entry
+            </button>
           )}
+          <button
+            onClick={exportToExcel}
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center transition-all duration-300 transform hover:scale-105"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Export Excel
+          </button>
+          <button
+            onClick={exportToPDF}
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center transition-all duration-300 transform hover:scale-105"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Export PDF
+          </button>
         </div>
 
         {/* Tables */}
         {activeTab === 'brokers' ? (
-          // Broker Entries Table
           <div ref={tableRef} className="bg-white shadow rounded-lg overflow-hidden animate-fade-in-up animation-delay-700">
             <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
               <h2 className="text-xl font-semibold text-gray-900">
@@ -1166,43 +1177,51 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
             {loading ? (
               <div className="p-8 text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto"></div>
-                <p className="mt-4 text-gray-600">Loading entries...</p>
+                <p className="mt-4 text-gray-600">Loading broker entries...</p>
               </div>
             ) : (
               <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
                 <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
                   <thead className="bg-gray-50 sticky top-0 z-10">
                     <tr>
-                      <th className="w-24 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Date</th>
-                      <th className="w-20 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Time</th>
-                      <th className="w-40 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Broker Name</th>
-                      <th className="w-20 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Hours</th>
-                      <th className="w-28 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Total</th>
-                      <th className="w-28 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Received</th>
-                      <th className="w-28 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Balance</th>
-                      <th className="w-20 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap">Actions</th>
+                      <th className="px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Date</th>
+                      <th className="px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Time</th>
+                      <th className="px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Broker Name</th>
+                      <th className="px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Hours</th>
+                      <th className="px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Total</th>
+                      <th className="px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Received</th>
+                      <th className="px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Balance</th>
+                      <th className="px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredBrokerEntries.map((entry) => (
                       <tr key={entry.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="w-24 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{format(parseISO(entry.date), 'dd/MM/yyyy')}</td>
-                        <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 border-r border-gray-200">{entry.time || 'N/A'}</td>
-                        <td className="w-40 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{entry.broker_name}</td>
-                        <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{Number(entry.total_hours).toFixed(2)}</td>
-                        <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 font-semibold border-r border-gray-200">₹{entry.total_amount.toLocaleString()}</td>
-                        <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-green-600 font-semibold border-r border-gray-200">₹{entry.amount_received.toLocaleString()}</td>
-                        <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap font-semibold text-xs sm:text-sm border-r border-gray-200">
+                        <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{format(parseISO(entry.date), 'dd/MM/yyyy')}</td>
+                        <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 border-r border-gray-200">{entry.time || 'N/A'}</td>
+                        <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{entry.broker_name}</td>
+                        <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{Number(entry.total_hours).toFixed(2)}</td>
+                        <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 font-semibold border-r border-gray-200">₹{entry.total_amount.toLocaleString()}</td>
+                        <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-green-600 font-semibold border-r border-gray-200">₹{entry.amount_received.toLocaleString()}</td>
+                        <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap font-semibold text-xs sm:text-sm border-r border-gray-200">
                           <span className={entry.total_amount - entry.amount_received > 0 ? 'text-red-600' : 'text-green-600'}>
                             ₹{(entry.total_amount - entry.amount_received).toLocaleString()}
                           </span>
                         </td>
-                        <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                        <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                           <div className="flex space-x-2">
-                            <button onClick={() => setEditingBrokerEntry(entry)} className="text-amber-600 hover:text-amber-900 transition-colors" title="Edit entry">
+                            <button 
+                              onClick={() => setEditingBrokerEntry(entry)} 
+                              className="text-amber-600 hover:text-amber-900 transition-colors" 
+                              title="Edit broker entry"
+                            >
                               <Edit2 className="h-4 w-4" />
                             </button>
-                            <button onClick={() => deleteBrokerEntry(entry.id!)} className="text-red-600 hover:text-red-900 transition-colors" title="Delete entry">
+                            <button 
+                              onClick={() => deleteBrokerEntry(entry.id!)} 
+                              className="text-red-600 hover:text-red-900 transition-colors" 
+                              title="Delete broker entry"
+                            >
                               <Trash2 className="h-4 w-4" />
                             </button>
                           </div>
@@ -1215,7 +1234,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                 {filteredBrokerEntries.length === 0 && (
                   <div className="text-center py-8">
                     <p className="text-gray-500">
-                      {brokerEntries.length === 0 ? 'No broker entries found. Add your first entry!' : 'No broker entries found matching your filters.'}
+                      {brokerEntries.length === 0 ? 'No broker entries found. Add your first broker entry!' : 'No broker entries found matching your filters.'}
                     </p>
                   </div>
                 )}
@@ -1223,7 +1242,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
             )}
           </div>
         ) : (
-          // Work Entries Table
           <div ref={tableRef} className="bg-white shadow rounded-lg overflow-hidden animate-fade-in-up animation-delay-700">
             <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
               <h2 className="text-xl font-semibold text-gray-900">
