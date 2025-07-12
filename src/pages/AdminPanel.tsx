@@ -23,10 +23,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showAddBrokerForm, setShowAddBrokerForm] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  // Set default filter state for machineType to 'Harvester'
   const [filters, setFilters] = useState({
     dateFrom: '',
     dateTo: '',
-    machineType: '',
+    machineType: 'Harvester',
     driver: '',
     broker: '',
     search: ''
@@ -44,9 +45,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   const tableRef = useRef<HTMLDivElement>(null);
 
   const driverNames = [
-    'Vignesh',
-    'Markandeyan',
-    'Vijayakumar',
     'Sakthi / Mohan',
   ];
 
@@ -638,9 +636,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       }
       return {
         rental_person_name: '',
-        driver_name: '',
+        driver_name: 'Sakthi / Mohan',
         broker: '',
-        machine_type: 'JCB',
+        machine_type: 'Harvester',
         hours_driven: undefined,
         total_amount: undefined,
         amount_received: undefined,
@@ -715,12 +713,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Machine Type</label>
                 <select
-                  value={formData.machine_type || 'JCB'}
-                  onChange={(e) => setFormData({...formData, machine_type: e.target.value as 'JCB' | 'Tractor' | 'Harvester'})}
+                  value={formData.machine_type || 'Harvester'}
+                  onChange={(e) => setFormData({...formData, machine_type: e.target.value as 'Harvester'})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                 >
-                  <option value="JCB">JCB</option>
-                  <option value="Tractor">Tractor</option>
                   <option value="Harvester">Harvester</option>
                 </select>
               </div>
@@ -1155,9 +1151,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                   onChange={(e) => setFilters({...filters, machineType: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
                 >
-                  <option value="">All Machines</option>
-                  <option value="JCB">JCB</option>
-                  <option value="Tractor">Tractor</option>
                   <option value="Harvester">Harvester</option>
                 </select>
               </div>
@@ -1193,7 +1186,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
               </div>
               <div className="flex items-end">
                 <button
-                  onClick={() => setFilters({dateFrom: '', dateTo: '', machineType: '', driver: '', broker: '', search: ''})}
+                  onClick={() => setFilters({dateFrom: '', dateTo: '', machineType: 'Harvester', driver: '', broker: '', search: ''})}
                   className="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md transition-colors text-sm"
                 >
                   Clear Filters
@@ -1358,7 +1351,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                         <td className="w-32 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 truncate-mobile border-r border-gray-200">{entry.driver_name}</td>
                         <td className="w-32 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 truncate-mobile border-r border-gray-200">{entry.broker || '-'}</td>
                         <td className="w-32 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap border-r border-gray-200">
-                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${entry.machine_type === 'JCB' ? 'bg-blue-100 text-blue-800' : entry.machine_type === 'Tractor' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>{entry.machine_type}</span>
+                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${entry.machine_type === 'Harvester' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}`}>{entry.machine_type}</span>
                         </td>
                         <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{typeof entry.hours_driven === 'number' ? entry.hours_driven.toFixed(2) : entry.hours_driven}</td>
                         <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 font-semibold border-r border-gray-200">₹{entry.total_amount.toLocaleString()}</td>

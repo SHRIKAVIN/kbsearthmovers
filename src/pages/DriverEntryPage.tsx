@@ -10,18 +10,15 @@ const DriverEntryPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState('');
 
   const driverNames = [
-    'Vignesh',
-    'Markandeyan',
-    'Vijayakumar',
     'Sakthi / Mohan',
   ];
 
   const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<Omit<WorkEntry, 'id' | 'created_at' | 'updated_at'> & { broker?: string }>({
     defaultValues: {
       rental_person_name: '',
-      driver_name: '',
+      driver_name: 'Sakthi / Mohan',
       broker: '',
-      machine_type: 'JCB',
+      machine_type: 'Harvester',
       hours_driven: undefined,
       total_amount: undefined,
       amount_received: undefined,
@@ -63,9 +60,9 @@ const DriverEntryPage: React.FC = () => {
       
       reset({
         rental_person_name: '',
-        driver_name: '',
+        driver_name: 'Sakthi / Mohan',
         broker: '',
-        machine_type: 'JCB',
+        machine_type: 'Harvester',
         hours_driven: undefined,
         total_amount: undefined,
         amount_received: undefined,
@@ -124,10 +121,7 @@ const DriverEntryPage: React.FC = () => {
                 {...register('driver_name', { required: 'Driver name is required' })}
                 className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base bg-white text-gray-900"
               >
-                <option value="">Select driver name</option>
-                {driverNames.map((name, index) => (
-                  <option key={index} value={name}>{name}</option>
-                ))}
+                <option value="Sakthi / Mohan">Sakthi / Mohan</option>
               </select>
               {errors.driver_name && (
                 <p className="mt-1 text-sm text-red-600 animate-shake">{errors.driver_name.message}</p>
@@ -157,8 +151,6 @@ const DriverEntryPage: React.FC = () => {
                 {...register('machine_type', { required: 'Machine type is required' })}
                 className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base bg-white text-gray-900"
               >
-                <option value="JCB">JCB</option>
-                <option value="Tractor">Tractor</option>
                 <option value="Harvester">Harvester</option>
               </select>
               {errors.machine_type && (
