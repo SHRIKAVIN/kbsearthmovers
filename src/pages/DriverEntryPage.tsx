@@ -121,7 +121,9 @@ const DriverEntryPage: React.FC = () => {
                 {...register('driver_name', { required: 'Driver name is required' })}
                 className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base bg-white text-gray-900"
               >
-                <option value="Sakthi / Mohan">Sakthi / Mohan</option>
+                {driverNames.map((name) => (
+                  <option key={name} value={name}>{name}</option>
+                ))}
               </select>
               {errors.driver_name && (
                 <p className="mt-1 text-sm text-red-600 animate-shake">{errors.driver_name.message}</p>

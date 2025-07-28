@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase, type WorkEntry, type BrokerEntry } from '../lib/supabase';
 import { format, parseISO } from 'date-fns';
-import { Lock, Eye, Download, Filter, Plus, Edit2, Trash2, Search, User, LogOut, Save, X, Users, FileText, RefreshCw, Building2 } from 'lucide-react';
+import {Download, Filter, Plus, Edit2, Trash2, User, LogOut, Save, X, Users, FileText, RefreshCw, Building2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -38,20 +38,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     brokerName: '',
     search: ''
   });
-  const [dateSortOrder, setDateSortOrder] = useState<'asc' | 'desc'>('desc');
+  const dateSortOrder: 'asc' | 'desc' = 'desc';
   const [showStickyBar, setShowStickyBar] = useState(false);
   const [showingStickyBar, setShowingStickyBar] = useState(false);
-  const [stickyBarAnimation, setStickyBarAnimation] = useState('animate-fade-in-up');
   const tableRef = useRef<HTMLDivElement>(null);
 
   const driverNames = [
     'Sakthi / Mohan',
-  ];
-
-  const adminUsers = [
-    'BHASKARAN K',
-    'SHRINIVAS B',
-    'SHRIKAVIN B'
   ];
 
   useEffect(() => {
@@ -119,9 +112,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   useEffect(() => {
     if (showStickyBar) {
       setShowingStickyBar(true);
-      setStickyBarAnimation('animate-fade-in-up');
     } else if (showingStickyBar) {
-      setStickyBarAnimation('animate-fade-out-down');
       const timeout = setTimeout(() => setShowingStickyBar(false), 500);
       return () => clearTimeout(timeout);
     }
@@ -406,7 +397,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     doc.save(`KBS_${activeTab === 'brokers' ? 'Broker' : 'Work'}_Entries_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
   };
 
-  const deleteEntry = async (id: string, entryData: WorkEntry) => {
+  const deleteEntry = async (id: string) => {
     if (confirm('Are you sure you want to delete this entry?')) {
       try {
         console.log('Deleting work entry with ID:', id);
@@ -637,32 +628,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     };
   };
 
-  function formatDecimalHours(value: number) {
-    if (typeof value !== 'number' || isNaN(value)) return '0.00';
-    const [h, m] = value.toString().split('.').map(Number);
-    const totalMinutes = (h || 0) * 60 + ((m || 0) * 6);
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    return `${hours}.${minutes.toString().padStart(2, '0')}`;
-  }
 
-  // Helper: parse H.MM string to float hours (e.g., '2.20' => 2 + 20/60)
-  function parseHourMinuteInput(val: string): number {
-    if (!val) return 0;
-    const [h, m] = val.split('.');
-    const hours = parseInt(h || '0', 10);
-    const minutes = parseInt((m || '0').padEnd(2, '0').slice(0, 2), 10); // always 2 digits
-    if (minutes >= 60) return hours + 59 / 60; // clamp to 59 min
-    return hours + minutes / 60;
-  }
 
-  // Helper: format float hours to H.MM string
-  function floatToHourMinuteString(val: number): string {
-    if (typeof val !== 'number' || isNaN(val)) return '0.00';
-    const hours = Math.floor(val);
-    const minutes = Math.round((val - hours) * 60);
-    return `${hours}.${minutes.toString().padStart(2, '0')}`;
-  }
+
+
+ 
 
   const EntryForm = ({ entry, onSave, onCancel }: { entry?: WorkEntry | null, onSave: (entry: Partial<WorkEntry>) => void, onCancel: () => void }) => {
     const [formData, setFormData] = useState<Partial<WorkEntry>>(() => {
@@ -922,7 +892,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                     // Prevent more than one decimal
                     if ((val.match(/\./g) || []).length > 1) return;
                     // Prevent minutes >= 60
-                    const [h, m] = val.split('.');
+                    const [m] = val.split('.');
                     if (m && parseInt(m.padEnd(2, '0').slice(0, 2), 10) >= 60) return;
                     setFormData({ ...formData, total_hours_str: val });
                   }}
@@ -1412,7 +1382,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                             <button onClick={() => setEditingEntry(entry)} className="text-amber-600 hover:text-amber-900 transition-colors mobile-button" title="Edit entry">
                               <Edit2 className="h-4 w-4" />
                             </button>
-                            <button onClick={() => deleteEntry(entry.id!, entry)} className="text-red-600 hover:text-red-900 transition-colors mobile-button" title="Delete entry">
+                            <button onClick={() => deleteEntry(entry.id!)} className="text-red-600 hover:text-red-900 transition-colors mobile-button" title="Delete entry">
                               <Trash2 className="h-4 w-4" />
                             </button>
                           </div>
