@@ -300,19 +300,59 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     }
   };
 
-  const exportToPDF = () => {
+  const exportToPDF = async () => {
     const doc = new jsPDF();
     
-    // Header
-    doc.setFontSize(20);
-    doc.text('KBS EARTHMOVERS & HARVESTER', 20, 20);
+    // Add KBS Logo to PDF
+    try {
+      const logoUrl = '/Logo for KBS Earthmovers - Bold Industrial Design.png';
+      const logoResponse = await fetch(logoUrl);
+      const logoBlob = await logoResponse.blob();
+      const logoBase64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(logoBlob);
+      });
+      
+      // Add logo to PDF (positioned at top center)
+      const logoWidth = 25;
+      const logoHeight = 25;
+      const logoX = (210 - logoWidth) / 2; // Center horizontally
+      const logoY = 10; // Reduced top margin
+      doc.addImage(logoBase64, 'PNG', logoX, logoY, logoWidth, logoHeight);
+    } catch (error) {
+      console.log('Logo not loaded, continuing without logo');
+    }
+    
+    // Header styling - centered alignment
+    doc.setFontSize(18);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'bold');
+    
+    // Main title - perfectly centered
+    const title = activeTab === 'brokers' ? 'KBS TRACTORS - BROKER RECORDS' : 'KBS TRACTORS - RENTAL RECORDS';
+    const titleWidth = doc.getTextWidth(title);
+    const titleX = (210 - titleWidth) / 2; // Center horizontally
+    const titleY = 45; // Reduced spacing below logo
+    doc.text(title, titleX, titleY);
+    
+    // Timestamp - perfectly centered
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    const timestamp = `Generated on: ${format(new Date(), 'dd/MM/yyyy HH:mm:ss')}`;
+    const timestampWidth = doc.getTextWidth(timestamp);
+    const timestampX = (210 - timestampWidth) / 2; // Center horizontally
+    const timestampY = 55; // Reduced spacing below title
+    doc.text(timestamp, timestampX, timestampY);
+    
+    // Report type and entry count - left aligned for table context
     doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    const reportType = activeTab === 'brokers' ? 'Broker Entries Report' : 'Work Entries Report';
+    const entryCount = activeTab === 'brokers' ? filteredBrokerEntries.length : filteredEntries.length;
+    doc.text(`${reportType} - Total Entries: ${entryCount}`, 20, 70);
     
     if (activeTab === 'brokers') {
-      doc.text('Broker Entries Report', 20, 30);
-      doc.text(`Generated on: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 20, 40);
-      doc.text(`Total Entries: ${filteredBrokerEntries.length}`, 20, 50);
-
       // Table data with proper currency formatting
       const tableData = filteredBrokerEntries.map(entry => [
         entry.date,
@@ -327,15 +367,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       (doc as any).autoTable({
         head: [['Date', 'Time', 'Broker Name', 'Hours', 'Total', 'Received', 'Balance']],
         body: tableData,
-        startY: 60,
+        startY: 80,
         styles: { fontSize: 8 },
-        headStyles: { fillColor: [245, 158, 11] }
+        headStyles: { fillColor: [245, 158, 11] },
+        theme: 'grid',
+        lineWidth: 0.5,
+        lineColor: [0, 0, 0]
       });
     } else {
-      doc.text('Work Entries Report', 20, 30);
-      doc.text(`Generated on: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 20, 40);
-      doc.text(`Total Entries: ${filteredEntries.length}`, 20, 50);
-
       // Table data with proper currency formatting
       const tableData = filteredEntries.map(entry => [
         entry.date,
@@ -355,9 +394,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       (doc as any).autoTable({
         head: [['Date', 'Time', 'Rental Person', 'Driver', 'Broker', 'Machine', 'Hours', 'Total', 'Received', 'Advance', 'Balance', 'Type']],
         body: tableData,
-        startY: 60,
+        startY: 80,
         styles: { fontSize: 7 },
-        headStyles: { fillColor: [245, 158, 11] }
+        headStyles: { fillColor: [245, 158, 11] },
+        theme: 'grid',
+        lineWidth: 0.5,
+        lineColor: [0, 0, 0]
       });
     }
 
