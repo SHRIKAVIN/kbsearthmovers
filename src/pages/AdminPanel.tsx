@@ -1077,9 +1077,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
             {[
               { title: 'Total Entries', value: filteredBrokerEntries.length, color: 'blue' },
               { title: 'Total Hours', value: brokerTotals.totalHours, color: 'green' },
-              { title: 'Total Amount', value: `₹${brokerTotals.totalAmount.toLocaleString()}`, color: 'amber' },
-              { title: 'Amount Received', value: `₹${brokerTotals.totalReceived.toLocaleString()}`, color: 'purple' },
-              { title: 'Balance Due', value: `₹${brokerTotals.totalBalance.toLocaleString()}`, color: 'red' }
+              { title: 'Total Amount', value: `₹${brokerTotals.totalAmount.toLocaleString('en-IN')}`, color: 'amber' },
+              { title: 'Amount Received', value: `₹${brokerTotals.totalReceived.toLocaleString('en-IN')}`, color: 'purple' },
+              { title: 'Balance Due', value: `₹${brokerTotals.totalBalance.toLocaleString('en-IN')}`, color: 'red' }
             ].map((stat, index) => (
               <div key={index} className={`bg-white p-4 sm:p-6 rounded-lg shadow-lg animate-fade-in-up`} style={{animationDelay: `${index * 0.1}s`}}>
                 <h3 className="text-xs sm:text-sm font-medium text-gray-500">{stat.title}</h3>
@@ -1092,10 +1092,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
             {[
               { title: 'Total Entries', value: filteredEntries.length, color: 'blue' },
               { title: 'Total Hours', value: totals.totalHours, color: 'green' },
-              { title: 'Total Amount', value: `₹${totals.totalAmount.toLocaleString()}`, color: 'amber' },
-              { title: 'Amount Received', value: `₹${totals.totalReceived.toLocaleString()}`, color: 'purple' },
-              { title: 'Total Advance', value: `₹${totals.totalAdvance.toLocaleString()}`, color: 'indigo' },
-              { title: 'Balance Due', value: `₹${totals.totalBalance.toLocaleString()}`, color: 'red' }
+              { title: 'Total Amount', value: `₹${totals.totalAmount.toLocaleString('en-IN')}`, color: 'amber' },
+              { title: 'Amount Received', value: `₹${totals.totalReceived.toLocaleString('en-IN')}`, color: 'purple' },
+              { title: 'Total Advance', value: `₹${totals.totalAdvance.toLocaleString('en-IN')}`, color: 'indigo' },
+              { title: 'Balance Due', value: `₹${totals.totalBalance.toLocaleString('en-IN')}`, color: 'red' }
             ].map((stat, index) => (
               <div key={index} className={`bg-white p-4 sm:p-6 rounded-lg shadow-lg animate-fade-in-up`} style={{animationDelay: `${index * 0.1}s`}}>
                 <h3 className="text-xs sm:text-sm font-medium text-gray-500">{stat.title}</h3>
@@ -1311,11 +1311,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                         <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 border-r border-gray-200">{entry.time || 'N/A'}</td>
                         <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{entry.broker_name}</td>
                         <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{entry.total_hours}</td>
-                        <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 font-semibold border-r border-gray-200">₹{entry.total_amount.toLocaleString()}</td>
-                        <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-green-600 font-semibold border-r border-gray-200">₹{entry.amount_received.toLocaleString()}</td>
+                        <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 font-semibold border-r border-gray-200">₹{entry.total_amount.toLocaleString('en-IN')}</td>
+                        <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-green-600 font-semibold border-r border-gray-200">₹{entry.amount_received.toLocaleString('en-IN')}</td>
                         <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap font-semibold text-xs sm:text-sm border-r border-gray-200">
                           <span className={entry.total_amount - entry.amount_received > 0 ? 'text-red-600' : 'text-green-600'}>
-                            ₹{(entry.total_amount - entry.amount_received).toLocaleString()}
+                            ₹{(entry.total_amount - entry.amount_received).toLocaleString('en-IN')}
                           </span>
                         </td>
                         <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
@@ -1396,12 +1396,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                           <span className={`px-2 py-1 text-xs font-semibold rounded-full ${entry.machine_type === 'Harvester' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}`}>{entry.machine_type}</span>
                         </td>
                         <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{typeof entry.hours_driven === 'number' ? entry.hours_driven.toFixed(2) : entry.hours_driven}</td>
-                        <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 font-semibold border-r border-gray-200">₹{entry.total_amount.toLocaleString()}</td>
-                        <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-green-600 font-semibold border-r border-gray-200">₹{entry.amount_received.toLocaleString()}</td>
-                        <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-blue-600 font-semibold border-r border-gray-200">₹{entry.advance_amount.toLocaleString()}</td>
+                        <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 font-semibold border-r border-gray-200">₹{entry.total_amount.toLocaleString('en-IN')}</td>
+                        <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-green-600 font-semibold border-r border-gray-200">₹{entry.amount_received.toLocaleString('en-IN')}</td>
+                        <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-blue-600 font-semibold border-r border-gray-200">₹{entry.advance_amount.toLocaleString('en-IN')}</td>
                         <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap font-semibold text-xs sm:text-sm border-r border-gray-200">
                           <span className={entry.total_amount - entry.amount_received - entry.advance_amount > 0 ? 'text-red-600' : 'text-green-600'}>
-                            ₹{(entry.total_amount - entry.amount_received - entry.advance_amount).toLocaleString()}
+                            ₹{(entry.total_amount - entry.amount_received - entry.advance_amount).toLocaleString('en-IN')}
                           </span>
                         </td>
                         <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap border-r border-gray-200">
