@@ -80,20 +80,20 @@ const DriverEntryPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 py-4 sm:py-8">
+    <div data-testid="driver-entry-page" className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 py-4 sm:py-8">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8 animate-fade-in-up">
           <div className="bg-white p-3 sm:p-4 rounded-full w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 shadow-lg transform hover:scale-110 transition-transform duration-300">
             <User className="h-10 w-10 sm:h-12 sm:w-12 text-amber-600 mx-auto" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Driver Entry Form</h1>
+          <h1 data-testid="driver-entry-title" className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Driver Entry Form</h1>
           <p className="text-gray-600 text-sm sm:text-base">Submit your work details after completing the job</p>
         </div>
 
         {/* Form */}
-        <div className="bg-white shadow-xl rounded-xl p-4 sm:p-8 animate-fade-in-up animation-delay-300">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
+        <div data-testid="driver-entry-form-container" className="bg-white shadow-xl rounded-xl p-4 sm:p-8 animate-fade-in-up animation-delay-300">
+          <form data-testid="driver-entry-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
             {/* Rental Person Name */}
             <div className="animate-slide-in-left">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -101,13 +101,14 @@ const DriverEntryPage: React.FC = () => {
                 Rental Person Name *
               </label>
               <input
+                data-testid="rental-person-name"
                 type="text"
                 {...register('rental_person_name', { required: 'Rental person name is required' })}
                 className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base bg-white text-gray-900"
                 placeholder="Enter rental person's name"
               />
               {errors.rental_person_name && (
-                <p className="mt-1 text-sm text-red-600 animate-shake">{errors.rental_person_name.message}</p>
+                <p data-testid="rental-person-name-error" className="mt-1 text-sm text-red-600 animate-shake">{errors.rental_person_name.message}</p>
               )}
             </div>
 
@@ -118,6 +119,7 @@ const DriverEntryPage: React.FC = () => {
                 Driver Name *
               </label>
               <select
+                data-testid="driver-name-select"
                 {...register('driver_name', { required: 'Driver name is required' })}
                 className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base bg-white text-gray-900"
               >
@@ -126,7 +128,7 @@ const DriverEntryPage: React.FC = () => {
                 ))}
               </select>
               {errors.driver_name && (
-                <p className="mt-1 text-sm text-red-600 animate-shake">{errors.driver_name.message}</p>
+                <p data-testid="driver-name-error" className="mt-1 text-sm text-red-600 animate-shake">{errors.driver_name.message}</p>
               )}
             </div>
 
@@ -136,6 +138,7 @@ const DriverEntryPage: React.FC = () => {
                 Broker
               </label>
               <input
+                data-testid="broker-input"
                 type="text"
                 {...register('broker')}
                 className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base bg-white text-gray-900"
@@ -150,13 +153,14 @@ const DriverEntryPage: React.FC = () => {
                 Machine Type
               </label>
               <select
+                data-testid="machine-type-select"
                 {...register('machine_type', { required: 'Machine type is required' })}
                 className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base bg-white text-gray-900"
               >
                 <option value="Harvester">Harvester</option>
               </select>
               {errors.machine_type && (
-                <p className="mt-1 text-sm text-red-600 animate-shake">{errors.machine_type.message}</p>
+                <p data-testid="machine-type-error" className="mt-1 text-sm text-red-600 animate-shake">{errors.machine_type.message}</p>
               )}
             </div>
 
@@ -167,6 +171,7 @@ const DriverEntryPage: React.FC = () => {
                 Hours Driven
               </label>
               <input
+                data-testid="hours-driven"
                 type="number"
                 step="0.01"
                 min="0"
@@ -177,7 +182,7 @@ const DriverEntryPage: React.FC = () => {
                 placeholder="Enter hours driven"
               />
               {errors.hours_driven && (
-                <p className="mt-1 text-sm text-red-600 animate-shake">{errors.hours_driven.message}</p>
+                <p data-testid="hours-driven-error" className="mt-1 text-sm text-red-600 animate-shake">{errors.hours_driven.message}</p>
               )}
             </div>
 
@@ -189,6 +194,7 @@ const DriverEntryPage: React.FC = () => {
                   Total Amount (₹)
                 </label>
                 <input
+                  data-testid="total-amount"
                   type="number"
                   min="0"
                   {...register('total_amount', { 
@@ -198,7 +204,7 @@ const DriverEntryPage: React.FC = () => {
                   placeholder="Enter total amount"
                 />
                 {errors.total_amount && (
-                  <p className="mt-1 text-sm text-red-600 animate-shake">{errors.total_amount.message}</p>
+                  <p data-testid="total-amount-error" className="mt-1 text-sm text-red-600 animate-shake">{errors.total_amount.message}</p>
                 )}
               </div>
 
@@ -208,6 +214,7 @@ const DriverEntryPage: React.FC = () => {
                   Amount Received (₹)
                 </label>
                 <input
+                  data-testid="amount-received"
                   type="number"
                   min="0"
                   {...register('amount_received', { 
@@ -217,7 +224,7 @@ const DriverEntryPage: React.FC = () => {
                   placeholder="Enter amount received"
                 />
                 {errors.amount_received && (
-                  <p className="mt-1 text-sm text-red-600 animate-shake">{errors.amount_received.message}</p>
+                  <p data-testid="amount-received-error" className="mt-1 text-sm text-red-600 animate-shake">{errors.amount_received.message}</p>
                 )}
               </div>
 
@@ -227,6 +234,7 @@ const DriverEntryPage: React.FC = () => {
                   Advance Amount (₹)
                 </label>
                 <input
+                  data-testid="advance-amount"
                   type="number"
                   min="0"
                   {...register('advance_amount', { 
@@ -236,7 +244,7 @@ const DriverEntryPage: React.FC = () => {
                   placeholder="Enter advance amount"
                 />
                 {errors.advance_amount && (
-                  <p className="mt-1 text-sm text-red-600 animate-shake">{errors.advance_amount.message}</p>
+                  <p data-testid="advance-amount-error" className="mt-1 text-sm text-red-600 animate-shake">{errors.advance_amount.message}</p>
                 )}
               </div>
             </div>
@@ -249,12 +257,13 @@ const DriverEntryPage: React.FC = () => {
                   Date *
                 </label>
                 <input
+                  data-testid="date-input"
                   type="date"
                   {...register('date', { required: 'Date is required' })}
                   className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base bg-white text-gray-900"
                 />
                 {errors.date && (
-                  <p className="mt-1 text-sm text-red-600 animate-shake">{errors.date.message}</p>
+                  <p data-testid="date-error" className="mt-1 text-sm text-red-600 animate-shake">{errors.date.message}</p>
                 )}
               </div>
 
@@ -264,19 +273,20 @@ const DriverEntryPage: React.FC = () => {
                   Time *
                 </label>
                 <input
+                  data-testid="time-input"
                   type="time"
                   {...register('time', { required: 'Time is required' })}
                   className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base bg-white text-gray-900"
                 />
                 {errors.time && (
-                  <p className="mt-1 text-sm text-red-600 animate-shake">{errors.time.message}</p>
+                  <p data-testid="time-error" className="mt-1 text-sm text-red-600 animate-shake">{errors.time.message}</p>
                 )}
               </div>
             </div>
 
             {/* Preview Summary */}
             {watchedValues.rental_person_name && watchedValues.driver_name && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 animate-fade-in-up">
+              <div data-testid="entry-preview" className="bg-amber-50 border border-amber-200 rounded-lg p-4 animate-fade-in-up">
                 <h4 className="text-sm font-medium text-amber-800 mb-2">Entry Preview</h4>
                 <div className="text-xs text-amber-700 space-y-1">
                   <p><strong>Client:</strong> {watchedValues.rental_person_name}</p>
@@ -290,6 +300,7 @@ const DriverEntryPage: React.FC = () => {
 
             {/* Submit Button */}
             <button
+              data-testid="submit-entry-button"
               type="submit"
               disabled={isSubmitting}
               className="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none animate-pulse-slow"
@@ -307,14 +318,14 @@ const DriverEntryPage: React.FC = () => {
 
           {/* Status Messages */}
           {submitStatus === 'success' && (
-            <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center animate-bounce-in">
+            <div data-testid="success-message" className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center animate-bounce-in">
               <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
               <span className="text-green-700">Entry submitted successfully!</span>
             </div>
           )}
 
           {submitStatus === 'error' && (
-            <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center animate-shake">
+            <div data-testid="error-message" className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center animate-shake">
               <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
               <span className="text-red-700">{errorMessage}</span>
             </div>

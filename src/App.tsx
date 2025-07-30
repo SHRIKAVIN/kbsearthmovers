@@ -31,7 +31,7 @@ function App() {
 
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-gray-50">
+      <div data-testid="app-container" className="min-h-screen bg-gray-50">
         <Navbar />
         <Routes>
           <Route path="/" element={<HomePage />} />

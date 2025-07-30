@@ -996,6 +996,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
             </div>
             <div className="flex space-x-2">
               <button
+                data-testid="refresh-button"
                 onClick={refreshData}
                 disabled={refreshing}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 flex items-center"
@@ -1004,6 +1005,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                 Refresh
               </button>
               <button
+                data-testid="logout-button"
                 onClick={onLogout}
                 className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 flex items-center"
               >
@@ -1026,6 +1028,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
               ].map((tab) => (
                 <button
                   key={tab.key}
+                  data-testid={`tab-${tab.key}`}
                   onClick={() => setActiveTab(tab.key as 'driver' | 'admin' | 'all' | 'brokers')}
                   className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center transition-all duration-300 ${
                     activeTab === tab.key
@@ -1086,6 +1089,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">From Date</label>
                 <input
+                  data-testid="broker-filter-date-from"
                   type="date"
                   value={brokerFilters.dateFrom}
                   onChange={(e) => setBrokerFilters({...brokerFilters, dateFrom: e.target.value})}
@@ -1095,6 +1099,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">To Date</label>
                 <input
+                  data-testid="broker-filter-date-to"
                   type="date"
                   value={brokerFilters.dateTo}
                   onChange={(e) => setBrokerFilters({...brokerFilters, dateTo: e.target.value})}
@@ -1104,6 +1109,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Broker Name</label>
                 <input
+                  data-testid="broker-filter-name"
                   type="text"
                   value={brokerFilters.brokerName}
                   onChange={(e) => setBrokerFilters({...brokerFilters, brokerName: e.target.value})}
@@ -1114,6 +1120,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
                 <input
+                  data-testid="broker-filter-search"
                   type="text"
                   value={brokerFilters.search}
                   onChange={(e) => setBrokerFilters({...brokerFilters, search: e.target.value})}
@@ -1123,6 +1130,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
               </div>
               <div className="flex items-end">
                 <button
+                  data-testid="broker-clear-filters"
                   onClick={() => setBrokerFilters({dateFrom: '', dateTo: '', brokerName: '', search: ''})}
                   className="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md transition-colors text-sm"
                 >

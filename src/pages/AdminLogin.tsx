@@ -57,21 +57,21 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 via-amber-50 to-orange-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div data-testid="admin-login-page" className="min-h-screen bg-gradient-to-br from-gray-100 via-amber-50 to-orange-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 animate-fade-in-up">
         {/* Header */}
         <div className="text-center">
           <div className="bg-gradient-to-br from-amber-100 to-orange-100 p-4 rounded-full w-20 h-20 mx-auto mb-6 shadow-lg transform hover:scale-110 transition-transform duration-300">
             <Lock className="h-12 w-12 text-amber-600 mx-auto" />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Admin Login</h2>
+          <h2 data-testid="login-title" className="text-3xl font-bold text-gray-900 mb-2">Admin Login</h2>
           <p className="text-gray-600">KBS EARTHMOVERS & HARVESTER</p>
           <p className="text-sm text-gray-500 mt-1">Access the admin dashboard</p>
         </div>
 
         {/* Login Form */}
-        <div className="bg-white shadow-xl rounded-xl p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <div data-testid="login-form-container" className="bg-white shadow-xl rounded-xl p-8">
+          <form data-testid="login-form" onSubmit={handleSubmit} className="space-y-6">
             {/* Username Dropdown */}
             <div className="animate-slide-in-left">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -79,6 +79,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
                 Select Admin User *
               </label>
               <select
+                data-testid="username-select"
                 value={credentials.username}
                 onChange={(e) => setCredentials({...credentials, username: e.target.value})}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-300"
@@ -99,6 +100,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
               </label>
               <div className="relative">
                 <input
+                  data-testid="password-input"
                   type={showPassword ? 'text' : 'password'}
                   value={credentials.password}
                   onChange={(e) => setCredentials({...credentials, password: e.target.value})}
@@ -107,6 +109,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
                   required
                 />
                 <button
+                  data-testid="toggle-password"
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
@@ -118,13 +121,14 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3 animate-shake">
+              <div data-testid="error-message" className="bg-red-50 border border-red-200 rounded-lg p-3 animate-shake">
                 <p className="text-red-700 text-sm">{error}</p>
               </div>
             )}
 
             {/* Submit Button */}
             <button
+              data-testid="login-submit-button"
               type="submit"
               disabled={isLoading}
               className="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none"
@@ -144,6 +148,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
         {/* Back to Home */}
         <div className="text-center">
           <button
+            data-testid="back-to-home"
             onClick={() => navigate('/')}
             className="text-amber-600 hover:text-amber-700 font-medium transition-colors"
           >

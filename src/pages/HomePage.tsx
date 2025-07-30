@@ -50,9 +50,9 @@ const HomePage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen overflow-x-hidden">
+    <div data-testid="home-page" className="min-h-screen overflow-x-hidden">
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+      <section data-testid="hero-section" className="relative h-screen flex items-center justify-center overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat transform scale-105 animate-slow-zoom"
           style={{
@@ -63,7 +63,7 @@ const HomePage: React.FC = () => {
         
         <div className="relative z-10 text-center text-white max-w-5xl mx-auto px-4">
           <div className="animate-fade-in-up">
-            <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold mb-6 leading-tight">
+            <h1 data-testid="hero-title" className="text-4xl sm:text-5xl md:text-7xl font-bold mb-6 leading-tight">
               KBS EARTHMOVERS
               <span className="block text-amber-400 text-2xl sm:text-3xl md:text-4xl mt-2 animate-pulse">
                 & HARVESTER
@@ -82,6 +82,7 @@ const HomePage: React.FC = () => {
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up animation-delay-500">
             <Link
+              data-testid="view-services-button"
               to="/services"
               className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white px-6 sm:px-8 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-xl flex items-center justify-center group"
             >
@@ -89,6 +90,7 @@ const HomePage: React.FC = () => {
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
+              data-testid="contact-us-button"
               to="/contact"
               className="border-2 border-white text-white hover:bg-white hover:text-gray-900 px-6 sm:px-8 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
             >
@@ -105,11 +107,11 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 bg-gradient-to-r from-amber-600 to-orange-600">
+      <section data-testid="stats-section" className="py-16 bg-gradient-to-r from-amber-600 to-orange-600">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
             {stats.map((stat, index) => (
-              <div key={index} className="text-center animate-fade-in-up" style={{animationDelay: `${index * 0.1}s`}}>
+              <div key={index} data-testid={`stat-${index}`} className="text-center animate-fade-in-up" style={{animationDelay: `${index * 0.1}s`}}>
                 <div className="text-3xl sm:text-4xl font-bold text-white mb-2">{stat.number}</div>
                 <div className="text-amber-100 text-sm sm:text-base">{stat.label}</div>
               </div>
@@ -119,7 +121,7 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Services Section */}
-      <section className="py-20 bg-gray-50">
+      <section data-testid="services-section" className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16 animate-fade-in-up">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Our Services</h2>
@@ -132,6 +134,7 @@ const HomePage: React.FC = () => {
             {services.map((service, index) => (
               <div
                 key={index}
+                data-testid={`service-card-${index}`}
                 className="bg-white rounded-xl shadow-lg overflow-hidden transform hover:scale-105 transition-all duration-500 hover:shadow-2xl group animate-fade-in-up"
                 style={{animationDelay: `${index * 0.2}s`}}
               >
@@ -152,6 +155,7 @@ const HomePage: React.FC = () => {
                   </div>
                   <p className="text-gray-600 mb-4 text-sm sm:text-base">{service.description}</p>
                   <Link
+                    data-testid={`get-quote-${index}`}
                     to="/contact"
                     className="text-amber-600 hover:text-amber-700 font-medium flex items-center group-hover:translate-x-2 transition-transform duration-300"
                   >
@@ -166,7 +170,7 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-white">
+      <section data-testid="features-section" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16 animate-fade-in-up">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Why Choose KBS?</h2>
@@ -175,7 +179,7 @@ const HomePage: React.FC = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <div key={index} className="text-center p-6 group animate-fade-in-up" style={{animationDelay: `${index * 0.2}s`}}>
+              <div key={index} data-testid={`feature-${index}`} className="text-center p-6 group animate-fade-in-up" style={{animationDelay: `${index * 0.2}s`}}>
                 <div className="bg-gradient-to-br from-amber-100 to-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 group-hover:shadow-lg">
                   <feature.icon className="h-8 w-8 text-amber-600" />
                 </div>
@@ -188,7 +192,7 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Testimonial Section */}
-      <section className="py-20 bg-gray-900">
+      <section data-testid="testimonial-section" className="py-20 bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="animate-fade-in-up">
             <h2 className="text-3xl sm:text-4xl font-bold text-white mb-8">What Our Clients Say</h2>
@@ -210,13 +214,14 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Quick Contact */}
-      <section className="py-16 bg-gradient-to-r from-amber-600 to-orange-600">
+      <section data-testid="quick-contact-section" className="py-16 bg-gradient-to-r from-amber-600 to-orange-600">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="animate-fade-in-up">
             <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">Ready to Get Started?</h2>
             <p className="text-lg sm:text-xl text-amber-100 mb-8">Contact us for immediate assistance</p>
             <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-8">
               <a
+                data-testid="phone-1"
                 href="tel:9486532856"
                 className="flex items-center text-white hover:text-amber-200 transition-colors duration-300 transform hover:scale-105"
               >
@@ -224,6 +229,7 @@ const HomePage: React.FC = () => {
                 <span className="font-semibold">9486532856</span>
               </a>
               <a
+                data-testid="phone-2"
                 href="tel:9943915881"
                 className="flex items-center text-white hover:text-amber-200 transition-colors duration-300 transform hover:scale-105"
               >
@@ -231,6 +237,7 @@ const HomePage: React.FC = () => {
                 <span className="font-semibold">9943915881</span>
               </a>
               <a
+                data-testid="email-contact"
                 href="mailto:skmbhaskaran@gmail.com"
                 className="flex items-center text-white hover:text-amber-200 transition-colors duration-300 transform hover:scale-105"
               >

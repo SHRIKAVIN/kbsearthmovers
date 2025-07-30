@@ -36,11 +36,11 @@ const ContactPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div data-testid="contact-page" className="min-h-screen bg-gray-50">
       {/* Header */}
-      <section className="bg-gradient-to-r from-amber-600 to-orange-600 py-16">
+      <section data-testid="contact-header" className="bg-gradient-to-r from-amber-600 to-orange-600 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Contact Us</h1>
+          <h1 data-testid="contact-title" className="text-4xl md:text-5xl font-bold text-white mb-4">Contact Us</h1>
           <p className="text-xl text-amber-100 max-w-2xl mx-auto">
             Get in touch for professional heavy machinery rental services
           </p>
@@ -48,7 +48,7 @@ const ContactPage: React.FC = () => {
       </section>
 
       {/* Contact Information */}
-      <section className="py-16">
+      <section data-testid="contact-information" className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Get In Touch</h2>
@@ -59,7 +59,7 @@ const ContactPage: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
             {contactInfo.map((info, index) => (
-              <div key={index} className="bg-white p-6 rounded-xl shadow-lg text-center hover:shadow-xl transition-shadow">
+              <div key={index} data-testid={`contact-info-${index}`} className="bg-white p-6 rounded-xl shadow-lg text-center hover:shadow-xl transition-shadow">
                 <div className="bg-amber-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                   <info.icon className="h-8 w-8 text-amber-600" />
                 </div>
@@ -75,7 +75,7 @@ const ContactPage: React.FC = () => {
           {/* Contact Cards */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Business Info */}
-            <div className="bg-white p-8 rounded-xl shadow-lg">
+            <div data-testid="business-info" className="bg-white p-8 rounded-xl shadow-lg">
               <h3 className="text-2xl font-bold text-gray-900 mb-6">Business Information</h3>
               <div className="space-y-4">
                 <div className="flex items-start">
@@ -112,11 +112,11 @@ const ContactPage: React.FC = () => {
             </div>
 
             {/* Services Overview */}
-            <div className="bg-white p-8 rounded-xl shadow-lg">
+            <div data-testid="services-overview" className="bg-white p-8 rounded-xl shadow-lg">
               <h3 className="text-2xl font-bold text-gray-900 mb-6">Our Services</h3>
               <div className="space-y-4">
                 {services.map((service, index) => (
-                  <div key={index} className="border-l-4 border-amber-600 pl-4">
+                  <div key={index} data-testid={`service-overview-${index}`} className="border-l-4 border-amber-600 pl-4">
                     <h4 className="font-semibold text-gray-900">{service.name}</h4>
                     <p className="text-gray-600">{service.description}</p>
                   </div>
@@ -134,12 +134,13 @@ const ContactPage: React.FC = () => {
       </section>
 
       {/* Quick Contact */}
-      <section className="py-16 bg-gray-900">
+      <section data-testid="quick-contact" className="py-16 bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold text-white mb-4">Need Immediate Assistance?</h2>
           <p className="text-xl text-gray-300 mb-8">Call us now for urgent machinery requirements</p>
           <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-8">
             <a
+              data-testid="call-phone-1"
               href="tel:9486532856"
               className="bg-amber-600 hover:bg-amber-700 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 flex items-center"
             >
@@ -147,6 +148,7 @@ const ContactPage: React.FC = () => {
               Call 9486532856
             </a>
             <a
+              data-testid="call-phone-2"
               href="tel:9943915881"
               className="bg-amber-600 hover:bg-amber-700 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 flex items-center"
             >
@@ -154,6 +156,7 @@ const ContactPage: React.FC = () => {
               Call 9943915881
             </a>
             <a
+              data-testid="send-email"
               href="mailto:skmbhaskaran@gmail.com"
               className="border-2 border-white text-white hover:bg-white hover:text-gray-900 px-8 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 flex items-center"
             >
@@ -165,7 +168,7 @@ const ContactPage: React.FC = () => {
       </section>
 
       {/* Business Hours & Notes */}
-      <section className="py-12 bg-amber-50">
+      <section data-testid="business-hours" className="py-12 bg-amber-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white p-8 rounded-xl shadow-lg">
             <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">Important Information</h3>

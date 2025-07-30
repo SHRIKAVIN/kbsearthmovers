@@ -67,11 +67,11 @@ const ServicesPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div data-testid="services-page" className="min-h-screen bg-gray-50">
       {/* Header */}
-      <section className="bg-gradient-to-r from-amber-600 to-orange-600 py-16">
+      <section data-testid="services-header" className="bg-gradient-to-r from-amber-600 to-orange-600 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Our Services</h1>
+          <h1 data-testid="services-title" className="text-4xl md:text-5xl font-bold text-white mb-4">Our Services</h1>
           <p className="text-xl text-amber-100 max-w-2xl mx-auto">
             Professional heavy machinery rental services for construction, agriculture, and industrial needs
           </p>
@@ -79,11 +79,11 @@ const ServicesPage: React.FC = () => {
       </section>
 
       {/* Services Detail */}
-      <section className="py-20">
+      <section data-testid="services-detail" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="space-y-20">
             {services.map((service, index) => (
-              <div key={index} className={`flex flex-col ${index % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'} gap-12 items-center`}>
+              <div key={index} data-testid={`service-detail-${index}`} className={`flex flex-col ${index % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'} gap-12 items-center`}>
                 <div className="lg:w-1/2">
                   <div className="relative overflow-hidden rounded-xl shadow-2xl bg-white p-8">
                     <img
@@ -99,7 +99,7 @@ const ServicesPage: React.FC = () => {
                 
                 <div className="lg:w-1/2 space-y-6">
                   <div>
-                    <h2 className="text-3xl font-bold text-gray-900 mb-4">{service.title}</h2>
+                    <h2 data-testid={`service-title-${index}`} className="text-3xl font-bold text-gray-900 mb-4">{service.title}</h2>
                     <p className="text-lg text-gray-600 mb-6">{service.description}</p>
                   </div>
 
@@ -107,7 +107,7 @@ const ServicesPage: React.FC = () => {
                     <h3 className="text-xl font-semibold text-gray-900 mb-4">Service Features</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {service.features.map((feature, featureIndex) => (
-                        <div key={featureIndex} className="flex items-start">
+                        <div key={featureIndex} data-testid={`feature-${index}-${featureIndex}`} className="flex items-start">
                           <CheckCircle className="h-5 w-5 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
                           <span className="text-gray-700">{feature}</span>
                         </div>
@@ -119,7 +119,7 @@ const ServicesPage: React.FC = () => {
                     <h3 className="text-xl font-semibold text-gray-900 mb-4">Specifications</h3>
                     <ul className="space-y-2">
                       {service.specifications.map((spec, specIndex) => (
-                        <li key={specIndex} className="text-gray-700 flex items-center">
+                        <li key={specIndex} data-testid={`spec-${index}-${specIndex}`} className="text-gray-700 flex items-center">
                           <div className="w-2 h-2 bg-amber-600 rounded-full mr-3"></div>
                           {spec}
                         </li>
@@ -129,6 +129,7 @@ const ServicesPage: React.FC = () => {
 
                   <div className="pt-4">
                     <Link
+                      data-testid={`get-quote-${index}`}
                       to="/contact"
                       className="inline-flex items-center bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105"
                     >
@@ -144,13 +145,14 @@ const ServicesPage: React.FC = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-gray-900">
+      <section data-testid="cta-section" className="py-16 bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold text-white mb-4">Need Custom Solutions?</h2>
           <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
             We provide tailored machinery rental solutions for your specific project requirements
           </p>
           <Link
+            data-testid="contact-team-button"
             to="/contact"
             className="bg-amber-600 hover:bg-amber-700 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 inline-flex items-center"
           >
