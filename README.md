@@ -16,6 +16,7 @@
 - [🚀 Overview](#-overview)
 - [✨ Features](#-features)
 - [🛠️ Tech Stack](#️-tech-stack)
+- [🌐 Live Demo](#-live-demo)
 - [📱 Screenshots](#-screenshots)
 - [🚀 Getting Started](#-getting-started)
 - [📁 Project Structure](#-project-structure)
@@ -80,6 +81,21 @@
 | **Date Handling** | date-fns | Latest |
 | **PDF Generation** | jsPDF | Latest |
 | **Excel Export** | SheetJS | Latest |
+
+---
+
+## 🌐 Live Demo
+
+🚀 **Experience the application live!**
+
+**[👉 View Live Demo](https://kbsearthmovers.vercel.app/)**
+
+### 📱 **Features to Explore**
+- **Public Pages:** Homepage, Services, Contact, Driver Entry
+- **Admin Panel:** Work entry management, broker transactions, reports
+- **Real-time Updates:** Live data synchronization
+- **Export Functionality:** Excel and PDF report generation
+- **Responsive Design:** Mobile-optimized interface
 
 ---
 
