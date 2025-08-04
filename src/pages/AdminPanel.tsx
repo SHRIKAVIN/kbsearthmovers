@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase, type WorkEntry, type BrokerEntry } from '../lib/supabase';
 import { format, parseISO } from 'date-fns';
-import {Download, Filter, Plus, Edit2, Trash2, User, LogOut, Save, X, Users, FileText, RefreshCw, Building2 } from 'lucide-react';
+import {Download, Filter, Plus, Edit2, Trash2, User, LogOut, Save, X, Users, FileText, RefreshCw, Building2, ChevronDown, ChevronUp } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -41,6 +41,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   const dateSortOrder: 'asc' | 'desc' = 'desc';
   const [showStickyBar, setShowStickyBar] = useState(false);
   const [showingStickyBar, setShowingStickyBar] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [showBrokerFilters, setShowBrokerFilters] = useState(false);
   const tableRef = useRef<HTMLDivElement>(null);
 
   const driverNames = [
@@ -1081,11 +1083,30 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         {/* Filters */}
         {activeTab === 'brokers' ? (
           <div className="bg-white shadow rounded-lg p-4 sm:p-6 mb-6 sm:mb-8 animate-fade-in-up animation-delay-500">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-              <Filter className="h-5 w-5 mr-2" />
-              Broker Filters
-            </h2>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                <Filter className="h-5 w-5 mr-2" />
+                Broker Filters
+              </h2>
+              <button
+                onClick={() => setShowBrokerFilters(!showBrokerFilters)}
+                className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                {showBrokerFilters ? (
+                  <>
+                    <span className="text-sm mr-1">Hide</span>
+                    <ChevronUp className="h-4 w-4" />
+                  </>
+                ) : (
+                  <>
+                    <span className="text-sm mr-1">Show</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </>
+                )}
+              </button>
+            </div>
+            {showBrokerFilters && (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">From Date</label>
                 <input
@@ -1138,14 +1159,34 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                 </button>
               </div>
             </div>
+            )}
           </div>
         ) : (
           <div className="bg-white shadow rounded-lg p-4 sm:p-6 mb-6 sm:mb-8 animate-fade-in-up animation-delay-500">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-              <Filter className="h-5 w-5 mr-2" />
-              Filters
-            </h2>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                <Filter className="h-5 w-5 mr-2" />
+                Filters
+              </h2>
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                {showFilters ? (
+                  <>
+                    <span className="text-sm mr-1">Hide</span>
+                    <ChevronUp className="h-4 w-4" />
+                  </>
+                ) : (
+                  <>
+                    <span className="text-sm mr-1">Show</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </>
+                )}
+              </button>
+            </div>
+            {showFilters && (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">From Date</label>
                 <input
@@ -1213,6 +1254,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                 </button>
               </div>
             </div>
+            )}
           </div>
         )}
 
