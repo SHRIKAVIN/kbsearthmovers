@@ -1,6 +1,6 @@
 {
-  "name": "KBS Earthmovers & Harvester",
-  "short_name": "KBS Earthmovers",
+  "name": "KBS",
+  "short_name": "KBS",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#fff7ed",
