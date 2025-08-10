@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase, type WorkEntry, type BrokerEntry } from '../lib/supabase';
 import { format, parseISO } from 'date-fns';
-import {Download, Filter, Plus, Edit2, Trash2, User, LogOut, Save, X, Users, FileText, RefreshCw, Building2, ChevronDown, ChevronUp } from 'lucide-react';
+import {Download, Filter, Plus, Edit2, Trash2, User, LogOut, Save, X, Users, FileText, RefreshCw, Building2, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -44,6 +44,24 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   const [showFilters, setShowFilters] = useState(false);
   const [showBrokerFilters, setShowBrokerFilters] = useState(false);
   const tableRef = useRef<HTMLDivElement>(null);
+  
+  // Custom confirmation modal states
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showBrokerDeleteConfirm, setShowBrokerDeleteConfirm] = useState(false);
+  const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
+  const [brokerEntryToDelete, setBrokerEntryToDelete] = useState<string | null>(null);
+  
+  // Custom toast notification states
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info'; show: boolean }>({
+    message: '',
+    type: 'info',
+    show: false
+  });
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    setToast({ message, type, show: true });
+    setTimeout(() => setToast(prev => ({ ...prev, show: false })), 4000);
+  };
 
   const driverNames = [
     'Sakthi / Mohan',
@@ -139,7 +157,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       setEntries(data || []);
     } catch (error: any) {
       console.error('Error fetching work entries:', error.message);
-      alert('Error fetching work entries: ' + error.message);
+              showToast('Unable to load work entries. Please refresh the page or try again later.', 'error');
     } finally {
       setLoading(false);
     }
@@ -162,7 +180,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       setBrokerEntries(data || []);
     } catch (error: any) {
       console.error('Error fetching broker entries:', error.message);
-      alert('Error fetching broker entries: ' + error.message);
+              showToast('Unable to load broker entries. Please refresh the page or try again later.', 'error');
     }
   };
 
@@ -400,56 +418,49 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   };
 
   const deleteEntry = async (id: string) => {
-    if (confirm('Are you sure you want to delete this entry?')) {
-      try {
-        console.log('Deleting work entry with ID:', id);
-        const { data, error } = await supabase
-          .from('work_entries')
-          .delete()
-          .eq('id', id)
-          .select();
-        console.log('Delete result:', { data, error });
-        if (error) {
-          console.error('Delete error:', error);
-          throw error;
-        }
-        if (Array.isArray(data) && data.length === 0) {
-          console.warn('No rows deleted. Check if the ID exists and RLS policies.');
-        }
-        console.log('Work entry deleted successfully');
-        await fetchEntries();
-        alert('Entry deleted successfully!');
-      } catch (error: any) {
-        console.error('Delete error:', error);
-        alert('Error deleting entry: ' + error.message);
-      }
-    }
+    setEntryToDelete(id);
+    setShowDeleteConfirm(true);
   };
 
   const deleteBrokerEntry = async (id: string) => {
-    if (confirm('Are you sure you want to delete this broker entry?')) {
-      try {
-        console.log('Deleting broker entry with ID:', id);
-        const { data, error } = await supabase
-          .from('broker_entries')
-          .delete()
-          .eq('id', id)
-          .select();
-        console.log('Delete broker result:', { data, error });
-        if (error) {
-          console.error('Delete broker entry error:', error);
-          throw error;
-        }
-        if (Array.isArray(data) && data.length === 0) {
-          console.warn('No broker rows deleted. Check if the ID exists and RLS policies.');
-        }
-        console.log('Broker entry deleted successfully');
-        await fetchBrokerEntries();
-        alert('Broker entry deleted successfully!');
-      } catch (error: any) {
-        console.error('Delete broker entry error:', error);
-        alert('Error deleting broker entry: ' + error.message);
+    setBrokerEntryToDelete(id);
+    setShowBrokerDeleteConfirm(true);
+  };
+
+  const confirmDelete = async (id: string | null, isBroker: boolean) => {
+    if (!id) return;
+
+    try {
+      console.log(`Deleting ${isBroker ? 'broker' : 'work'} entry with ID:`, id);
+      const table = isBroker ? 'broker_entries' : 'work_entries';
+      const { data, error } = await supabase
+        .from(table)
+        .delete()
+        .eq('id', id)
+        .select();
+      console.log('Delete result:', { data, error });
+      if (error) {
+        console.error('Delete error:', error);
+        throw error;
       }
+      if (Array.isArray(data) && data.length === 0) {
+        console.warn('No rows deleted. Check if the ID exists and RLS policies.');
+      }
+      console.log(`${isBroker ? 'Broker' : 'Work'} entry deleted successfully`);
+      if (isBroker) {
+        await fetchBrokerEntries();
+      } else {
+        await fetchEntries();
+      }
+              showToast('Entry has been successfully deleted from the system.', 'success');
+    } catch (error: any) {
+      console.error('Delete error:', error);
+              showToast('Failed to delete entry. Please try again or contact support if the issue persists.', 'error');
+    } finally {
+      setEntryToDelete(null);
+      setShowDeleteConfirm(false);
+      setBrokerEntryToDelete(null);
+      setShowBrokerDeleteConfirm(false);
     }
   };
 
@@ -484,7 +495,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
           console.warn('No rows updated. Check if the ID exists and RLS policies.');
         }
         console.log('Work entry updated successfully');
-        alert('Entry updated successfully!');
+        showToast('Entry has been successfully updated and saved.', 'success');
       } else {
         // Create new entry
         console.log('Creating new work entry:', entry);
@@ -509,7 +520,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
           throw error;
         }
         console.log('Work entry created successfully');
-        alert('Entry created successfully!');
+        showToast('New entry has been successfully created and saved.', 'success');
       }
 
       setEditingEntry(null);
@@ -517,7 +528,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       await fetchEntries();
     } catch (error: any) {
       console.error('Save work entry error:', error);
-      alert('Error saving entry: ' + error.message);
+              showToast('Failed to save entry. Please check your input and try again.', 'error');
     }
   };
 
@@ -549,7 +560,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
           console.warn('No broker rows updated. Check if the ID exists and RLS policies.');
         }
         console.log('Broker entry updated successfully:', data);
-        alert('Broker entry updated successfully!');
+        showToast('Broker entry has been successfully updated and saved.', 'success');
       } else {
         // Create new broker entry
         console.log('Creating new broker entry:', entry);
@@ -575,7 +586,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         }
         
         console.log('Broker entry created successfully:', data);
-        alert('Broker entry created successfully!');
+        showToast('New broker entry has been successfully created and saved.', 'success');
       }
 
       setEditingBrokerEntry(null);
@@ -583,7 +594,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       await fetchBrokerEntries();
     } catch (error: any) {
       console.error('Save broker entry error:', error);
-      alert('Error saving broker entry: ' + error.message);
+              showToast('Failed to save broker entry. Please check your input and try again.', 'error');
     }
   };
 
@@ -667,7 +678,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       
       // Validate required fields
       if (!formData.rental_person_name || !formData.driver_name || !formData.date) {
-        alert('Please fill in all required fields');
+        showToast('Please complete all required fields before submitting the form.', 'error');
         return;
       }
 
@@ -851,7 +862,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
       if (!formData.broker_name || !formData.date) {
-        alert('Please fill in all required fields');
+        showToast('Please complete all required fields before submitting the form.', 'error');
         return;
       }
       // Save total_hours as a string
@@ -1483,6 +1494,141 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
             onSave={saveBrokerEntry}
             onCancel={() => setEditingBrokerEntry(null)}
           />
+        )}
+
+                    {/* Professional Confirmation Modals */}
+            {showDeleteConfirm && (
+              <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all duration-300 scale-100">
+                  <div className="p-6">
+                    <div className="flex items-center justify-center mb-6">
+                      <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                        <AlertTriangle className="h-8 w-8 text-red-600" />
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 text-center mb-3">Confirm Deletion</h3>
+                    <p className="text-gray-600 text-center mb-6 leading-relaxed">
+                      Are you sure you want to delete this entry? This action cannot be undone.
+                    </p>
+                    <div className="flex space-x-3">
+                      <button
+                        onClick={() => setShowDeleteConfirm(false)}
+                        className="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => confirmDelete(entryToDelete, false)}
+                        className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                      >
+                        Delete Entry
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+                    {showBrokerDeleteConfirm && (
+              <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all duration-300 scale-100">
+                  <div className="p-6">
+                    <div className="flex items-center justify-center mb-6">
+                      <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                        <AlertTriangle className="h-8 w-8 text-red-600" />
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 text-center mb-3">Confirm Broker Deletion</h3>
+                    <p className="text-gray-600 text-center mb-6 leading-relaxed">
+                      Are you sure you want to delete this broker entry? This action cannot be undone.
+                    </p>
+                    <div className="flex space-x-3">
+                      <button
+                        onClick={() => setShowBrokerDeleteConfirm(false)}
+                        className="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => confirmDelete(brokerEntryToDelete, true)}
+                        className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                      >
+                        Delete Broker
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+        {/* Professional Toast Notification */}
+        {toast.show && (
+          <div className={`fixed top-6 right-6 z-50 transform transition-all duration-500 ease-in-out ${
+            toast.show ? 'translate-x-0 opacity-100 scale-100' : 'translate-x-full opacity-0 scale-95'
+          }`}>
+            <div className={`relative max-w-sm w-full bg-white rounded-xl shadow-2xl border-l-4 overflow-hidden ${
+              toast.type === 'success' ? 'border-green-500' :
+              toast.type === 'error' ? 'border-red-500' :
+              'border-blue-500'
+            }`}>
+              {/* Progress bar */}
+              <div className={`absolute bottom-0 left-0 h-1 bg-gradient-to-r ${
+                toast.type === 'success' ? 'from-green-400 to-green-600' :
+                toast.type === 'error' ? 'from-red-400 to-red-600' :
+                'from-blue-400 to-blue-600'
+              } transition-all duration-4000 ease-linear`} style={{ width: '100%' }}></div>
+              
+              <div className="p-4">
+                <div className="flex items-start space-x-3">
+                  {/* Icon */}
+                  <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${
+                    toast.type === 'success' ? 'bg-green-100' :
+                    toast.type === 'error' ? 'bg-red-100' :
+                    'bg-blue-100'
+                  }`}>
+                    {toast.type === 'success' ? (
+                      <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    ) : toast.type === 'error' ? (
+                      <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    ) : (
+                      <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </div>
+                  
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-medium ${
+                      toast.type === 'success' ? 'text-green-800' :
+                      toast.type === 'error' ? 'text-red-800' :
+                      'text-blue-800'
+                    }`}>
+                      {toast.message}
+                    </p>
+                  </div>
+                  
+                  {/* Close button */}
+                  <button 
+                    onClick={() => setToast(prev => ({ ...prev, show: false }))}
+                    className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-colors duration-200 ${
+                      toast.type === 'success' ? 'text-green-400 hover:bg-green-100 hover:text-green-600' :
+                      toast.type === 'error' ? 'text-red-400 hover:bg-red-100 hover:text-red-600' :
+                      'text-blue-400 hover:bg-blue-100 hover:text-blue-600'
+                    }`}
+                  >
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
