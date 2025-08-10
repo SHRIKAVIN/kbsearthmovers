@@ -63,6 +63,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     setTimeout(() => setToast(prev => ({ ...prev, show: false })), 4000);
   };
 
+  // Mobile-specific toast positioning
+  const isMobile = () => window.innerWidth < 640;
+
   const driverNames = [
     'Sakthi / Mohan',
   ];
@@ -1496,30 +1499,30 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
           />
         )}
 
-                    {/* Professional Confirmation Modals */}
+                    {/* Mobile-Friendly Confirmation Modals */}
             {showDeleteConfirm && (
-              <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all duration-300 scale-100">
-                  <div className="p-6">
-                    <div className="flex items-center justify-center mb-6">
-                      <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
-                        <AlertTriangle className="h-8 w-8 text-red-600" />
+              <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-auto transform transition-all duration-300 scale-100 max-h-[calc(100vh-2rem)] overflow-y-auto">
+                  <div className="p-4 sm:p-6">
+                    <div className="flex items-center justify-center mb-4 sm:mb-6">
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 bg-red-100 rounded-full flex items-center justify-center">
+                        <AlertTriangle className="h-7 w-7 sm:h-8 sm:w-8 text-red-600" />
                       </div>
                     </div>
-                    <h3 className="text-xl font-semibold text-gray-900 text-center mb-3">Confirm Deletion</h3>
-                    <p className="text-gray-600 text-center mb-6 leading-relaxed">
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 text-center mb-2 sm:mb-3">Confirm Deletion</h3>
+                    <p className="text-sm sm:text-base text-gray-600 text-center mb-4 sm:mb-6 leading-relaxed px-2">
                       Are you sure you want to delete this entry? This action cannot be undone.
                     </p>
-                    <div className="flex space-x-3">
+                    <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
                       <button
                         onClick={() => setShowDeleteConfirm(false)}
-                        className="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+                        className="w-full sm:flex-1 px-4 py-3 sm:py-3 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 hover:border-gray-400 active:bg-gray-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 touch-manipulation"
                       >
                         Cancel
                       </button>
                       <button
                         onClick={() => confirmDelete(entryToDelete, false)}
-                        className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                        className="w-full sm:flex-1 px-4 py-3 sm:py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 active:from-red-700 active:to-red-800 text-white font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 shadow-lg hover:shadow-xl active:shadow-inner transform hover:-translate-y-0.5 active:translate-y-0 touch-manipulation"
                       >
                         Delete Entry
                       </button>
@@ -1530,28 +1533,28 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
             )}
 
                     {showBrokerDeleteConfirm && (
-              <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all duration-300 scale-100">
-                  <div className="p-6">
-                    <div className="flex items-center justify-center mb-6">
-                      <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
-                        <AlertTriangle className="h-8 w-8 text-red-600" />
+              <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-auto transform transition-all duration-300 scale-100 max-h-[calc(100vh-2rem)] overflow-y-auto">
+                  <div className="p-4 sm:p-6">
+                    <div className="flex items-center justify-center mb-4 sm:mb-6">
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 bg-red-100 rounded-full flex items-center justify-center">
+                        <AlertTriangle className="h-7 w-7 sm:h-8 sm:w-8 text-red-600" />
                       </div>
                     </div>
-                    <h3 className="text-xl font-semibold text-gray-900 text-center mb-3">Confirm Broker Deletion</h3>
-                    <p className="text-gray-600 text-center mb-6 leading-relaxed">
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 text-center mb-2 sm:mb-3">Confirm Broker Deletion</h3>
+                    <p className="text-sm sm:text-base text-gray-600 text-center mb-4 sm:mb-6 leading-relaxed px-2">
                       Are you sure you want to delete this broker entry? This action cannot be undone.
                     </p>
-                    <div className="flex space-x-3">
+                    <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
                       <button
                         onClick={() => setShowBrokerDeleteConfirm(false)}
-                        className="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+                        className="w-full sm:flex-1 px-4 py-3 sm:py-3 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 hover:border-gray-400 active:bg-gray-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 touch-manipulation"
                       >
                         Cancel
                       </button>
                       <button
                         onClick={() => confirmDelete(brokerEntryToDelete, true)}
-                        className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                        className="w-full sm:flex-1 px-4 py-3 sm:py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 active:from-red-700 active:to-red-800 text-white font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 shadow-lg hover:shadow-xl active:shadow-inner transform hover:-translate-y-0.5 active:translate-y-0 touch-manipulation"
                       >
                         Delete Broker
                       </button>
@@ -1561,12 +1564,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
               </div>
             )}
 
-        {/* Professional Toast Notification */}
+        {/* Mobile-Friendly Toast Notification */}
         {toast.show && (
-          <div className={`fixed top-6 right-6 z-50 transform transition-all duration-500 ease-in-out ${
-            toast.show ? 'translate-x-0 opacity-100 scale-100' : 'translate-x-full opacity-0 scale-95'
-          }`}>
-            <div className={`relative max-w-sm w-full bg-white rounded-xl shadow-2xl border-l-4 overflow-hidden ${
+          <div className={`fixed z-50 transform transition-all duration-500 ease-in-out ${
+            toast.show ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-full opacity-0 scale-95'
+          } sm:top-6 sm:right-6 top-4 left-4 right-4 sm:left-auto max-h-[calc(100vh-2rem)] overflow-hidden`}>
+            <div className={`relative w-full sm:max-w-sm bg-white rounded-2xl shadow-2xl border-l-4 overflow-hidden ${
               toast.type === 'success' ? 'border-green-500' :
               toast.type === 'error' ? 'border-red-500' :
               'border-blue-500'
@@ -1578,24 +1581,24 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                 'from-blue-400 to-blue-600'
               } transition-all duration-4000 ease-linear`} style={{ width: '100%' }}></div>
               
-              <div className="p-4">
+              <div className="p-4 sm:p-4">
                 <div className="flex items-start space-x-3">
                   {/* Icon */}
-                  <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${
+                  <div className={`flex-shrink-0 w-8 h-8 sm:w-6 sm:h-6 rounded-full flex items-center justify-center ${
                     toast.type === 'success' ? 'bg-green-100' :
                     toast.type === 'error' ? 'bg-red-100' :
                     'bg-blue-100'
                   }`}>
                     {toast.type === 'success' ? (
-                      <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                      <svg className="w-5 h-5 sm:w-4 sm:h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
                     ) : toast.type === 'error' ? (
-                      <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                      <svg className="w-5 h-5 sm:w-4 sm:h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                       </svg>
                     ) : (
-                      <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                      <svg className="w-5 h-5 sm:w-4 sm:h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                       </svg>
                     )}
@@ -1603,7 +1606,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                   
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-medium ${
+                    <p className={`text-base sm:text-sm font-medium leading-relaxed break-words ${
                       toast.type === 'success' ? 'text-green-800' :
                       toast.type === 'error' ? 'text-red-800' :
                       'text-blue-800'
@@ -1612,16 +1615,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                     </p>
                   </div>
                   
-                  {/* Close button */}
+                  {/* Close button - Mobile optimized touch target */}
                   <button 
                     onClick={() => setToast(prev => ({ ...prev, show: false }))}
-                    className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-colors duration-200 ${
-                      toast.type === 'success' ? 'text-green-400 hover:bg-green-100 hover:text-green-600' :
-                      toast.type === 'error' ? 'text-red-400 hover:bg-red-100 hover:text-red-600' :
-                      'text-blue-400 hover:bg-blue-100 hover:text-blue-600'
+                    className={`flex-shrink-0 w-10 h-10 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-colors duration-200 ${
+                      toast.type === 'success' ? 'text-green-400 hover:bg-green-100 hover:text-green-600 active:bg-green-200' :
+                      toast.type === 'error' ? 'text-red-400 hover:bg-red-100 hover:text-red-600 active:bg-red-200' :
+                      'text-blue-400 hover:bg-blue-100 hover:text-blue-600 active:bg-blue-200'
                     }`}
                   >
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-4 h-4 sm:w-3 sm:h-3" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                     </svg>
                   </button>
