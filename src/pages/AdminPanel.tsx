@@ -1403,17 +1403,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                   <thead className="bg-gray-50 sticky top-0 z-10">
                     <tr>
                       <th className="w-24 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Date</th>
-                      <th className="w-20 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Time</th>
                       <th className="w-40 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200 truncate-mobile">Rental Person</th>
-                      <th className="w-32 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200 truncate-mobile">Driver</th>
                       <th className="w-32 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200 truncate-mobile">Broker</th>
-                      <th className="w-32 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Machine</th>
                       <th className="w-20 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Hours</th>
                       <th className="w-28 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Total</th>
                       <th className="w-28 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Received</th>
                       <th className="w-28 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Advance</th>
                       <th className="w-28 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Balance</th>
-                      <th className="w-20 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Type</th>
                       <th className="w-20 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap">Actions</th>
                     </tr>
                   </thead>
@@ -1421,13 +1417,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                     {filteredEntries.map((entry) => (
                       <tr key={entry.id} className="hover:bg-gray-50 transition-colors">
                         <td className="w-24 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{format(parseISO(entry.date), 'dd/MM/yyyy')}</td>
-                        <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 border-r border-gray-200">{entry.time || 'N/A'}</td>
                         <td className="w-40 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 truncate-mobile border-r border-gray-200">{entry.rental_person_name}</td>
-                        <td className="w-32 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 truncate-mobile border-r border-gray-200">{entry.driver_name}</td>
                         <td className="w-32 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 truncate-mobile border-r border-gray-200">{entry.broker || '-'}</td>
-                        <td className="w-32 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap border-r border-gray-200">
-                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${entry.machine_type === 'Harvester' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}`}>{entry.machine_type}</span>
-                        </td>
                         <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{typeof entry.hours_driven === 'number' ? entry.hours_driven.toFixed(2) : entry.hours_driven}</td>
                         <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 font-semibold border-r border-gray-200">₹{entry.total_amount.toLocaleString('en-IN')}</td>
                         <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-green-600 font-semibold border-r border-gray-200">₹{entry.amount_received.toLocaleString('en-IN')}</td>
@@ -1436,9 +1427,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                           <span className={entry.total_amount - entry.amount_received - entry.advance_amount > 0 ? 'text-red-600' : 'text-green-600'}>
                             ₹{(entry.total_amount - entry.amount_received - entry.advance_amount).toLocaleString('en-IN')}
                           </span>
-                        </td>
-                        <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap border-r border-gray-200">
-                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${entry.entry_type === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}`}>{entry.entry_type}</span>
                         </td>
                         <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                           <div className="flex space-x-2">
