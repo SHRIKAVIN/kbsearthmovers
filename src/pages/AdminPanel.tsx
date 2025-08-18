@@ -63,11 +63,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     setTimeout(() => setToast(prev => ({ ...prev, show: false })), 4000);
   };
 
-  // Mobile-specific toast positioning
-  const isMobile = () => window.innerWidth < 640;
+
 
   const driverNames = [
-    'Sakthi / Mohan',
+    'Sakthi / Manoj',
   ];
 
   useEffect(() => {
@@ -664,7 +663,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       }
       return {
         rental_person_name: '',
-        driver_name: 'Sakthi / Mohan',
+        driver_name: 'Sakthi / Manoj',
         broker: '',
         machine_type: 'Harvester',
         hours_driven: undefined,
@@ -775,18 +774,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Amount Received (₹)</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={formData.amount_received || ''}
-                  onChange={(e) => setFormData({...formData, amount_received: e.target.value ? Number(e.target.value) : undefined})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                  placeholder="Enter amount received"
-                />
-              </div>
-
-              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Advance Amount (₹)</label>
                 <input
                   type="number"
@@ -795,6 +782,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                   onChange={(e) => setFormData({...formData, advance_amount: e.target.value ? Number(e.target.value) : undefined})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                   placeholder="Enter advance amount"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Amount Received (₹)</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={formData.amount_received || ''}
+                  onChange={(e) => setFormData({...formData, amount_received: e.target.value ? Number(e.target.value) : undefined})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  placeholder="Enter amount received"
                 />
               </div>
 

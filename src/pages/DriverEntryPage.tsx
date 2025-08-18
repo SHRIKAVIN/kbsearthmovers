@@ -10,13 +10,13 @@ const DriverEntryPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState('');
 
   const driverNames = [
-    'Sakthi / Mohan',
+    'Sakthi / Manoj',
   ];
 
   const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<Omit<WorkEntry, 'id' | 'created_at' | 'updated_at'> & { broker?: string }>({
     defaultValues: {
       rental_person_name: '',
-      driver_name: 'Sakthi / Mohan',
+      driver_name: 'Sakthi / Manoj',
       broker: '',
       machine_type: 'Harvester',
       hours_driven: undefined,
@@ -60,7 +60,7 @@ const DriverEntryPage: React.FC = () => {
       
       reset({
         rental_person_name: '',
-        driver_name: 'Sakthi / Mohan',
+        driver_name: 'Sakthi / Manoj',
         broker: '',
         machine_type: 'Harvester',
         hours_driven: undefined,
@@ -211,26 +211,6 @@ const DriverEntryPage: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <DollarSign className="inline h-4 w-4 mr-1" />
-                  Amount Received (₹)
-                </label>
-                <input
-                  data-testid="amount-received"
-                  type="number"
-                  min="0"
-                  {...register('amount_received', { 
-                    min: { value: 0, message: 'Amount must be positive' }
-                  })}
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base bg-white text-gray-900"
-                  placeholder="Enter amount received"
-                />
-                {errors.amount_received && (
-                  <p data-testid="amount-received-error" className="mt-1 text-sm text-red-600 animate-shake">{errors.amount_received.message}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <DollarSign className="inline h-4 w-4 mr-1" />
                   Advance Amount (₹)
                 </label>
                 <input
@@ -245,6 +225,26 @@ const DriverEntryPage: React.FC = () => {
                 />
                 {errors.advance_amount && (
                   <p data-testid="advance-amount-error" className="mt-1 text-sm text-red-600 animate-shake">{errors.advance_amount.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <DollarSign className="inline h-4 w-4 mr-1" />
+                  Amount Received (₹)
+                </label>
+                <input
+                  data-testid="amount-received"
+                  type="number"
+                  min="0"
+                  {...register('amount_received', { 
+                    min: { value: 0, message: 'Amount must be positive' }
+                  })}
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base bg-white text-gray-900"
+                  placeholder="Enter amount received"
+                />
+                {errors.amount_received && (
+                  <p data-testid="amount-received-error" className="mt-1 text-sm text-red-600 animate-shake">{errors.amount_received.message}</p>
                 )}
               </div>
             </div>
