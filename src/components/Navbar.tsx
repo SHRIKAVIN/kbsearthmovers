@@ -28,7 +28,7 @@ const Navbar: React.FC = () => {
                 </div>
               </div>
               <div className="text-xl font-bold text-gray-900">
-                <span className="text-amber-600">KBS</span> Harvesters
+                <span className="text-amber-600">KBS</span> HARVESTERS
               </div>
             </Link>
           </div>
