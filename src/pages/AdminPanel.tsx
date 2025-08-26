@@ -343,7 +343,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     doc.setFont('helvetica', 'bold');
     
     // Main title - perfectly centered
-    const title = activeTab === 'brokers' ? 'KBS TRACTORS - BROKER RECORDS' : 'KBS TRACTORS - RENTAL RECORDS';
+    const title = activeTab === 'brokers' ? 'KBS HARVESTERS - BROKER RECORDS' : 'KBS HARVESTERS - RENTAL RECORDS';
     const titleWidth = doc.getTextWidth(title);
     const titleX = (210 - titleWidth) / 2; // Center horizontally
     const titleY = 45; // Reduced spacing below logo
