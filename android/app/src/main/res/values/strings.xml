@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">KBS Earthmovers</string>
+    <string name="title_activity_main">KBS Earthmovers</string>
+    <string name="package_name">com.kbs.earthmovers</string>
+    <string name="custom_url_scheme">com.kbs.earthmovers</string>
+</resources>

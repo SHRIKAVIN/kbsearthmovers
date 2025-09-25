@@ -3,11 +3,13 @@ import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
 import { supabase, type WorkEntry } from '../lib/supabase';
 import { CheckCircle, AlertCircle, User, Truck, Clock, DollarSign, Calendar, Timer } from 'lucide-react';
+import { useMobileOptimizations } from '../hooks/useMobileOptimizations';
 
 const DriverEntryPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'success' | 'error' | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const { triggerSuccessHaptic, triggerErrorHaptic } = useMobileOptimizations();
 
   const driverNames = [
     'Sakthi / Manoj',
@@ -57,6 +59,7 @@ const DriverEntryPage: React.FC = () => {
       }
 
       setSubmitStatus('success');
+      triggerSuccessHaptic();
       
       reset({
         rental_person_name: '',
@@ -74,6 +77,7 @@ const DriverEntryPage: React.FC = () => {
     } catch (error: any) {
       setSubmitStatus('error');
       setErrorMessage(error.message || 'Failed to submit entry');
+      triggerErrorHaptic();
     } finally {
       setIsSubmitting(false);
     }
