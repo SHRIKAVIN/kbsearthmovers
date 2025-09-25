@@ -16,6 +16,8 @@
     overscroll-behavior: none;
     /* Improve touch interactions */
     touch-action: manipulation;
+    /* Handle status bar properly */
+    padding-top: 0;
   }
   
   /* Better touch targets for mobile */

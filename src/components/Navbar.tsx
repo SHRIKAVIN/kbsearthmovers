@@ -19,8 +19,8 @@ const Navbar: React.FC = () => {
   return (
     <nav
       data-testid="navbar"
-      className="bg-white shadow-lg sticky top-0 z-50 backdrop-blur-md bg-white/95 min-h-[56px] sm:min-h-[64px]"
-      style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      className="bg-white shadow-lg sticky top-0 z-50 backdrop-blur-md bg-white/95"
+      style={{ paddingTop: 'max(env(safe-area-inset-top), 0px)' }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-14 sm:h-16">
