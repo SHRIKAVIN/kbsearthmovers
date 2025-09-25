@@ -1,6 +1,6 @@
 {
-  "name": "KBS",
-  "short_name": "KBS",
+  "name": "KBS Harvesters",
+  "short_name": "KBS Harvesters",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#fff7ed",
