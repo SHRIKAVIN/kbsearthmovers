@@ -45,6 +45,7 @@ export type WorkEntry = {
   date: string;
   time: string;
   entry_type: 'driver' | 'admin';
+  owner: 'Rohini' | 'Laxmi';
   created_at?: string;
   updated_at?: string;
 };
@@ -57,6 +58,7 @@ export type BrokerEntry = {
   amount_received: number;
   date: string;
   time: string;
+  owner: 'Rohini' | 'Laxmi';
   created_at?: string;
   updated_at?: string;
 };

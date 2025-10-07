@@ -30,12 +30,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     machineType: 'Harvester',
     driver: '',
     broker: '',
+    owner: '',
     search: ''
   });
   const [brokerFilters, setBrokerFilters] = useState({
     dateFrom: '',
     dateTo: '',
     brokerName: '',
+    owner: '',
     search: ''
   });
   const dateSortOrder: 'asc' | 'desc' = 'desc';
@@ -219,6 +221,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         (entry.broker || '').toLowerCase().includes(filters.broker.toLowerCase())
       );
     }
+    if (filters.owner) {
+      filtered = filtered.filter(entry => entry.owner === filters.owner);
+    }
     if (filters.search) {
       filtered = filtered.filter(entry => 
         entry.rental_person_name.toLowerCase().includes(filters.search.toLowerCase()) ||
@@ -252,6 +257,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         entry.broker_name.toLowerCase().includes(brokerFilters.brokerName.toLowerCase())
       );
     }
+    if (brokerFilters.owner) {
+      filtered = filtered.filter(entry => entry.owner === brokerFilters.owner);
+    }
     if (brokerFilters.search) {
       filtered = filtered.filter(entry => 
         entry.broker_name.toLowerCase().includes(brokerFilters.search.toLowerCase())
@@ -280,6 +288,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         'Date': entry.date,
         'Time': entry.time || 'N/A',
         'Broker Name': entry.broker_name,
+        'Owner': entry.owner,
         'Total Hours': Number(entry.total_hours).toFixed(2),
         'Total Amount': formatCurrency(Number(entry.total_amount)),
         'Amount Received': formatCurrency(Number(entry.amount_received)),
@@ -297,6 +306,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         'Rental Person': entry.rental_person_name,
         'Driver': entry.driver_name,
         'Broker': entry.broker || '-',
+        'Owner': entry.owner,
         'Machine Type': entry.machine_type,
         'Hours Driven': Number(entry.hours_driven).toFixed(2),
         'Total Amount': formatCurrency(Number(entry.total_amount)),
@@ -371,6 +381,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         entry.date,
         entry.time || 'N/A',
         entry.broker_name,
+        entry.owner,
         Number(entry.total_hours).toFixed(2),
         formatCurrency(Number(entry.total_amount)),
         formatCurrency(Number(entry.amount_received)),
@@ -378,7 +389,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       ]);
 
       (doc as any).autoTable({
-        head: [['Date', 'Time', 'Broker Name', 'Hours', 'Total', 'Received', 'Balance']],
+        head: [['Date', 'Time', 'Broker Name', 'Owner', 'Hours', 'Total', 'Received', 'Balance']],
         body: tableData,
         startY: 80,
         styles: { fontSize: 8 },
@@ -395,6 +406,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         entry.rental_person_name,
         entry.driver_name,
         entry.broker || '-',
+        entry.owner,
         entry.machine_type,
         typeof entry.hours_driven === 'number' ? entry.hours_driven.toFixed(2) : entry.hours_driven,
         formatCurrency(Number(entry.total_amount)),
@@ -405,7 +417,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       ]);
 
       (doc as any).autoTable({
-        head: [['Date', 'Time', 'Rental Person', 'Driver', 'Broker', 'Machine', 'Hours', 'Total', 'Received', 'Advance', 'Balance', 'Type']],
+        head: [['Date', 'Time', 'Rental Person', 'Driver', 'Broker', 'Owner', 'Machine', 'Hours', 'Total', 'Received', 'Advance', 'Balance', 'Type']],
         body: tableData,
         startY: 80,
         styles: { fontSize: 7 },
@@ -484,6 +496,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
             advance_amount: entry.advance_amount || 0,
             date: entry.date,
             time: entry.time,
+            owner: entry.owner || 'Rohini',
             updated_at: new Date().toISOString()
           })
           .eq('id', entry.id)
@@ -514,7 +527,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
             advance_amount: entry.advance_amount || 0,
             date: entry.date,
             time: entry.time || format(new Date(), 'HH:mm'),
-            entry_type: 'admin'
+            entry_type: 'admin',
+            owner: entry.owner || 'Rohini'
           }]);
 
         if (error) {
@@ -545,7 +559,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
           total_amount: Number(entry.total_amount) || 0,
           amount_received: Number(entry.amount_received) || 0,
           date: entry.date,
-          time: entry.time
+          time: entry.time,
+          owner: entry.owner || 'Rohini'
         };
         console.log('Update data:', updateData);
         const { data, error } = await supabase
@@ -572,7 +587,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
           total_amount: Number(entry.total_amount) || 0,
           amount_received: Number(entry.amount_received) || 0,
           date: entry.date,
-          time: entry.time || format(new Date(), 'HH:mm')
+          time: entry.time || format(new Date(), 'HH:mm'),
+          owner: entry.owner || 'Rohini'
         };
         
         console.log('Insert data:', insertData);
@@ -671,7 +687,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         amount_received: undefined,
         advance_amount: undefined,
         date: format(new Date(), 'yyyy-MM-dd'),
-        time: format(new Date(), 'HH:mm')
+        time: format(new Date(), 'HH:mm'),
+        owner: 'Rohini'
       };
     });
 
@@ -735,6 +752,19 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                   placeholder="Enter broker name (if any)"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Owner *</label>
+                <select
+                  value={formData.owner || 'Rohini'}
+                  onChange={(e) => setFormData({...formData, owner: e.target.value as 'Rohini' | 'Laxmi'})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  required
+                >
+                  <option value="Rohini">Rohini</option>
+                  <option value="Laxmi">Laxmi</option>
+                </select>
               </div>
 
               <div>
@@ -857,7 +887,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         total_amount: undefined,
         amount_received: undefined,
         date: format(new Date(), 'yyyy-MM-dd'),
-        time: format(new Date(), 'HH:mm')
+        time: format(new Date(), 'HH:mm'),
+        owner: 'Rohini'
       };
     });
 
@@ -894,6 +925,19 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                   placeholder="Enter broker name"
                   required
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Owner *</label>
+                <select
+                  value={formData.owner || 'Rohini'}
+                  onChange={(e) => setFormData({...formData, owner: e.target.value as 'Rohini' | 'Laxmi'})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  required
+                >
+                  <option value="Rohini">Rohini</option>
+                  <option value="Laxmi">Laxmi</option>
+                </select>
               </div>
 
               <div>
@@ -1152,6 +1196,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                 />
               </div>
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Owner</label>
+                <select
+                  value={brokerFilters.owner}
+                  onChange={(e) => setBrokerFilters({...brokerFilters, owner: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
+                >
+                  <option value="">All Owners</option>
+                  <option value="Rohini">Rohini</option>
+                  <option value="Laxmi">Laxmi</option>
+                </select>
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
                 <input
                   data-testid="broker-filter-search"
@@ -1165,7 +1221,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
               <div className="flex items-end">
                 <button
                   data-testid="broker-clear-filters"
-                  onClick={() => setBrokerFilters({dateFrom: '', dateTo: '', brokerName: '', search: ''})}
+                  onClick={() => setBrokerFilters({dateFrom: '', dateTo: '', brokerName: '', owner: '', search: ''})}
                   className="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md transition-colors text-sm"
                 >
                   Clear Filters
@@ -1249,6 +1305,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                 />
               </div>
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Owner</label>
+                <select
+                  value={filters.owner}
+                  onChange={(e) => setFilters({...filters, owner: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
+                >
+                  <option value="">All Owners</option>
+                  <option value="Rohini">Rohini</option>
+                  <option value="Laxmi">Laxmi</option>
+                </select>
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
                 <input
                   type="text"
@@ -1260,7 +1328,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
               </div>
               <div className="flex items-end">
                 <button
-                  onClick={() => setFilters({dateFrom: '', dateTo: '', machineType: 'Harvester', driver: '', broker: '', search: ''})}
+                  onClick={() => setFilters({dateFrom: '', dateTo: '', machineType: 'Harvester', driver: '', broker: '', owner: '', search: ''})}
                   className="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md transition-colors text-sm"
                 >
                   Clear Filters
@@ -1330,6 +1398,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                       <th className="px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Date</th>
                       <th className="px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Time</th>
                       <th className="px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Broker Name</th>
+                      <th className="px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Owner</th>
                       <th className="px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Hours</th>
                       <th className="px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Total</th>
                       <th className="px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Received</th>
@@ -1343,6 +1412,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                         <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{format(parseISO(entry.date), 'dd/MM/yyyy')}</td>
                         <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 border-r border-gray-200">{entry.time || 'N/A'}</td>
                         <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{entry.broker_name}</td>
+                        <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{entry.owner}</td>
                         <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{entry.total_hours}</td>
                         <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 font-semibold border-r border-gray-200">₹{entry.total_amount.toLocaleString('en-IN')}</td>
                         <td className="px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-green-600 font-semibold border-r border-gray-200">₹{entry.amount_received.toLocaleString('en-IN')}</td>
@@ -1405,6 +1475,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                       <th className="w-24 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Date</th>
                       <th className="w-40 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200 truncate-mobile">Rental Person</th>
                       <th className="w-32 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200 truncate-mobile">Broker</th>
+                      <th className="w-20 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Owner</th>
                       <th className="w-20 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Hours</th>
                       <th className="w-28 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Total</th>
                       <th className="w-28 px-2 sm:px-3 py-2 sm:py-3 text-left font-medium text-gray-500 uppercase tracking-wider bg-gray-50 whitespace-nowrap border-r border-gray-200">Advance</th>
@@ -1419,6 +1490,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                         <td className="w-24 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{format(parseISO(entry.date), 'dd/MM/yyyy')}</td>
                         <td className="w-40 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 truncate-mobile border-r border-gray-200">{entry.rental_person_name}</td>
                         <td className="w-32 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 truncate-mobile border-r border-gray-200">{entry.broker || '-'}</td>
+                        <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{entry.owner}</td>
                         <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{typeof entry.hours_driven === 'number' ? entry.hours_driven.toFixed(2) : entry.hours_driven}</td>
                         <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 font-semibold border-r border-gray-200">₹{entry.total_amount.toLocaleString('en-IN')}</td>
                         <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-blue-600 font-semibold border-r border-gray-200">₹{entry.advance_amount.toLocaleString('en-IN')}</td>

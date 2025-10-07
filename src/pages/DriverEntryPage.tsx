@@ -27,7 +27,8 @@ const DriverEntryPage: React.FC = () => {
       advance_amount: undefined,
       date: format(new Date(), 'yyyy-MM-dd'),
       time: format(new Date(), 'HH:mm'),
-      entry_type: 'driver'
+      entry_type: 'driver',
+      owner: 'Rohini'
     }
   });
 
@@ -72,7 +73,8 @@ const DriverEntryPage: React.FC = () => {
         advance_amount: undefined,
         date: format(new Date(), 'yyyy-MM-dd'),
         time: format(new Date(), 'HH:mm'),
-        entry_type: 'driver'
+        entry_type: 'driver',
+        owner: 'Rohini'
       });
     } catch (error: any) {
       setSubmitStatus('error');
@@ -148,6 +150,25 @@ const DriverEntryPage: React.FC = () => {
                 className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base bg-white text-gray-900"
                 placeholder="Enter broker name (if any)"
               />
+            </div>
+
+            {/* Owner Selection */}
+            <div className="animate-slide-in-right">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <User className="inline h-4 w-4 mr-1" />
+                Owner *
+              </label>
+              <select
+                data-testid="owner-select"
+                {...register('owner', { required: 'Owner is required' })}
+                className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base bg-white text-gray-900"
+              >
+                <option value="Rohini">Rohini</option>
+                <option value="Laxmi">Laxmi</option>
+              </select>
+              {errors.owner && (
+                <p data-testid="owner-error" className="mt-1 text-sm text-red-600 animate-shake">{errors.owner.message}</p>
+              )}
             </div>
 
             {/* Machine Type */}
@@ -295,6 +316,7 @@ const DriverEntryPage: React.FC = () => {
                 <div className="text-xs text-amber-700 space-y-1">
                   <p><strong>Client:</strong> {watchedValues.rental_person_name}</p>
                   <p><strong>Driver:</strong> {watchedValues.driver_name}</p>
+                  <p><strong>Owner:</strong> {watchedValues.owner}</p>
                   <p><strong>Machine:</strong> {watchedValues.machine_type}</p>
                   {watchedValues.hours_driven && watchedValues.hours_driven > 0 && <p><strong>Hours:</strong> {watchedValues.hours_driven}</p>}
                   {watchedValues.total_amount && watchedValues.total_amount > 0 && <p><strong>Total Amount:</strong> ₹{watchedValues.total_amount}</p>}

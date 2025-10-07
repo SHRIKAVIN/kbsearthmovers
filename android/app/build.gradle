@@ -3,6 +3,15 @@ apply plugin: 'com.android.application'
 android {
     namespace "com.kbs.earthmovers"
     compileSdk rootProject.ext.compileSdkVersion
+    
+    signingConfigs {
+        release {
+            storeFile file('kbs-harvesters-key.keystore')
+            storePassword 'kbs2024!'
+            keyAlias 'kbs-harvesters'
+            keyPassword 'kbs2024!'
+        }
+    }
     defaultConfig {
         applicationId "com.kbs.earthmovers"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -24,6 +33,7 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
 }
