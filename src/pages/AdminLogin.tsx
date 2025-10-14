@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, User, Eye, EyeOff } from 'lucide-react';
+import Lottie from 'lottie-react';
 
 interface AdminLoginProps {
   onLogin: (username: string) => void;
@@ -14,7 +15,16 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [loginAnimation, setLoginAnimation] = useState<any>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Load the Lottie animation
+    fetch('/assets/Password Authentication.json')
+      .then(response => response.json())
+      .then(data => setLoginAnimation(data))
+      .catch(err => console.error('Error loading animation:', err));
+  }, []);
 
   const ADMIN_PASSWORD = 'kbs2025';
   const adminUsers = [
@@ -61,8 +71,17 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
       <div className="max-w-md w-full space-y-8 animate-fade-in-up">
         {/* Header */}
         <div className="text-center">
-          <div className="bg-gradient-to-br from-amber-100 to-orange-100 p-4 rounded-full w-20 h-20 mx-auto mb-6 shadow-lg transform hover:scale-110 transition-transform duration-300">
-            <Lock className="h-12 w-12 text-amber-600 mx-auto" />
+          <div className="mx-auto mb-6 w-40 h-40">
+            {loginAnimation ? (
+              <Lottie 
+                animationData={loginAnimation} 
+                loop={true}
+              />
+            ) : (
+              <div className="bg-gradient-to-br from-amber-100 to-orange-100 p-4 rounded-full w-20 h-20 flex items-center justify-center shadow-lg">
+                <Lock className="h-12 w-12 text-amber-600" />
+              </div>
+            )}
           </div>
           <h2 data-testid="login-title" className="text-3xl font-bold text-gray-900 mb-2">Admin Login</h2>
           <p className="text-gray-600">KBS EARTHMOVERS & HARVESTER</p>

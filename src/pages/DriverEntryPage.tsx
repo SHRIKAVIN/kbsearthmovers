@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
 import { supabase, type WorkEntry } from '../lib/supabase';
-import { CheckCircle, AlertCircle, User, Truck, Clock, DollarSign, Calendar, Timer } from 'lucide-react';
+import { CheckCircle, AlertCircle, Truck, Clock, DollarSign, Calendar, Timer, User } from 'lucide-react';
 import { useMobileOptimizations } from '../hooks/useMobileOptimizations';
 
 const DriverEntryPage: React.FC = () => {
@@ -10,6 +10,16 @@ const DriverEntryPage: React.FC = () => {
   const [submitStatus, setSubmitStatus] = useState<'success' | 'error' | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const { triggerSuccessHaptic, triggerErrorHaptic } = useMobileOptimizations();
+
+  // Prevent scroll jumping on page load
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    
+    // Disable scroll restoration
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+  }, []);
 
   const driverNames = [
     'Sakthi / Manoj',
