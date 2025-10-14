@@ -93,14 +93,14 @@ const HomePage: React.FC = () => {
             </Link>
           </div>
           
-          {/* Admin Panel and Driver Entry Buttons */}
-          <div className="mt-8 animate-fade-in-up animation-delay-700">
+          {/* Admin Panel and Driver Entry Buttons - Mobile Only */}
+          <div className="mt-8 animate-fade-in-up animation-delay-700 md:hidden">
             <div className="flex flex-row gap-4 justify-center items-center">
               {/* Admin Panel Button */}
               <Link
                 data-testid="admin-panel-button"
                 to="/admin-login"
-                className="flex items-center justify-center bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-4 sm:py-4 sm:px-8 rounded-2xl border-2 border-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 group text-sm sm:text-base min-w-0 flex-1"
+                className="flex items-center justify-center bg-gradient-to-br from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 text-white py-3 px-4 sm:py-4 sm:px-8 rounded-xl font-semibold shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 group text-sm sm:text-base min-w-0 flex-1 border border-slate-600"
               >
                 <Settings className="h-4 w-4 sm:h-5 sm:w-5 mr-2 sm:mr-3 group-hover:rotate-90 transition-transform duration-300 flex-shrink-0" />
                 <span className="text-center flex-1 whitespace-nowrap">
@@ -114,7 +114,7 @@ const HomePage: React.FC = () => {
               <Link
                 data-testid="driver-entry-button"
                 to="/driver-entry"
-                className="flex items-center justify-center bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-bold py-3 px-4 sm:py-4 sm:px-8 rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 group text-sm sm:text-base min-w-0 flex-1"
+                className="flex items-center justify-center bg-gradient-to-br from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white py-3 px-4 sm:py-4 sm:px-8 rounded-xl font-semibold shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 group text-sm sm:text-base min-w-0 flex-1 border border-emerald-500"
               >
                 <User className="h-4 w-4 sm:h-5 sm:w-5 mr-2 sm:mr-3 group-hover:scale-110 transition-transform duration-300 flex-shrink-0" />
                 <span className="text-center flex-1 whitespace-nowrap">
