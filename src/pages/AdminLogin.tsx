@@ -67,11 +67,11 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
   };
 
   return (
-    <div data-testid="admin-login-page" className="min-h-screen bg-gradient-to-br from-gray-100 via-amber-50 to-orange-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 animate-fade-in-up">
+    <div data-testid="admin-login-page" className="h-screen bg-gradient-to-br from-gray-100 via-amber-50 to-orange-100 flex items-center justify-center px-4 sm:px-6 lg:px-8 overflow-hidden">
+      <div className="max-w-md w-full space-y-6 animate-fade-in-up">
         {/* Header */}
         <div className="text-center">
-          <div className="mx-auto mb-6 w-40 h-40">
+          <div className="mx-auto mb-4 w-32 h-32">
             {loginAnimation ? (
               <Lottie 
                 animationData={loginAnimation} 
@@ -89,8 +89,8 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
         </div>
 
         {/* Login Form */}
-        <div data-testid="login-form-container" className="bg-white shadow-xl rounded-xl p-8">
-          <form data-testid="login-form" onSubmit={handleSubmit} className="space-y-6">
+        <div data-testid="login-form-container" className="bg-white shadow-xl rounded-xl p-6">
+          <form data-testid="login-form" onSubmit={handleSubmit} className="space-y-4">
             {/* Username Dropdown */}
             <div className="animate-slide-in-left">
               <label className="block text-sm font-medium text-gray-700 mb-2">
