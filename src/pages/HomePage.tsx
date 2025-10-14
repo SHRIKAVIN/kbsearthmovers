@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Truck, Tractor, Wheat, Phone, Mail, Clock, Shield, Users, Star } from 'lucide-react';
+import { ArrowRight, Truck, Tractor, Wheat, Phone, Mail, Clock, Shield, Users, Star, Settings, User } from 'lucide-react';
 import StatsSection from '../components/StatsSection';
 
 const HomePage: React.FC = () => {
@@ -91,6 +91,35 @@ const HomePage: React.FC = () => {
             >
               Contact Us
             </Link>
+          </div>
+          
+          {/* Admin Panel and Driver Entry Buttons */}
+          <div className="mt-8 animate-fade-in-up animation-delay-700">
+            <div className="flex flex-row gap-4 justify-center items-center">
+              {/* Admin Panel Button */}
+              <Link
+                data-testid="admin-panel-button"
+                to="/admin-login"
+                className="inline-flex items-center justify-center bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-4 sm:py-4 sm:px-8 rounded-2xl border-2 border-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 group text-sm sm:text-base"
+              >
+                <Settings className="h-4 w-4 sm:h-5 sm:w-5 mr-2 sm:mr-3 group-hover:rotate-90 transition-transform duration-300" />
+                <span className="hidden xs:inline">Admin Panel</span>
+                <span className="xs:hidden">Admin</span>
+                <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+              </Link>
+              
+              {/* Driver Entry Button */}
+              <Link
+                data-testid="driver-entry-button"
+                to="/driver-entry"
+                className="inline-flex items-center justify-center bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-bold py-3 px-4 sm:py-4 sm:px-8 rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 group text-sm sm:text-base"
+              >
+                <User className="h-4 w-4 sm:h-5 sm:w-5 mr-2 sm:mr-3 group-hover:scale-110 transition-transform duration-300" />
+                <span className="hidden xs:inline">Driver Entry</span>
+                <span className="xs:hidden">Driver</span>
+                <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+              </Link>
+            </div>
           </div>
         </div>
         

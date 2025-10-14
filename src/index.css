@@ -227,6 +227,17 @@
   }
 }
 
+/* Extra small screens */
+@media (max-width: 475px) {
+  .xs\:hidden {
+    display: none;
+  }
+  
+  .xs\:inline {
+    display: inline;
+  }
+}
+
 /* Focus styles for accessibility */
 button:focus,
 input:focus,
