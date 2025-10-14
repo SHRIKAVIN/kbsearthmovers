@@ -100,24 +100,28 @@ const HomePage: React.FC = () => {
               <Link
                 data-testid="admin-panel-button"
                 to="/admin-login"
-                className="inline-flex items-center justify-center bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-4 sm:py-4 sm:px-8 rounded-2xl border-2 border-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 group text-sm sm:text-base"
+                className="flex items-center justify-center bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-4 sm:py-4 sm:px-8 rounded-2xl border-2 border-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 group text-sm sm:text-base min-w-0 flex-1"
               >
-                <Settings className="h-4 w-4 sm:h-5 sm:w-5 mr-2 sm:mr-3 group-hover:rotate-90 transition-transform duration-300" />
-                <span className="hidden xs:inline">Admin Panel</span>
-                <span className="xs:hidden">Admin</span>
-                <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+                <Settings className="h-4 w-4 sm:h-5 sm:w-5 mr-2 sm:mr-3 group-hover:rotate-90 transition-transform duration-300 flex-shrink-0" />
+                <span className="text-center flex-1 whitespace-nowrap">
+                  <span className="hidden xs:inline">Admin Panel</span>
+                  <span className="xs:hidden">Admin</span>
+                </span>
+                <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-2 sm:ml-3 group-hover:translate-x-1 transition-transform duration-300 flex-shrink-0" />
               </Link>
               
               {/* Driver Entry Button */}
               <Link
                 data-testid="driver-entry-button"
                 to="/driver-entry"
-                className="inline-flex items-center justify-center bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-bold py-3 px-4 sm:py-4 sm:px-8 rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 group text-sm sm:text-base"
+                className="flex items-center justify-center bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-bold py-3 px-4 sm:py-4 sm:px-8 rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 group text-sm sm:text-base min-w-0 flex-1"
               >
-                <User className="h-4 w-4 sm:h-5 sm:w-5 mr-2 sm:mr-3 group-hover:scale-110 transition-transform duration-300" />
-                <span className="hidden xs:inline">Driver Entry</span>
-                <span className="xs:hidden">Driver</span>
-                <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+                <User className="h-4 w-4 sm:h-5 sm:w-5 mr-2 sm:mr-3 group-hover:scale-110 transition-transform duration-300 flex-shrink-0" />
+                <span className="text-center flex-1 whitespace-nowrap">
+                  <span className="hidden xs:inline">Driver Entry</span>
+                  <span className="xs:hidden">Driver</span>
+                </span>
+                <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-2 sm:ml-3 group-hover:translate-x-1 transition-transform duration-300 flex-shrink-0" />
               </Link>
             </div>
           </div>
