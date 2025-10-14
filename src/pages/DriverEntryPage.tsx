@@ -99,19 +99,19 @@ const DriverEntryPage: React.FC = () => {
     <div data-testid="driver-entry-page" className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 py-4 sm:py-8">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-6 sm:mb-8 animate-fade-in-up">
-          <div className="bg-white p-3 sm:p-4 rounded-full w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 shadow-lg transform hover:scale-110 transition-transform duration-300">
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="bg-white p-3 sm:p-4 rounded-full w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 shadow-lg transform hover:scale-110 transition-all duration-500 hover:shadow-2xl animate-professional-float">
             <User className="h-10 w-10 sm:h-12 sm:w-12 text-amber-600 mx-auto" />
           </div>
-          <h1 data-testid="driver-entry-title" className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Driver Entry Form</h1>
-          <p className="text-gray-600 text-sm sm:text-base">Submit your work details after completing the job</p>
+          <h1 data-testid="driver-entry-title" className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 animate-professional-slide-up">Driver Entry Form</h1>
+          <p className="text-gray-600 text-sm sm:text-base animate-professional-fade-in">Submit your work details after completing the job</p>
         </div>
 
         {/* Form */}
-        <div data-testid="driver-entry-form-container" className="bg-white shadow-xl rounded-xl p-4 sm:p-8 animate-fade-in-up animation-delay-300">
+        <div data-testid="driver-entry-form-container" className="bg-white shadow-xl rounded-xl p-4 sm:p-8 animate-professional-scale-in">
           <form data-testid="driver-entry-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
             {/* Rental Person Name */}
-            <div className="animate-slide-in-left">
+            <div className="animate-professional-slide-in-left">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <User className="inline h-4 w-4 mr-1" />
                 Rental Person Name *
@@ -129,7 +129,7 @@ const DriverEntryPage: React.FC = () => {
             </div>
 
             {/* Driver Name Dropdown */}
-            <div className="animate-slide-in-right">
+            <div className="animate-professional-slide-in-right">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <User className="inline h-4 w-4 mr-1" />
                 Driver Name *
@@ -149,7 +149,7 @@ const DriverEntryPage: React.FC = () => {
             </div>
 
             {/* Broker Field */}
-            <div className="animate-slide-in-left">
+            <div className="animate-professional-slide-in-left">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Broker
               </label>
@@ -163,7 +163,7 @@ const DriverEntryPage: React.FC = () => {
             </div>
 
             {/* Owner Selection */}
-            <div className="animate-slide-in-right">
+            <div className="animate-professional-slide-in-right">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <User className="inline h-4 w-4 mr-1" />
                 Owner *
@@ -182,7 +182,7 @@ const DriverEntryPage: React.FC = () => {
             </div>
 
             {/* Machine Type */}
-            <div className="animate-slide-in-left">
+            <div className="animate-professional-slide-in-left">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <Truck className="inline h-4 w-4 mr-1" />
                 Machine Type
@@ -200,7 +200,7 @@ const DriverEntryPage: React.FC = () => {
             </div>
 
             {/* Hours Driven */}
-            <div className="animate-slide-in-right">
+            <div className="animate-professional-slide-in-right">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <Clock className="inline h-4 w-4 mr-1" />
                 Hours Driven
@@ -222,7 +222,7 @@ const DriverEntryPage: React.FC = () => {
             </div>
 
             {/* Amount Fields */}
-            <div className="grid grid-cols-1 gap-4 animate-fade-in-up">
+            <div className="grid grid-cols-1 gap-4 animate-professional-fade-in-up">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <DollarSign className="inline h-4 w-4 mr-1" />
@@ -285,7 +285,7 @@ const DriverEntryPage: React.FC = () => {
             </div>
 
             {/* Date and Time */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-slide-in-up">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-professional-slide-in-up">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <Calendar className="inline h-4 w-4 mr-1" />
@@ -321,7 +321,7 @@ const DriverEntryPage: React.FC = () => {
 
             {/* Preview Summary */}
             {watchedValues.rental_person_name && watchedValues.driver_name && (
-              <div data-testid="entry-preview" className="bg-amber-50 border border-amber-200 rounded-lg p-4 animate-fade-in-up">
+              <div data-testid="entry-preview" className="bg-amber-50 border border-amber-200 rounded-lg p-4 animate-professional-scale-in">
                 <h4 className="text-sm font-medium text-amber-800 mb-2">Entry Preview</h4>
                 <div className="text-xs text-amber-700 space-y-1">
                   <p><strong>Client:</strong> {watchedValues.rental_person_name}</p>
@@ -339,7 +339,7 @@ const DriverEntryPage: React.FC = () => {
               data-testid="submit-entry-button"
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none animate-pulse-slow"
+              className="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-500 transform hover:scale-105 hover:shadow-xl disabled:transform-none disabled:shadow-none animate-professional-pulse"
             >
               {isSubmitting ? (
                 <div className="flex items-center justify-center">
@@ -354,7 +354,7 @@ const DriverEntryPage: React.FC = () => {
 
           {/* Status Messages */}
           {submitStatus === 'success' && (
-            <div data-testid="success-message" className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center animate-bounce-in">
+            <div data-testid="success-message" className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center animate-professional-bounce-in">
               <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
               <span className="text-green-700">Entry submitted successfully!</span>
             </div>
