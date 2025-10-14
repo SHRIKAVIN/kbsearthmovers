@@ -295,7 +295,7 @@ const DriverEntryPage: React.FC = () => {
                   data-testid="date-input"
                   type="date"
                   {...register('date', { required: 'Date is required' })}
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base bg-white text-gray-900"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base bg-white text-gray-900 ios-date-input"
                 />
                 {errors.date && (
                   <p data-testid="date-error" className="mt-1 text-sm text-red-600 animate-shake">{errors.date.message}</p>
@@ -311,7 +311,7 @@ const DriverEntryPage: React.FC = () => {
                   data-testid="time-input"
                   type="time"
                   {...register('time', { required: 'Time is required' })}
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base bg-white text-gray-900"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base bg-white text-gray-900 ios-time-input"
                 />
                 {errors.time && (
                   <p data-testid="time-error" className="mt-1 text-sm text-red-600 animate-shake">{errors.time.message}</p>

@@ -309,3 +309,80 @@ body {
     font-size: 1rem;
   }
 }
+
+/* iOS-specific fixes for date and time inputs */
+.ios-date-input,
+.ios-time-input {
+  /* Reset iOS default styling */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  
+  /* Ensure consistent height */
+  min-height: 44px;
+  height: 44px;
+  
+  /* Fix iOS date/time input styling */
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  
+  /* Prevent iOS zoom on focus */
+  font-size: 16px;
+  
+  /* Fix text alignment */
+  text-align: left;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  .ios-date-input,
+  .ios-time-input {
+    /* Remove iOS default styling */
+    -webkit-appearance: none;
+    -webkit-border-radius: 0.5rem;
+    
+    /* Fix the weird iOS styling */
+    background-image: none;
+    background-color: #ffffff;
+    
+    /* Ensure proper padding */
+    padding: 0.75rem;
+    
+    /* Fix text positioning */
+    line-height: 1.5;
+  }
+  
+  .ios-date-input::-webkit-datetime-edit,
+  .ios-time-input::-webkit-datetime-edit {
+    /* Fix text positioning in iOS */
+    padding: 0;
+    margin: 0;
+  }
+  
+  .ios-date-input::-webkit-datetime-edit-text,
+  .ios-time-input::-webkit-datetime-edit-text {
+    /* Fix spacing between date/time parts */
+    padding: 0 0.25rem;
+  }
+  
+  .ios-date-input::-webkit-datetime-edit-month-field,
+  .ios-date-input::-webkit-datetime-edit-day-field,
+  .ios-date-input::-webkit-datetime-edit-year-field,
+  .ios-time-input::-webkit-datetime-edit-hour-field,
+  .ios-time-input::-webkit-datetime-edit-minute-field {
+    /* Fix individual field styling */
+    padding: 0;
+    margin: 0;
+  }
+}
+
+/* Focus states for iOS */
+.ios-date-input:focus,
+.ios-time-input:focus {
+  outline: none;
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+}
