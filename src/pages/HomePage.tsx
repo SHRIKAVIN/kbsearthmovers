@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Truck, Tractor, Wheat, Phone, Mail, Clock, Shield, Users, Star } from 'lucide-react';
+import StatsSection from '../components/StatsSection';
 
 const HomePage: React.FC = () => {
   const services = [
@@ -42,12 +43,6 @@ const HomePage: React.FC = () => {
     },
   ];
 
-  const stats = [
-    { number: '500+', label: 'Projects Completed' },
-    { number: '50+', label: 'Happy Clients' },
-    { number: '15+', label: 'Years Experience' },
-    { number: '24/7', label: 'Support Available' },
-  ];
 
   return (
     <div data-testid="home-page" className="min-h-screen overflow-x-hidden">
@@ -107,18 +102,7 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Stats Section */}
-      <section data-testid="stats-section" className="py-16 bg-gradient-to-r from-amber-600 to-orange-600">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <div key={index} data-testid={`stat-${index}`} className="text-center animate-fade-in-up" style={{animationDelay: `${index * 0.1}s`}}>
-                <div className="text-3xl sm:text-4xl font-bold text-white mb-2">{stat.number}</div>
-                <div className="text-amber-100 text-sm sm:text-base">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <StatsSection />
 
       {/* Services Section */}
       <section data-testid="services-section" className="py-20 bg-gray-50">
