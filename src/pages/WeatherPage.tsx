@@ -115,11 +115,9 @@ const WeatherPage: React.FC = () => {
   const weatherColor = getWeatherColor(weather.description);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-100 relative overflow-hidden">
-      {/* Weather-themed Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 via-transparent to-indigo-100/20"></div>
-      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-blue-200/30 to-transparent rounded-full blur-3xl"></div>
-      <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-tr from-indigo-200/30 to-transparent rounded-full blur-3xl"></div>
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-100 relative" style={{willChange: 'auto'}}>
+      {/* Weather-themed Background - Simplified */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 via-transparent to-indigo-100/20" style={{transform: 'translate3d(0,0,0)'}}></div>
       
       <div className="relative max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Header */}

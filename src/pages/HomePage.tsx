@@ -139,11 +139,9 @@ const HomePage: React.FC = () => {
       <StatsSection />
 
       {/* Weather Section */}
-      <section data-testid="weather-section" className="py-12 sm:py-16 bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50 relative overflow-hidden">
-        {/* Weather-themed Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-100/30 via-transparent to-indigo-100/30"></div>
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-blue-200/20 to-transparent rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-tr from-indigo-200/20 to-transparent rounded-full blur-3xl"></div>
+      <section data-testid="weather-section" className="py-12 sm:py-16 bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50 relative" style={{willChange: 'auto'}}>
+        {/* Weather-themed Background - Simplified */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 via-transparent to-indigo-100/20" style={{transform: 'translate3d(0,0,0)'}}></div>
         
         <div className="relative max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
           <div className="text-center mb-6 sm:mb-8 animate-fade-in-up">

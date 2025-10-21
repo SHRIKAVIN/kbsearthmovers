@@ -98,11 +98,9 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ className = '', showDetai
   const weatherColor = getWeatherColor(weather.description);
 
   return (
-    <div className={`relative bg-gradient-to-br ${weatherColor} text-white rounded-2xl shadow-xl overflow-hidden ${className}`}>
-      {/* Weather-themed Background Elements */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
-      <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-      <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
+    <div className={`relative bg-gradient-to-br ${weatherColor} text-white rounded-2xl shadow-xl overflow-hidden ${className}`} style={{willChange: 'auto'}}>
+      {/* Weather-themed Background Elements - Simplified */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent" style={{transform: 'translate3d(0,0,0)'}}></div>
       
       <div className="relative p-4 sm:p-6">
         {/* Header */}
