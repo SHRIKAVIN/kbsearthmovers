@@ -7,6 +7,7 @@ import DriverEntryPage from './pages/DriverEntryPage';
 import AdminLogin from './pages/AdminLogin';
 import AdminPanel from './pages/AdminPanel';
 import ContactPage from './pages/ContactPage';
+import WeatherPage from './pages/WeatherPage';
 
 function App() {
   const [adminUser, setAdminUser] = useState<string | null>(null);
@@ -37,6 +38,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/driver-entry" element={<DriverEntryPage />} />
+          <Route path="/weather" element={<WeatherPage />} />
           <Route 
             path="/admin-login" 
             element={

@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Truck, Tractor, Wheat, Phone, Mail, Clock, Shield, Users, Star, Settings, User } from 'lucide-react';
 import StatsSection from '../components/StatsSection';
+import WeatherWidget from '../components/WeatherWidget';
 
 const HomePage: React.FC = () => {
   const services = [
@@ -136,6 +137,41 @@ const HomePage: React.FC = () => {
 
       {/* Stats Section */}
       <StatsSection />
+
+      {/* Weather Section */}
+      <section data-testid="weather-section" className="py-12 sm:py-16 bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50 relative overflow-hidden">
+        {/* Weather-themed Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-100/30 via-transparent to-indigo-100/30"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-blue-200/20 to-transparent rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-tr from-indigo-200/20 to-transparent rounded-full blur-3xl"></div>
+        
+        <div className="relative max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="text-center mb-6 sm:mb-8 animate-fade-in-up">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-3 sm:mb-4">
+              Weather Conditions
+            </h2>
+            <p className="text-base sm:text-lg lg:text-xl text-gray-600 max-w-2xl mx-auto">
+              Stay informed about weather conditions for your projects
+            </p>
+          </div>
+          
+          <div className="flex justify-center">
+            <div className="w-full max-w-sm sm:max-w-md">
+              <WeatherWidget showDetails={true} />
+            </div>
+          </div>
+          
+          <div className="text-center mt-4 sm:mt-6">
+            <Link
+              to="/weather"
+              className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors duration-300 text-sm sm:text-base px-4 py-2 rounded-lg shadow-md hover:shadow-lg"
+            >
+              View Detailed Forecast
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* Services Section */}
       <section data-testid="services-section" className="py-20 bg-gray-50">
