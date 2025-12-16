@@ -1,0 +1,41 @@
+name: Keep Supabase Database Active
+
+on:
+  schedule:
+    # Run every 6 hours to keep database active
+    # Cron format: minute hour day month day-of-week
+    # This runs at: 00:00, 06:00, 12:00, 18:00 UTC daily
+    - cron: '0 */6 * * *'
+  workflow_dispatch: # Allows manual triggering from GitHub Actions UI
+
+jobs:
+  ping-database:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Keep-Alive Endpoint
+        env:
+          # Set this in GitHub Secrets: Settings > Secrets and variables > Actions
+          # Add a secret named: VERCEL_DEPLOYMENT_URL
+          # Value: https://your-app.vercel.app (your actual Vercel URL)
+          VERCEL_URL: ${{ secrets.VERCEL_DEPLOYMENT_URL || 'https://kbsearthmovers.vercel.app' }}
+        run: |
+          KEEP_ALIVE_URL="${VERCEL_URL}/api/keep-alive"
+          
+          echo "🚀 Pinging keep-alive endpoint: $KEEP_ALIVE_URL"
+          echo "⏰ Timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          
+          response=$(curl -s -w "\n%{http_code}" "$KEEP_ALIVE_URL" --max-time 30)
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+          
+          echo "📊 HTTP Status Code: $http_code"
+          echo "📝 Response: $body"
+          
+          if [ "$http_code" -eq 200 ]; then
+            echo "✅ Keep-alive successful! Database is active."
+            exit 0
+          else
+            echo "❌ Keep-alive failed with status code: $http_code"
+            echo "⚠️  Please check your Vercel deployment and API endpoint."
+            exit 1
+          fi
