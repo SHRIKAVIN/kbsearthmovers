@@ -24,7 +24,9 @@ jobs:
           echo "🚀 Pinging keep-alive endpoint: $KEEP_ALIVE_URL"
           echo "⏰ Timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
           
-          response=$(curl -s -w "\n%{http_code}" "$KEEP_ALIVE_URL" --max-time 30)
+          # Use -L to follow redirects (handles 308, 301, 302, etc.)
+          # Use -f to fail silently on HTTP errors (we'll check status code manually)
+          response=$(curl -sL -w "\n%{http_code}" "$KEEP_ALIVE_URL" --max-time 30)
           http_code=$(echo "$response" | tail -n1)
           body=$(echo "$response" | sed '$d')
           
