@@ -20,6 +20,8 @@
     "@capacitor/splash-screen": "^7.0.3",
     "@capacitor/status-bar": "^7.0.3",
     "@supabase/supabase-js": "^2.38.5",
+    "@types/canvas-confetti": "^1.9.0",
+    "canvas-confetti": "^1.9.4",
     "date-fns": "^3.0.6",
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.6.0",

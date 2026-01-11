@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase, type WorkEntry, type BrokerEntry } from '../lib/supabase';
 import { format, parseISO } from 'date-fns';
-import {Download, Filter, Plus, Edit2, Trash2, User, LogOut, Save, X, Users, FileText, RefreshCw, Building2, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
+import {Download, Filter, Plus, Edit2, Trash2, User, LogOut, Save, X, Users, FileText, RefreshCw, Building2, ChevronDown, ChevronUp, AlertTriangle, Archive } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import confetti from 'canvas-confetti';
 
 interface AdminPanelProps {
   adminUser: string;
@@ -45,6 +46,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   const [showingStickyBar, setShowingStickyBar] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showBrokerFilters, setShowBrokerFilters] = useState(false);
+  const [viewArchivedData, setViewArchivedData] = useState(false); // false = current data (2025+), true = archived data (< 2025)
   const tableRef = useRef<HTMLDivElement>(null);
   
   // Custom confirmation modal states
@@ -63,6 +65,50 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
     setToast({ message, type, show: true });
     setTimeout(() => setToast(prev => ({ ...prev, show: false })), 4000);
+  };
+
+  const triggerNewYearConfetti = () => {
+    const duration = 3000;
+    const animationEnd = Date.now() + duration;
+    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+    function randomInRange(min: number, max: number) {
+      return Math.random() * (max - min) + min;
+    }
+
+    const interval: any = setInterval(function() {
+      const timeLeft = animationEnd - Date.now();
+
+      if (timeLeft <= 0) {
+        return clearInterval(interval);
+      }
+
+      const particleCount = 50 * (timeLeft / duration);
+      
+      // Launch confetti from left
+      confetti({
+        ...defaults,
+        particleCount,
+        origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+      });
+      
+      // Launch confetti from right
+      confetti({
+        ...defaults,
+        particleCount,
+        origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+      });
+    }, 250);
+
+    // Final burst
+    setTimeout(() => {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE']
+      });
+    }, 100);
   };
 
 
@@ -103,7 +149,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       workEntriesSubscription.unsubscribe();
       brokerEntriesSubscription.unsubscribe();
     };
-  }, []);
+  }, [viewArchivedData]);
 
   useEffect(() => {
     applyFilters();
@@ -147,10 +193,22 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     setLoading(true);
     try {
       console.log('Fetching work entries...');
-      const { data, error } = await supabase
+      let query = supabase
         .from('work_entries')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*');
+      
+      // Get current year dynamically
+      const currentYear = new Date().getFullYear();
+      const currentYearStart = `${currentYear}-01-01`;
+      
+      // Filter by date: current data (>= current year) or archived data (< current year)
+      if (viewArchivedData) {
+        query = query.lt('date', currentYearStart);
+      } else {
+        query = query.gte('date', currentYearStart);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) {
         console.error('Supabase error fetching work entries:', error);
@@ -170,10 +228,22 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   const fetchBrokerEntries = async () => {
     try {
       console.log('Fetching broker entries...');
-      const { data, error } = await supabase
+      let query = supabase
         .from('broker_entries')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*');
+      
+      // Get current year dynamically
+      const currentYear = new Date().getFullYear();
+      const currentYearStart = `${currentYear}-01-01`;
+      
+      // Filter by date: current data (>= current year) or archived data (< current year)
+      if (viewArchivedData) {
+        query = query.lt('date', currentYearStart);
+      } else {
+        query = query.gte('date', currentYearStart);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) {
         console.error('Supabase error fetching broker entries:', error);
@@ -1373,6 +1443,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
           >
             <Download className="h-4 w-4 mr-2" />
             Export PDF
+          </button>
+          <button
+            onClick={() => {
+              const wasViewingArchived = viewArchivedData;
+              setViewArchivedData(!viewArchivedData);
+              // Trigger confetti when switching to archived data view (viewing old year data)
+              if (!wasViewingArchived) {
+                triggerNewYearConfetti();
+              }
+            }}
+            className={`${viewArchivedData ? 'bg-blue-600 hover:bg-blue-700' : 'bg-purple-600 hover:bg-purple-700'} text-white px-4 py-2 rounded-lg flex items-center transition-all duration-300 transform hover:scale-105`}
+          >
+            <Archive className="h-4 w-4 mr-2" />
+            {viewArchivedData ? 'Current Data' : `${new Date().getFullYear() - 1} DATA`}
           </button>
         </div>
 
