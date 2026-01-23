@@ -136,14 +136,13 @@ const NotificationToggle: React.FC<NotificationToggleProps> = ({ userId }) => {
         disabled={loading}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
-        onTouchStart={() => setShowTooltip(true)}
-        onTouchEnd={() => setTimeout(() => setShowTooltip(false), 2000)}
         className={`px-3 py-2 sm:px-4 sm:py-2 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 touch-manipulation flex items-center ${
           subscribed
             ? 'bg-green-100 text-green-600 hover:bg-green-200 active:bg-green-300'
             : 'bg-gray-100 text-gray-600 hover:bg-gray-200 active:bg-gray-300'
         } ${loading ? 'opacity-50 cursor-wait' : ''}`}
         title={subscribed ? 'Notifications enabled' : 'Enable notifications'}
+        aria-label={subscribed ? 'Notifications enabled' : 'Enable notifications'}
       >
         {loading ? (
           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
@@ -154,10 +153,10 @@ const NotificationToggle: React.FC<NotificationToggleProps> = ({ userId }) => {
         )}
       </button>
       {showTooltip && (
-        <div className="absolute top-full right-0 mt-2 w-48 bg-gray-900 text-white text-xs rounded-lg p-2 z-50 shadow-xl whitespace-nowrap">
+        <div className="hidden sm:block absolute top-full right-0 mt-2 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 z-50 shadow-xl whitespace-nowrap">
           {subscribed 
-            ? 'Click to disable notifications' 
-            : 'Click to enable notifications'}
+            ? 'Notifications enabled' 
+            : 'Enable notifications'}
         </div>
       )}
     </div>

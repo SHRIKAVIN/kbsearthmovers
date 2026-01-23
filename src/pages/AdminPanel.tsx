@@ -497,7 +497,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
           : (deletedEntry as WorkEntry).rental_person_name;
         await broadcastNotification(
           'Entry Deleted 🗑️',
-          `Admin deleted ${isBroker ? 'broker' : ''} entry for ${entryName}`,
+          `${adminUser} deleted ${isBroker ? 'broker' : ''} entry: ${entryName}`,
           '/icons/icon-192x192.png'
         );
       }
@@ -557,7 +557,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         console.log('Sending notification for entry update...');
         const notifResult = await broadcastNotification(
           'Entry Updated 📝',
-          `Admin updated entry for ${entry.rental_person_name} - ${entry.machine_type}`,
+          `${adminUser} updated: ${entry.rental_person_name} | ${entry.machine_type} | ${(entry as any).hours_used || 0}hrs | ₹${entry.total_amount?.toLocaleString('en-IN') || 0}`,
           '/icons/icon-192x192.png'
         );
         console.log('Notification result:', notifResult);
@@ -592,7 +592,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         console.log('Sending notification for new entry...');
         const notifResult = await broadcastNotification(
           'New Entry Added ✅',
-          `Admin created new entry for ${entry.rental_person_name} - ${entry.machine_type}`,
+          `${adminUser} added: ${entry.rental_person_name} | ${entry.machine_type} | ${(entry as any).hours_used || 0}hrs | ₹${entry.total_amount?.toLocaleString('en-IN') || 0}`,
           '/icons/icon-192x192.png'
         );
         console.log('Notification result:', notifResult);
@@ -641,7 +641,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         // Send notification about broker entry update
         await broadcastNotification(
           'Broker Entry Updated 📝',
-          `Admin updated broker entry for ${entry.broker_name}`,
+          `${adminUser} updated broker: ${entry.broker_name} | ₹${((entry as any).amount || 0).toLocaleString('en-IN')}`,
           '/icons/icon-192x192.png'
         );
       } else {
@@ -675,7 +675,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         // Send notification about new broker entry
         await broadcastNotification(
           'New Broker Entry ✅',
-          `Admin created broker entry for ${entry.broker_name}`,
+          `${adminUser} added broker: ${entry.broker_name} | ₹${((entry as any).amount || 0).toLocaleString('en-IN')}`,
           '/icons/icon-192x192.png'
         );
       }
