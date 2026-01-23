@@ -9,14 +9,14 @@ export type NotificationSubscription = {
 };
 
 // Base64 to Uint8Array conversion for VAPID key
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
+function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
   const base64 = (base64String + padding)
     .replace(/\-/g, '+')
     .replace(/_/g, '/');
 
   const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
+  const outputArray = new Uint8Array(rawData.length) as Uint8Array<ArrayBuffer>;
 
   for (let i = 0; i < rawData.length; ++i) {
     outputArray[i] = rawData.charCodeAt(i);
@@ -202,35 +202,77 @@ export async function broadcastNotification(
   icon?: string
 ): Promise<boolean> {
   try {
+    console.log('Broadcasting notification:', { title, body });
+    
     // Get all subscriptions
     const { data, error } = await supabase
       .from('notification_subscriptions')
       .select('*');
 
-    if (error || !data || data.length === 0) {
-      console.error('No subscriptions found');
+    if (error) {
+      console.error('Error fetching subscriptions:', error);
+      // Still show local notification
+      showLocalNotification(title, body, icon);
       return false;
     }
 
-    // Send notification to all subscribers
-    const promises = data.map(sub => {
-      return supabase.functions.invoke('send-push-notification', {
-        body: {
-          subscription: JSON.parse(sub.subscription_json),
-          payload: {
-            title,
-            body,
-            icon: icon || '/icons/icon-192x192.png',
-            badge: '/icons/icon-64x64.png'
+    if (!data || data.length === 0) {
+      console.log('No subscriptions found, showing local notification');
+      // Show local notification as fallback
+      showLocalNotification(title, body, icon);
+      return true;
+    }
+
+    console.log(`Found ${data.length} subscription(s), sending notifications...`);
+
+    // Try to send via Edge Function
+    let edgeFunctionFailed = false;
+    const promises = data.map(async (sub) => {
+      try {
+        const result = await supabase.functions.invoke('send-push-notification', {
+          body: {
+            subscription: JSON.parse(sub.subscription_json),
+            payload: {
+              title,
+              body,
+              icon: icon || '/icons/icon-192x192.png',
+              badge: '/icons/icon-64x64.png',
+              data: {
+                url: '/',
+                timestamp: Date.now()
+              }
+            }
           }
+        });
+        
+        if (result.error) {
+          console.error('Edge function error:', result.error);
+          edgeFunctionFailed = true;
+        } else {
+          console.log('Notification sent successfully via Edge Function');
         }
-      });
+        
+        return result;
+      } catch (err) {
+        console.error('Failed to send to subscriber:', err);
+        edgeFunctionFailed = true;
+        return null;
+      }
     });
 
     await Promise.all(promises);
+    
+    // If Edge Function failed, show local notification as fallback
+    if (edgeFunctionFailed) {
+      console.log('Edge Function failed, showing local notification as fallback');
+      showLocalNotification(title, body, icon);
+    }
+    
     return true;
   } catch (error) {
     console.error('Error broadcasting notification:', error);
+    // Always show local notification on error
+    showLocalNotification(title, body, icon);
     return false;
   }
 }

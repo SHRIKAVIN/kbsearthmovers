@@ -554,11 +554,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         showToast('Entry has been successfully updated and saved.', 'success');
         
         // Send notification about update
-        await broadcastNotification(
+        console.log('Sending notification for entry update...');
+        const notifResult = await broadcastNotification(
           'Entry Updated 📝',
           `Admin updated entry for ${entry.rental_person_name} - ${entry.machine_type}`,
           '/icons/icon-192x192.png'
         );
+        console.log('Notification result:', notifResult);
       } else {
         // Create new entry
         console.log('Creating new work entry:', entry);
@@ -587,11 +589,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         showToast('New entry has been successfully created and saved.', 'success');
         
         // Send notification about new entry
-        await broadcastNotification(
+        console.log('Sending notification for new entry...');
+        const notifResult = await broadcastNotification(
           'New Entry Added ✅',
           `Admin created new entry for ${entry.rental_person_name} - ${entry.machine_type}`,
           '/icons/icon-192x192.png'
         );
+        console.log('Notification result:', notifResult);
       }
 
       setEditingEntry(null);

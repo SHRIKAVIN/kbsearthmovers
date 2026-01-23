@@ -135,23 +135,25 @@ const NotificationToggle: React.FC<NotificationToggleProps> = ({ userId }) => {
         disabled={loading}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
-        className={`p-2 rounded-lg transition-all duration-200 transform hover:scale-110 ${
+        onTouchStart={() => setShowTooltip(true)}
+        onTouchEnd={() => setTimeout(() => setShowTooltip(false), 2000)}
+        className={`p-2 sm:p-2 rounded-lg transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation ${
           subscribed
-            ? 'bg-green-100 text-green-600 hover:bg-green-200'
-            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            ? 'bg-green-100 text-green-600 hover:bg-green-200 active:bg-green-300'
+            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 active:bg-gray-300'
         } ${loading ? 'opacity-50 cursor-wait' : ''}`}
         title={subscribed ? 'Notifications enabled' : 'Enable notifications'}
       >
         {loading ? (
-          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current"></div>
+          <div className="animate-spin rounded-full h-5 w-5 sm:h-5 sm:w-5 border-b-2 border-current"></div>
         ) : subscribed ? (
-          <Bell className="h-5 w-5" />
+          <Bell className="h-5 w-5 sm:h-5 sm:w-5" />
         ) : (
-          <BellOff className="h-5 w-5" />
+          <BellOff className="h-5 w-5 sm:h-5 sm:w-5" />
         )}
       </button>
       {showTooltip && (
-        <div className="absolute top-full right-0 mt-2 w-48 bg-gray-900 text-white text-xs rounded-lg p-2 z-50 shadow-xl">
+        <div className="absolute top-full right-0 mt-2 w-48 bg-gray-900 text-white text-xs rounded-lg p-2 z-50 shadow-xl whitespace-nowrap">
           {subscribed 
             ? 'Click to disable notifications' 
             : 'Click to enable notifications'}

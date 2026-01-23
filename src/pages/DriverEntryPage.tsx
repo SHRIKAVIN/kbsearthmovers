@@ -74,11 +74,13 @@ const DriverEntryPage: React.FC = () => {
       triggerSuccessHaptic();
       
       // Send notification about new driver entry
-      await broadcastNotification(
+      console.log('Sending notification for new driver entry...');
+      const notifResult = await broadcastNotification(
         'New Driver Entry 🚜',
         `${data.driver_name} submitted entry for ${data.rental_person_name} - ${data.machine_type}`,
         '/icons/icon-192x192.png'
       );
+      console.log('Notification result:', notifResult);
       
       reset({
         rental_person_name: '',
