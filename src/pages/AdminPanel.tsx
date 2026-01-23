@@ -5,8 +5,6 @@ import {Download, Filter, Plus, Edit2, Trash2, User, LogOut, Save, X, Users, Fil
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import NotificationToggle from '../components/NotificationToggle';
-import { broadcastNotification } from '../lib/notifications';
 
 interface AdminPanelProps {
   adminUser: string;
@@ -14,13 +12,6 @@ interface AdminPanelProps {
 }
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
-  // Helper function to format admin name for notifications
-  const getNotificationName = (name: string): string => {
-    const upperName = name.toUpperCase();
-    if (upperName.includes('SHRIKAVIN')) return 'Kavin';
-    if (upperName.includes('SHRINIVAS')) return 'Shri';
-    return name; // Return original if no match
-  };
 
   const [entries, setEntries] = useState<WorkEntry[]>([]);
   const [brokerEntries, setBrokerEntries] = useState<BrokerEntry[]>([]);
@@ -500,14 +491,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       // Send notification about deletion
       const deletedEntry = data && data.length > 0 ? data[0] : null;
       if (deletedEntry) {
-        const entryName = isBroker 
-          ? (deletedEntry as BrokerEntry).broker_name 
-          : (deletedEntry as WorkEntry).rental_person_name;
-        await broadcastNotification(
-          'Entry Deleted 🗑️',
-          `${getNotificationName(adminUser)} deleted ${isBroker ? 'broker' : ''} entry: ${entryName}`,
-          '/icons/icon-192x192.png'
-        );
       }
       
       if (isBroker) {
@@ -560,15 +543,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         }
         console.log('Work entry updated successfully');
         showToast('Entry has been successfully updated and saved.', 'success');
-        
-        // Send notification about update
-        console.log('Sending notification for entry update...');
-        const notifResult = await broadcastNotification(
-          'Entry Updated 📝',
-          `${getNotificationName(adminUser)} updated: ${entry.rental_person_name} | ${entry.hours_driven || 0}hrs | ₹${entry.total_amount?.toLocaleString('en-IN') || 0}`,
-          '/icons/icon-192x192.png'
-        );
-        console.log('Notification result:', notifResult);
       } else {
         // Create new entry
         console.log('Creating new work entry:', entry);
@@ -595,15 +569,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         }
         console.log('Work entry created successfully');
         showToast('New entry has been successfully created and saved.', 'success');
-        
-        // Send notification about new entry
-        console.log('Sending notification for new entry...');
-        const notifResult = await broadcastNotification(
-          'New Entry Added ✅',
-          `${getNotificationName(adminUser)} added: ${entry.rental_person_name} | ${entry.hours_driven || 0}hrs | ₹${entry.total_amount?.toLocaleString('en-IN') || 0}`,
-          '/icons/icon-192x192.png'
-        );
-        console.log('Notification result:', notifResult);
       }
 
       setEditingEntry(null);
@@ -645,13 +610,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         }
         console.log('Broker entry updated successfully:', data);
         showToast('Broker entry has been successfully updated and saved.', 'success');
-        
-        // Send notification about broker entry update
-        await broadcastNotification(
-          'Broker Entry Updated 📝',
-          `${getNotificationName(adminUser)} updated broker: ${entry.broker_name} | ₹${((entry as any).amount || 0).toLocaleString('en-IN')}`,
-          '/icons/icon-192x192.png'
-        );
       } else {
         // Create new broker entry
         console.log('Creating new broker entry:', entry);
@@ -679,13 +637,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         
         console.log('Broker entry created successfully:', data);
         showToast('New broker entry has been successfully created and saved.', 'success');
-        
-        // Send notification about new broker entry
-        await broadcastNotification(
-          'New Broker Entry ✅',
-          `${getNotificationName(adminUser)} added broker: ${entry.broker_name} | ₹${((entry as any).amount || 0).toLocaleString('en-IN')}`,
-          '/icons/icon-192x192.png'
-        );
       }
 
       setEditingBrokerEntry(null);
@@ -1135,7 +1086,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
               </div>
             </div>
             <div className="flex space-x-2 items-center">
-              <NotificationToggle userId={adminUser} />
               <button
                 data-testid="refresh-button"
                 onClick={refreshData}

@@ -6,20 +6,6 @@ import { StatusBar, Style } from '@capacitor/status-bar';
 import App from './App.tsx';
 import './index.css';
 
-// Register service worker for PWA and push notifications
-if ('serviceWorker' in navigator && !Capacitor.isNativePlatform()) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register('/sw-custom.js')
-      .then((registration) => {
-        console.log('Service Worker registered successfully:', registration.scope);
-      })
-      .catch((error) => {
-        console.error('Service Worker registration failed:', error);
-      });
-  });
-}
-
 // Initialize mobile-specific features
 const initializeApp = async () => {
   if (Capacitor.isNativePlatform()) {

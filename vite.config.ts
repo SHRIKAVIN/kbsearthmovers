@@ -8,16 +8,6 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      strategies: 'injectManifest',
-      srcDir: 'public',
-      filename: 'sw-custom.js',
-      injectManifest: {
-        injectionPoint: undefined
-      },
-      devOptions: {
-        enabled: true,
-        type: 'module'
-      },
       manifest: {
         name: 'KBS Earthmovers & Harvester',
         short_name: 'KBS Earthmovers',
