@@ -119,10 +119,11 @@ const NotificationToggle: React.FC<NotificationToggleProps> = ({ userId }) => {
       <button
         onClick={handleRequestPermission}
         disabled={loading}
-        className="flex items-center space-x-2 px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg transition-colors duration-200 disabled:opacity-50"
+        className="flex items-center px-3 py-2 sm:px-4 sm:py-2 bg-amber-100 hover:bg-amber-200 active:bg-amber-300 text-amber-800 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 touch-manipulation"
+        title="Enable notifications"
       >
-        <Bell className="h-5 w-5" />
-        <span className="text-sm font-medium">Enable Notifications</span>
+        <Bell className="h-4 w-4" />
+        <span className="hidden sm:inline text-sm font-medium ml-2">Enable Notifications</span>
       </button>
     );
   }
@@ -137,7 +138,7 @@ const NotificationToggle: React.FC<NotificationToggleProps> = ({ userId }) => {
         onMouseLeave={() => setShowTooltip(false)}
         onTouchStart={() => setShowTooltip(true)}
         onTouchEnd={() => setTimeout(() => setShowTooltip(false), 2000)}
-        className={`p-2 sm:p-2 rounded-lg transition-all duration-200 transform hover:scale-110 active:scale-95 touch-manipulation ${
+        className={`px-3 py-2 sm:px-4 sm:py-2 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 touch-manipulation flex items-center ${
           subscribed
             ? 'bg-green-100 text-green-600 hover:bg-green-200 active:bg-green-300'
             : 'bg-gray-100 text-gray-600 hover:bg-gray-200 active:bg-gray-300'
@@ -145,11 +146,11 @@ const NotificationToggle: React.FC<NotificationToggleProps> = ({ userId }) => {
         title={subscribed ? 'Notifications enabled' : 'Enable notifications'}
       >
         {loading ? (
-          <div className="animate-spin rounded-full h-5 w-5 sm:h-5 sm:w-5 border-b-2 border-current"></div>
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
         ) : subscribed ? (
-          <Bell className="h-5 w-5 sm:h-5 sm:w-5" />
+          <Bell className="h-4 w-4" />
         ) : (
-          <BellOff className="h-5 w-5 sm:h-5 sm:w-5" />
+          <BellOff className="h-4 w-4" />
         )}
       </button>
       {showTooltip && (

@@ -202,31 +202,31 @@ export async function broadcastNotification(
   icon?: string
 ): Promise<boolean> {
   try {
-    console.log('Broadcasting notification:', { title, body });
+    console.log('🔔 Broadcasting notification:', { title, body });
+    
+    // ALWAYS show local notification first (immediate feedback)
+    console.log('📱 Showing local notification...');
+    showLocalNotification(title, body, icon);
     
     // Get all subscriptions
+    console.log('📡 Fetching push subscriptions from database...');
     const { data, error } = await supabase
       .from('notification_subscriptions')
       .select('*');
 
     if (error) {
-      console.error('Error fetching subscriptions:', error);
-      // Still show local notification
-      showLocalNotification(title, body, icon);
-      return false;
+      console.error('❌ Error fetching subscriptions:', error);
+      return true; // Still return true since local notification was shown
     }
 
     if (!data || data.length === 0) {
-      console.log('No subscriptions found, showing local notification');
-      // Show local notification as fallback
-      showLocalNotification(title, body, icon);
+      console.log('ℹ️ No push subscriptions found (local notification already shown)');
       return true;
     }
 
-    console.log(`Found ${data.length} subscription(s), sending notifications...`);
+    console.log(`✅ Found ${data.length} subscription(s), sending push notifications...`);
 
-    // Try to send via Edge Function
-    let edgeFunctionFailed = false;
+    // Try to send via Edge Function (background delivery)
     const promises = data.map(async (sub) => {
       try {
         const result = await supabase.functions.invoke('send-push-notification', {
@@ -246,49 +246,55 @@ export async function broadcastNotification(
         });
         
         if (result.error) {
-          console.error('Edge function error:', result.error);
-          edgeFunctionFailed = true;
+          console.error('❌ Edge function error:', result.error);
         } else {
-          console.log('Notification sent successfully via Edge Function');
+          console.log('✅ Push notification sent via Edge Function');
         }
         
         return result;
       } catch (err) {
-        console.error('Failed to send to subscriber:', err);
-        edgeFunctionFailed = true;
+        console.error('❌ Failed to send to subscriber:', err);
         return null;
       }
     });
 
     await Promise.all(promises);
-    
-    // If Edge Function failed, show local notification as fallback
-    if (edgeFunctionFailed) {
-      console.log('Edge Function failed, showing local notification as fallback');
-      showLocalNotification(title, body, icon);
-    }
+    console.log('✅ All push notifications processed');
     
     return true;
   } catch (error) {
-    console.error('Error broadcasting notification:', error);
-    // Always show local notification on error
-    showLocalNotification(title, body, icon);
-    return false;
+    console.error('❌ Error broadcasting notification:', error);
+    // Local notification already shown at the start
+    return true; // Still return true since user saw the notification
   }
 }
 
 // Show local notification (fallback if push fails)
 export function showLocalNotification(title: string, body: string, icon?: string) {
+  console.log('🔔 showLocalNotification called:', { title, body, permission: Notification?.permission });
+  
   if (!('Notification' in window)) {
-    console.error('This browser does not support notifications');
+    console.error('❌ This browser does not support notifications');
     return;
   }
 
   if (Notification.permission === 'granted') {
-    new Notification(title, {
+    console.log('✅ Showing notification...');
+    const notification = new Notification(title, {
       body,
       icon: icon || '/icons/icon-192x192.png',
-      badge: '/icons/icon-64x64.png'
+      badge: '/icons/icon-64x64.png',
+      tag: 'kbs-notification',
+      requireInteraction: false
     });
+    
+    notification.onclick = () => {
+      window.focus();
+      notification.close();
+    };
+    
+    console.log('✅ Notification displayed successfully');
+  } else {
+    console.warn(`⚠️ Notification permission is: ${Notification.permission}. Please enable notifications.`);
   }
 }
