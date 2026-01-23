@@ -47,6 +47,13 @@
 - **Contact** - Business information and contact details
 - **Driver Entry** - Mobile-friendly work entry submission
 
+### 🔔 **Real-time Push Notifications** (NEW!)
+- **Instant Alerts** - Get notified when drivers submit entries
+- **Admin Actions** - Real-time updates for all admin operations
+- **Browser Notifications** - Works even when the app is in the background
+- **One-click Setup** - Easy subscription management
+- See [Quick Start Guide](QUICK_START_NOTIFICATIONS.md) for setup
+
 ### 🔐 **Admin Panel**
 - **Multi-User Authentication** - Secure admin login system
 - **Work Entry Management** - CRUD operations for work entries

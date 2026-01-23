@@ -8,6 +8,16 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      strategies: 'injectManifest',
+      srcDir: 'public',
+      filename: 'sw-custom.js',
+      injectManifest: {
+        injectionPoint: undefined
+      },
+      devOptions: {
+        enabled: true,
+        type: 'module'
+      },
       manifest: {
         name: 'KBS Earthmovers & Harvester',
         short_name: 'KBS Earthmovers',
@@ -18,12 +28,12 @@ export default defineConfig({
         description: 'Professional heavy machinery rental services. JCB, Tractor, and Harvester rentals with experienced operators.',
         icons: [
           {
-            src: '/Logo for KBS Earthmovers - Bold Industrial Design.png',
+            src: '/icons/icon-192x192.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: '/Logo for KBS Earthmovers - Bold Industrial Design.png',
+            src: '/icons/icon-512x512.png',
             sizes: '512x512',
             type: 'image/png'
           }

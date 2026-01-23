@@ -5,6 +5,8 @@ import {Download, Filter, Plus, Edit2, Trash2, User, LogOut, Save, X, Users, Fil
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import NotificationToggle from '../components/NotificationToggle';
+import { broadcastNotification } from '../lib/notifications';
 
 interface AdminPanelProps {
   adminUser: string;
@@ -486,6 +488,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         console.warn('No rows deleted. Check if the ID exists and RLS policies.');
       }
       console.log(`${isBroker ? 'Broker' : 'Work'} entry deleted successfully`);
+      
+      // Send notification about deletion
+      const deletedEntry = data && data.length > 0 ? data[0] : null;
+      if (deletedEntry) {
+        const entryName = isBroker 
+          ? (deletedEntry as BrokerEntry).broker_name 
+          : (deletedEntry as WorkEntry).rental_person_name;
+        await broadcastNotification(
+          'Entry Deleted 🗑️',
+          `Admin deleted ${isBroker ? 'broker' : ''} entry for ${entryName}`,
+          '/icons/icon-192x192.png'
+        );
+      }
+      
       if (isBroker) {
         await fetchBrokerEntries();
       } else {
@@ -536,6 +552,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         }
         console.log('Work entry updated successfully');
         showToast('Entry has been successfully updated and saved.', 'success');
+        
+        // Send notification about update
+        await broadcastNotification(
+          'Entry Updated 📝',
+          `Admin updated entry for ${entry.rental_person_name} - ${entry.machine_type}`,
+          '/icons/icon-192x192.png'
+        );
       } else {
         // Create new entry
         console.log('Creating new work entry:', entry);
@@ -562,6 +585,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         }
         console.log('Work entry created successfully');
         showToast('New entry has been successfully created and saved.', 'success');
+        
+        // Send notification about new entry
+        await broadcastNotification(
+          'New Entry Added ✅',
+          `Admin created new entry for ${entry.rental_person_name} - ${entry.machine_type}`,
+          '/icons/icon-192x192.png'
+        );
       }
 
       setEditingEntry(null);
@@ -603,6 +633,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         }
         console.log('Broker entry updated successfully:', data);
         showToast('Broker entry has been successfully updated and saved.', 'success');
+        
+        // Send notification about broker entry update
+        await broadcastNotification(
+          'Broker Entry Updated 📝',
+          `Admin updated broker entry for ${entry.broker_name}`,
+          '/icons/icon-192x192.png'
+        );
       } else {
         // Create new broker entry
         console.log('Creating new broker entry:', entry);
@@ -630,6 +667,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         
         console.log('Broker entry created successfully:', data);
         showToast('New broker entry has been successfully created and saved.', 'success');
+        
+        // Send notification about new broker entry
+        await broadcastNotification(
+          'New Broker Entry ✅',
+          `Admin created broker entry for ${entry.broker_name}`,
+          '/icons/icon-192x192.png'
+        );
       }
 
       setEditingBrokerEntry(null);
@@ -1078,7 +1122,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                 <span>Welcome, {adminUser}</span>
               </div>
             </div>
-            <div className="flex space-x-2">
+            <div className="flex space-x-2 items-center">
+              <NotificationToggle userId={adminUser} />
               <button
                 data-testid="refresh-button"
                 onClick={refreshData}

@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { supabase, type WorkEntry } from '../lib/supabase';
 import { CheckCircle, AlertCircle, Truck, Clock, DollarSign, Calendar, Timer, User } from 'lucide-react';
 import { useMobileOptimizations } from '../hooks/useMobileOptimizations';
+import { broadcastNotification } from '../lib/notifications';
 
 const DriverEntryPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -71,6 +72,13 @@ const DriverEntryPage: React.FC = () => {
 
       setSubmitStatus('success');
       triggerSuccessHaptic();
+      
+      // Send notification about new driver entry
+      await broadcastNotification(
+        'New Driver Entry 🚜',
+        `${data.driver_name} submitted entry for ${data.rental_person_name} - ${data.machine_type}`,
+        '/icons/icon-192x192.png'
+      );
       
       reset({
         rental_person_name: '',
