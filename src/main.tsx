@@ -10,7 +10,7 @@ import './index.css';
 if ('serviceWorker' in navigator && !Capacitor.isNativePlatform()) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
-      .register('/sw-custom.js', { type: 'module' })
+      .register('/sw-custom.js')
       .then((registration) => {
         console.log('Service Worker registered successfully:', registration.scope);
       })
