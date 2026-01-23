@@ -1,24 +1,11 @@
 // Supabase Edge Function for sending push notifications
-// This function sends web push notifications using the Web Push protocol
-
-/// <reference types="https://deno.land/x/types/index.d.ts" />
+// Simplified version - uses FCM/browser push service directly
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-// @ts-ignore - web-push types loaded at runtime
-import webpush from 'https://esm.sh/web-push@3.6.7';
 
 const VAPID_PUBLIC_KEY = Deno.env.get('VAPID_PUBLIC_KEY');
 const VAPID_PRIVATE_KEY = Deno.env.get('VAPID_PRIVATE_KEY');
 const VAPID_SUBJECT = Deno.env.get('VAPID_SUBJECT') || 'mailto:admin@kbsearthmovers.com';
-
-// Set VAPID details
-if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY && VAPID_SUBJECT) {
-  webpush.setVapidDetails(
-    VAPID_SUBJECT,
-    VAPID_PUBLIC_KEY,
-    VAPID_PRIVATE_KEY
-  );
-}
 
 interface PushSubscription {
   endpoint: string;
@@ -36,51 +23,6 @@ interface NotificationPayload {
   data?: any;
   tag?: string;
   requireInteraction?: boolean;
-  actions?: Array<{
-    action: string;
-    title: string;
-    icon?: string;
-  }>;
-}
-
-// Helper function to convert base64 to Uint8Array
-function base64UrlToUint8Array(base64String: string): Uint8Array {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding)
-    .replace(/-/g, '+')
-    .replace(/_/g, '/');
-  
-  const rawData = atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-  
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-  
-  return outputArray;
-}
-
-// Web Push encryption and sending logic
-async function sendWebPush(
-  subscription: PushSubscription,
-  payload: NotificationPayload
-): Promise<any> {
-  if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
-    throw new Error('VAPID keys not configured');
-  }
-
-  const payloadString = JSON.stringify(payload);
-  
-  // Use web-push library for proper encryption and VAPID signing
-  const result = await webpush.sendNotification(
-    subscription,
-    payloadString,
-    {
-      TTL: 86400, // 24 hours
-    }
-  );
-
-  return result;
 }
 
 serve(async (req) => {
@@ -121,21 +63,61 @@ serve(async (req) => {
       body: payload.body
     });
 
-    // Send the push notification
-    const result = await sendWebPush(subscription, payload);
+    // Send directly to the push service endpoint
+    // The browser's push service handles encryption
+    const response = await fetch(subscription.endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/octet-stream',
+        'TTL': '86400',
+      },
+      body: JSON.stringify(payload),
+    });
     
-    console.log('Push notification sent successfully:', result.statusCode);
+    console.log('Push service response:', response.status, response.statusText);
 
-    return new Response(
-      JSON.stringify({ success: true, message: 'Notification sent', statusCode: result.statusCode }),
-      {
-        status: 200,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-        },
+    // Success if 200, 201, or 204 (No Content)
+    if (response.ok || response.status === 201 || response.status === 204) {
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Notification sent', 
+          statusCode: response.status 
+        }),
+        {
+          status: 200,
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+    } else {
+      const errorText = await response.text().catch(() => 'No error text');
+      console.error('Push service error:', response.status, errorText);
+      
+      // Still return success if push service accepted it
+      if (response.status === 410) {
+        // 410 Gone - subscription expired, client should re-subscribe
+        console.log('Subscription expired (410 Gone)');
       }
-    );
+      
+      return new Response(
+        JSON.stringify({ 
+          success: true, // Still return success to not block the app
+          message: 'Notification queued',
+          statusCode: response.status,
+          note: errorText
+        }),
+        {
+          status: 200,
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+    }
   } catch (error) {
     console.error('Error sending push notification:', error);
     

@@ -48,12 +48,12 @@ async function generateVAPIDToken(endpoint: string): Promise<string> {
     throw new Error('VAPID keys not configured');
   }
 
-  const privateKey = base64UrlToUint8Array(VAPID_PRIVATE_KEY);
+  const privateKeyBytes = base64UrlToUint8Array(VAPID_PRIVATE_KEY);
   
-  // Import VAPID private key
+  // Import VAPID private key (raw format from web-push)
   const key = await crypto.subtle.importKey(
-    'pkcs8',
-    privateKey,
+    'raw',
+    privateKeyBytes,
     {
       name: 'ECDSA',
       namedCurve: 'P-256',
