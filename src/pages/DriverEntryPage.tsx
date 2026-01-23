@@ -77,7 +77,7 @@ const DriverEntryPage: React.FC = () => {
       console.log('Sending notification for new driver entry...');
       const notifResult = await broadcastNotification(
         'New Driver Entry 🚜',
-        `${data.driver_name} submitted: ${data.rental_person_name} | ${data.machine_type} | ${data.hours_used}hrs | ₹${data.total_amount?.toLocaleString('en-IN') || 0}`,
+        `${submitData.driver_name} submitted: ${submitData.rental_person_name} | ${submitData.hours_driven}hrs | ₹${submitData.total_amount?.toLocaleString('en-IN') || 0}`,
         '/icons/icon-192x192.png'
       );
       console.log('Notification result:', notifResult);

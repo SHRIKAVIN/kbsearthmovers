@@ -14,6 +14,14 @@ interface AdminPanelProps {
 }
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
+  // Helper function to format admin name for notifications
+  const getNotificationName = (name: string): string => {
+    const upperName = name.toUpperCase();
+    if (upperName.includes('SHRIKAVIN')) return 'Kavin';
+    if (upperName.includes('SHRINIVAS')) return 'Shri';
+    return name; // Return original if no match
+  };
+
   const [entries, setEntries] = useState<WorkEntry[]>([]);
   const [brokerEntries, setBrokerEntries] = useState<BrokerEntry[]>([]);
   const [filteredEntries, setFilteredEntries] = useState<WorkEntry[]>([]);
@@ -497,7 +505,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
           : (deletedEntry as WorkEntry).rental_person_name;
         await broadcastNotification(
           'Entry Deleted 🗑️',
-          `${adminUser} deleted ${isBroker ? 'broker' : ''} entry: ${entryName}`,
+          `${getNotificationName(adminUser)} deleted ${isBroker ? 'broker' : ''} entry: ${entryName}`,
           '/icons/icon-192x192.png'
         );
       }
@@ -557,7 +565,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         console.log('Sending notification for entry update...');
         const notifResult = await broadcastNotification(
           'Entry Updated 📝',
-          `${adminUser} updated: ${entry.rental_person_name} | ${entry.machine_type} | ${(entry as any).hours_used || 0}hrs | ₹${entry.total_amount?.toLocaleString('en-IN') || 0}`,
+          `${getNotificationName(adminUser)} updated: ${entry.rental_person_name} | ${entry.hours_driven || 0}hrs | ₹${entry.total_amount?.toLocaleString('en-IN') || 0}`,
           '/icons/icon-192x192.png'
         );
         console.log('Notification result:', notifResult);
@@ -592,7 +600,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         console.log('Sending notification for new entry...');
         const notifResult = await broadcastNotification(
           'New Entry Added ✅',
-          `${adminUser} added: ${entry.rental_person_name} | ${entry.machine_type} | ${(entry as any).hours_used || 0}hrs | ₹${entry.total_amount?.toLocaleString('en-IN') || 0}`,
+          `${getNotificationName(adminUser)} added: ${entry.rental_person_name} | ${entry.hours_driven || 0}hrs | ₹${entry.total_amount?.toLocaleString('en-IN') || 0}`,
           '/icons/icon-192x192.png'
         );
         console.log('Notification result:', notifResult);
@@ -641,7 +649,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         // Send notification about broker entry update
         await broadcastNotification(
           'Broker Entry Updated 📝',
-          `${adminUser} updated broker: ${entry.broker_name} | ₹${((entry as any).amount || 0).toLocaleString('en-IN')}`,
+          `${getNotificationName(adminUser)} updated broker: ${entry.broker_name} | ₹${((entry as any).amount || 0).toLocaleString('en-IN')}`,
           '/icons/icon-192x192.png'
         );
       } else {
@@ -675,7 +683,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         // Send notification about new broker entry
         await broadcastNotification(
           'New Broker Entry ✅',
-          `${adminUser} added broker: ${entry.broker_name} | ₹${((entry as any).amount || 0).toLocaleString('en-IN')}`,
+          `${getNotificationName(adminUser)} added broker: ${entry.broker_name} | ₹${((entry as any).amount || 0).toLocaleString('en-IN')}`,
           '/icons/icon-192x192.png'
         );
       }
