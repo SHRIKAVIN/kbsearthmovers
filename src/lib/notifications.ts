@@ -73,16 +73,27 @@ export async function subscribeToPushNotifications(userId: string): Promise<bool
     });
 
     // Save subscription to database
+    // First check if this exact subscription already exists
+    const subscriptionJson = JSON.stringify(subscription);
+    
+    const { data: existing } = await supabase
+      .from('notification_subscriptions')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('subscription_json', subscriptionJson)
+      .single();
+    
+    if (existing) {
+      console.log('Subscription already exists for this device');
+      return true;
+    }
+    
+    // Insert new subscription (allows multiple devices per user)
     const { error } = await supabase
       .from('notification_subscriptions')
-      .upsert([
-        {
-          user_id: userId,
-          subscription_json: JSON.stringify(subscription),
-          updated_at: new Date().toISOString()
-        }
-      ], {
-        onConflict: 'user_id'
+      .insert({
+        user_id: userId,
+        subscription_json: subscriptionJson,
       });
 
     if (error) {
@@ -112,11 +123,14 @@ export async function unsubscribeFromPushNotifications(userId: string): Promise<
       await subscription.unsubscribe();
     }
 
-    // Remove subscription from database
+    // Remove only this device's subscription from database
+    const subscriptionJson = subscription ? JSON.stringify(subscription) : null;
+    
     const { error } = await supabase
       .from('notification_subscriptions')
       .delete()
-      .eq('user_id', userId);
+      .eq('user_id', userId)
+      .eq('subscription_json', subscriptionJson || '');
 
     if (error) {
       console.error('Error removing subscription:', error);
