@@ -140,11 +140,14 @@
    cp .env.example .env.local
    ```
    
-   Update `.env.local` with your Supabase credentials:
+   Update `.env.local` with your Supabase credentials and admin password:
    ```env
    VITE_SUPABASE_URL=your_supabase_url
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   VITE_ADMIN_PASSWORD=your_secure_admin_password
    ```
+   
+   **Important:** Replace `your_secure_admin_password` with a strong password for admin authentication.
 
 4. **Database Setup**
    ```bash

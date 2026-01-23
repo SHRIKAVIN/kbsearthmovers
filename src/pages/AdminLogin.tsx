@@ -26,7 +26,9 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
       .catch(err => console.error('Error loading animation:', err));
   }, []);
 
-  const ADMIN_PASSWORD = 'kbs2025';
+  // Get admin password from environment variable
+  const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD;
+  
   const adminUsers = [
     'BHASKARAN K',
     'SHRINIVAS B', 
