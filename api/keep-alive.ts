@@ -17,7 +17,7 @@ export default async function handler(req: any, res: any) {
       process.env.SUPABASE_ANON_KEY ||
       process.env.VITE_SUPABASE_ANON_KEY
   );
-  const tableName = process.env.KEEP_ALIVE_TABLE || 'rental_records';
+  const tableName = process.env.KEEP_ALIVE_TABLE || 'work_entries';
   const keyType = process.env.SUPABASE_SERVICE_ROLE_KEY ? 'service_role' : 'anon';
 
   if (!supabaseUrl || !supabaseKey) {
