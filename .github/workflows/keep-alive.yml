@@ -46,11 +46,11 @@ jobs:
             "title": "Supabase Keep-Alive Notification",
             "sections": [
               {
-                "activityTitle": "${{ github.event.repository.name }}",
+                "activityTitle": "KBS Earthmovers & Harvesters",
                 "activitySubtitle": "Keep-alive workflow result",
                 "activityImage": "${LOGO_URL}",
                 "facts": [
-                  { "name": "Project Name", "value": "${{ github.event.repository.name }}" },
+                  { "name": "Project Name", "value": "KBS Earthmovers & Harvesters" },
                   { "name": "Job Status", "value": "Success ✅" },
                   { "name": "Timestamp", "value": "$(date -u +"%Y-%m-%d %H:%M:%S UTC")" },
                   { "name": "Action", "value": "${{ github.workflow }}" },
@@ -87,11 +87,11 @@ jobs:
             "title": "Supabase Keep-Alive Notification",
             "sections": [
               {
-                "activityTitle": "${{ github.event.repository.name }}",
+                "activityTitle": "KBS Earthmovers & Harvesters",
                 "activitySubtitle": "Keep-alive workflow result",
                 "activityImage": "${LOGO_URL}",
                 "facts": [
-                  { "name": "Project Name", "value": "${{ github.event.repository.name }}" },
+                  { "name": "Project Name", "value": "KBS Earthmovers & Harvesters" },
                   { "name": "Job Status", "value": "Failed ❌" },
                   { "name": "Timestamp", "value": "$(date -u +"%Y-%m-%d %H:%M:%S UTC")" },
                   { "name": "Action", "value": "${{ github.workflow }}" },
