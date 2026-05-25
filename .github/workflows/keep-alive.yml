@@ -30,84 +30,84 @@ jobs:
             exit 1
           fi
 
-      - name: Notify Teams on Success
-        if: success()
-        env:
-          TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
-        run: |
-          LOGO_URL="https://kbsearthmovers.vercel.app/Logo%20for%20KBS%20Earthmovers%20-%20Bold%20Industrial%20Design.png"
-          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          payload=$(cat <<EOF
-          {
-            "@type": "MessageCard",
-            "@context": "https://schema.org/extensions",
-            "summary": "Supabase keep-alive success",
-            "themeColor": "2EB886",
-            "title": "Supabase Keep-Alive Notification",
-            "sections": [
-              {
-                "activityTitle": "KBS Earthmovers & Harvesters",
-                "activitySubtitle": "Keep-alive workflow result",
-                "activityImage": "${LOGO_URL}",
-                "facts": [
-                  { "name": "Project Name", "value": "KBS Earthmovers & Harvesters" },
-                  { "name": "Job Status", "value": "Success ✅" },
-                  { "name": "Timestamp", "value": "$(date -u +"%Y-%m-%d %H:%M:%S UTC")" },
-                  { "name": "Action", "value": "${{ github.workflow }}" },
-                  { "name": "Job Number", "value": "#${{ github.run_number }}" }
-                ],
-                "markdown": true
-              }
-            ],
-            "potentialAction": [
-              {
-                "@type": "OpenUri",
-                "name": "Open GitHub Run",
-                "targets": [{ "os": "default", "uri": "${RUN_URL}" }]
-              }
-            ]
-          }
-          EOF
-          )
-          curl -sS -X POST "$TEAMS_WEBHOOK_URL" -H "Content-Type: application/json" -d "$payload"
+      # - name: Notify Teams on Success
+      #   if: success()
+      #   env:
+      #     TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
+      #   run: |
+      #     LOGO_URL="https://kbsearthmovers.vercel.app/Logo%20for%20KBS%20Earthmovers%20-%20Bold%20Industrial%20Design.png"
+      #     RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+      #     payload=$(cat <<EOF
+      #     {
+      #       "@type": "MessageCard",
+      #       "@context": "https://schema.org/extensions",
+      #       "summary": "Supabase keep-alive success",
+      #       "themeColor": "2EB886",
+      #       "title": "Supabase Keep-Alive Notification",
+      #       "sections": [
+      #         {
+      #           "activityTitle": "KBS Earthmovers & Harvesters",
+      #           "activitySubtitle": "Keep-alive workflow result",
+      #           "activityImage": "${LOGO_URL}",
+      #           "facts": [
+      #             { "name": "Project Name", "value": "KBS Earthmovers & Harvesters" },
+      #             { "name": "Job Status", "value": "Success ✅" },
+      #             { "name": "Timestamp", "value": "$(date -u +"%Y-%m-%d %H:%M:%S UTC")" },
+      #             { "name": "Action", "value": "${{ github.workflow }}" },
+      #             { "name": "Job Number", "value": "#${{ github.run_number }}" }
+      #           ],
+      #           "markdown": true
+      #         }
+      #       ],
+      #       "potentialAction": [
+      #         {
+      #           "@type": "OpenUri",
+      #           "name": "Open GitHub Run",
+      #           "targets": [{ "os": "default", "uri": "${RUN_URL}" }]
+      #         }
+      #       ]
+      #     }
+      #     EOF
+      #     )
+      #     curl -sS -X POST "$TEAMS_WEBHOOK_URL" -H "Content-Type: application/json" -d "$payload"
 
-      - name: Notify Teams on Failure
-        if: failure()
-        env:
-          TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
-        run: |
-          LOGO_URL="https://kbsearthmovers.vercel.app/Logo%20for%20KBS%20Earthmovers%20-%20Bold%20Industrial%20Design.png"
-          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          payload=$(cat <<EOF
-          {
-            "@type": "MessageCard",
-            "@context": "https://schema.org/extensions",
-            "summary": "Supabase keep-alive failure",
-            "themeColor": "E81123",
-            "title": "Supabase Keep-Alive Notification",
-            "sections": [
-              {
-                "activityTitle": "KBS Earthmovers & Harvesters",
-                "activitySubtitle": "Keep-alive workflow result",
-                "activityImage": "${LOGO_URL}",
-                "facts": [
-                  { "name": "Project Name", "value": "KBS Earthmovers & Harvesters" },
-                  { "name": "Job Status", "value": "Failed ❌" },
-                  { "name": "Timestamp", "value": "$(date -u +"%Y-%m-%d %H:%M:%S UTC")" },
-                  { "name": "Action", "value": "${{ github.workflow }}" },
-                  { "name": "Job Number", "value": "#${{ github.run_number }}" }
-                ],
-                "markdown": true
-              }
-            ],
-            "potentialAction": [
-              {
-                "@type": "OpenUri",
-                "name": "Open GitHub Run",
-                "targets": [{ "os": "default", "uri": "${RUN_URL}" }]
-              }
-            ]
-          }
-          EOF
-          )
-          curl -sS -X POST "$TEAMS_WEBHOOK_URL" -H "Content-Type: application/json" -d "$payload"
+      # - name: Notify Teams on Failure
+      #   if: failure()
+      #   env:
+      #     TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
+      #   run: |
+      #     LOGO_URL="https://kbsearthmovers.vercel.app/Logo%20for%20KBS%20Earthmovers%20-%20Bold%20Industrial%20Design.png"
+      #     RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+      #     payload=$(cat <<EOF
+      #     {
+      #       "@type": "MessageCard",
+      #       "@context": "https://schema.org/extensions",
+      #       "summary": "Supabase keep-alive failure",
+      #       "themeColor": "E81123",
+      #       "title": "Supabase Keep-Alive Notification",
+      #       "sections": [
+      #         {
+      #           "activityTitle": "KBS Earthmovers & Harvesters",
+      #           "activitySubtitle": "Keep-alive workflow result",
+      #           "activityImage": "${LOGO_URL}",
+      #           "facts": [
+      #             { "name": "Project Name", "value": "KBS Earthmovers & Harvesters" },
+      #             { "name": "Job Status", "value": "Failed ❌" },
+      #             { "name": "Timestamp", "value": "$(date -u +"%Y-%m-%d %H:%M:%S UTC")" },
+      #             { "name": "Action", "value": "${{ github.workflow }}" },
+      #             { "name": "Job Number", "value": "#${{ github.run_number }}" }
+      #           ],
+      #           "markdown": true
+      #         }
+      #       ],
+      #       "potentialAction": [
+      #         {
+      #           "@type": "OpenUri",
+      #           "name": "Open GitHub Run",
+      #           "targets": [{ "os": "default", "uri": "${RUN_URL}" }]
+      #         }
+      #       ]
+      #     }
+      #     EOF
+      #     )
+      #     curl -sS -X POST "$TEAMS_WEBHOOK_URL" -H "Content-Type: application/json" -d "$payload"
