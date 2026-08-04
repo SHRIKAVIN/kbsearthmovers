@@ -2,11 +2,12 @@
 
 > **Professional Heavy Machinery Rental Management System**
 
-[![React](https://img.shields.io/badge/React-18.0.0-blue.svg?style=for-the-badge&logo=react)](https://reactjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0.0-blue.svg?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.3.0-38B2AC.svg?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
-[![Supabase](https://img.shields.io/badge/Supabase-2.0.0-3ECF8E.svg?style=for-the-badge&logo=supabase)](https://supabase.com/)
-[![Vite](https://img.shields.io/badge/Vite-4.4.0-646CFF.svg?style=for-the-badge&logo=vite)](https://vitejs.dev/)
+[![React](https://img.shields.io/badge/React-18.3-blue.svg?style=for-the-badge&logo=react)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-blue.svg?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC.svg?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
+[![Supabase](https://img.shields.io/badge/Supabase-2.38-3ECF8E.svg?style=for-the-badge&logo=supabase)](https://supabase.com/)
+[![Vite](https://img.shields.io/badge/Vite-5.4-646CFF.svg?style=for-the-badge&logo=vite)](https://vitejs.dev/)
+[![Capacitor](https://img.shields.io/badge/Capacitor-7.4-119EFF.svg?style=for-the-badge&logo=capacitor)](https://capacitorjs.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
 
 ---
@@ -21,53 +22,52 @@
 - [🚀 Getting Started](#-getting-started)
 - [📁 Project Structure](#-project-structure)
 - [🔧 Configuration](#-configuration)
+- [💓 Database Keep-Alive](#-database-keep-alive)
 - [📊 Database Schema](#-database-schema)
-- [🧪 Testing](#-testing)
 - [🚀 Deployment](#-deployment)
+- [📱 Mobile App](#-mobile-app)
 - [🤝 Contributing](#-contributing)
 
 ---
 
 ## 🚀 Overview
 
-**KBS EARTHMOVERS & HARVESTER** is a comprehensive web-based management system designed for heavy machinery rental businesses. This modern React application provides efficient tools for managing work entries, driver submissions, broker transactions, and administrative operations.
+**KBS EARTHMOVERS & HARVESTER** is a web-based management system for heavy machinery rental businesses. It covers work entries, driver submissions, broker transactions, and admin operations for JCB, tractor, and harvester services.
 
-### 🎯 **Key Business Areas**
-- **JCB Services** - Excavation and construction work
-- **Tractor Rental** - Agricultural and land preparation
-- **Harvester Services** - Crop harvesting and processing
+### 🎯 Key Business Areas
+
+- **JCB Services** — Excavation and construction work
+- **Tractor Rental** — Agricultural and land preparation
+- **Harvester Services** — Crop harvesting and processing
 
 ---
 
 ## ✨ Features
 
-### 🏠 **Public Pages**
-- **Homepage** - Professional landing page with service overview
-- **Services** - Detailed service descriptions and specifications
-- **Contact** - Business information and contact details
-- **Driver Entry** - Mobile-friendly work entry submission
+### 🏠 Public Pages
 
-### 🔔 **Real-time Push Notifications** (NEW!)
-- **Instant Alerts** - Get notified when drivers submit entries
-- **Admin Actions** - Real-time updates for all admin operations
-- **Browser Notifications** - Works even when the app is in the background
-- **One-click Setup** - Easy subscription management
-- See [Quick Start Guide](QUICK_START_NOTIFICATIONS.md) for setup
+- **Homepage** — Landing page with service overview
+- **Services** — Service descriptions and specifications
+- **Contact** — Business information and contact details
+- **Driver Entry** — Mobile-friendly work entry submission
 
-### 🔐 **Admin Panel**
-- **Multi-User Authentication** - Secure admin login system
-- **Work Entry Management** - CRUD operations for work entries
-- **Broker Entry Management** - Dedicated broker transaction tracking
-- **Advanced Filtering** - Date, machine type, driver, and search filters
-- **Real-time Updates** - Live data synchronization
-- **Export Functionality** - Excel and PDF report generation
-- **Responsive Design** - Mobile-optimized admin interface
+### 🔐 Admin Panel
 
-### 📊 **Analytics & Reporting**
-- **Dashboard Statistics** - Real-time business metrics
-- **Financial Tracking** - Total amounts, received payments, balances
-- **Hour Tracking** - Work hours and machine utilization
-- **Export Reports** - Professional Excel and PDF exports
+- **Password Authentication** — Secure admin login
+- **Work Entry Management** — CRUD for work entries
+- **Broker Entry Management** — Broker transaction tracking
+- **Owner Filtering** — Filter by owner (Rohini / Laxmi)
+- **Advanced Filtering** — Date, machine type, driver, and search
+- **Real-time Updates** — Live data via Supabase
+- **Export** — Excel and PDF report generation
+- **Responsive Design** — Mobile-optimized admin UI
+
+### 📊 Analytics & Reporting
+
+- Dashboard statistics and business metrics
+- Financial tracking (totals, received amounts, balances)
+- Hour tracking and machine utilization
+- Excel and PDF exports
 
 ---
 
@@ -75,59 +75,57 @@
 
 | Category | Technology | Version |
 |----------|------------|---------|
-| **Frontend** | React | 18.0.0 |
-| **Language** | TypeScript | 5.0.0 |
-| **Styling** | Tailwind CSS | 3.3.0 |
-| **Build Tool** | Vite | 4.4.0 |
-| **Backend** | Supabase | 2.0.0 |
+| **Frontend** | React | 18.3 |
+| **Language** | TypeScript | 5.5 |
+| **Styling** | Tailwind CSS | 3.4 |
+| **Build Tool** | Vite | 5.4 |
+| **Backend** | Supabase | 2.38 |
 | **Database** | PostgreSQL | Latest |
-| **Authentication** | Supabase Auth | Built-in |
-| **Real-time** | Supabase Realtime | Built-in |
+| **Mobile** | Capacitor | 7.4 |
+| **PWA** | vite-plugin-pwa | 1.0 |
 | **Icons** | Lucide React | Latest |
 | **Forms** | React Hook Form | Latest |
 | **Date Handling** | date-fns | Latest |
 | **PDF Generation** | jsPDF | Latest |
-| **Excel Export** | SheetJS | Latest |
+| **Excel Export** | SheetJS (xlsx) | Latest |
 
 ---
 
 ## 🌐 Live Demo
 
-🚀 **Experience the application live!**
-
 **[👉 View Live Demo](https://kbsearthmovers.vercel.app/)**
 
-### 📱 **Features to Explore**
-- **Public Pages:** Homepage, Services, Contact, Driver Entry
-- **Admin Panel:** Work entry management, broker transactions, reports
-- **Real-time Updates:** Live data synchronization
-- **Export Functionality:** Excel and PDF report generation
-- **Responsive Design:** Mobile-optimized interface
+### Features to Explore
+
+- Public pages: Homepage, Services, Contact, Driver Entry
+- Admin panel: Work entries, broker transactions, reports
+- Real-time updates and Excel/PDF exports
+- Responsive, mobile-friendly UI
 
 ---
 
 ## 📱 Screenshots
 
-### 🏠 Homepage
+### Homepage
 ![Homepage](./public/Sample_Images/home.png)
 
-### 🔐 Admin Dashboard
+### Admin Dashboard
 ![Admin Dashboard](./public/Sample_Images/admin.png)
 
-### 📝 Driver Entry Form
+### Driver Entry Form
 ![Driver Entry](./public/Sample_Images/driver.png)
 
 ---
 
 ## 🚀 Getting Started
 
-### 📋 Prerequisites
+### Prerequisites
 
-- **Node.js** (v16 or higher)
+- **Node.js** (v18 or higher recommended)
 - **npm** or **yarn**
-- **Supabase Account** (for backend services)
+- **Supabase** account (for backend)
 
-### 🔧 Installation
+### Installation
 
 1. **Clone the repository**
    ```bash
@@ -138,41 +136,31 @@
 2. **Install dependencies**
    ```bash
    npm install
-   # or
-   yarn install
    ```
 
-3. **Environment Setup**
+3. **Environment setup**
    ```bash
    cp .env.example .env.local
    ```
-   
-   Update `.env.local` with your Supabase credentials and admin password:
+
+   Update `.env.local`:
    ```env
    VITE_SUPABASE_URL=your_supabase_url
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
    VITE_ADMIN_PASSWORD=your_secure_admin_password
    ```
-   
-   **Important:** Replace `your_secure_admin_password` with a strong password for admin authentication.
 
-4. **Database Setup**
+4. **Database setup**
    ```bash
-   # Run Supabase migrations
    npx supabase db push
    ```
 
-5. **Start Development Server**
+5. **Start the dev server**
    ```bash
    npm run dev
-   # or
-   yarn dev
    ```
 
-6. **Open Application**
-   ```
-   http://localhost:5173
-   ```
+6. Open [http://localhost:5173](http://localhost:5173)
 
 ---
 
@@ -180,33 +168,35 @@
 
 ```
 kbsearthmovers/
-├── 📁 public/                 # Static assets
-│   ├── 📁 icons/             # App icons
-│   ├── 🖼️ harvester.png      # Service images
-│   ├── 🖼️ jcb.png           # Service images
-│   ├── 🖼️ tractor.png       # Service images
-│   └── 📄 manifest.json      # PWA manifest
-├── 📁 src/                   # Source code
-│   ├── 📁 components/        # Reusable components
-│   │   └── 🧭 Navbar.tsx     # Navigation component
-│   ├── 📁 pages/            # Page components
-│   │   ├── 🏠 HomePage.tsx   # Landing page
-│   │   ├── 🔧 ServicesPage.tsx # Services page
-│   │   ├── 📞 ContactPage.tsx # Contact page
-│   │   ├── 📝 DriverEntryPage.tsx # Driver entry form
-│   │   ├── 🔐 AdminLogin.tsx # Admin authentication
-│   │   └── 📊 AdminPanel.tsx # Admin dashboard
-│   ├── 📁 lib/              # Utility libraries
-│   │   └── 🔗 supabase.ts   # Supabase configuration
-│   ├── 🎨 index.css         # Global styles
-│   ├── 🚀 main.tsx          # Application entry point
-│   └── 📱 App.tsx           # Main app component
-├── 📁 supabase/             # Database migrations
-│   └── 📁 migrations/       # SQL migration files
-├── 📄 package.json          # Dependencies and scripts
-├── 📄 vite.config.ts        # Vite configuration
-├── 📄 tailwind.config.js    # Tailwind CSS configuration
-└── 📄 README.md             # Project documentation
+├── api/
+│   └── keep-alive.ts          # Vercel serverless keep-alive endpoint
+├── .github/workflows/
+│   └── keep-alive.yml         # Cron job to ping keep-alive + Teams alerts
+├── android/ / ios/            # Capacitor native projects
+├── public/                    # Static assets, icons, PWA manifest
+├── src/
+│   ├── components/
+│   │   ├── Navbar.tsx
+│   │   └── StatsSection.tsx
+│   ├── hooks/
+│   │   └── useMobileOptimizations.ts
+│   ├── pages/
+│   │   ├── HomePage.tsx
+│   │   ├── ServicesPage.tsx
+│   │   ├── ContactPage.tsx
+│   │   ├── DriverEntryPage.tsx
+│   │   ├── AdminLogin.tsx
+│   │   └── AdminPanel.tsx
+│   ├── lib/
+│   │   └── supabase.ts
+│   ├── App.tsx
+│   ├── main.tsx
+│   └── index.css
+├── supabase/migrations/       # SQL migrations
+├── capacitor.config.ts
+├── vercel.json
+├── vite.config.ts
+└── package.json
 ```
 
 ---
@@ -215,42 +205,61 @@ kbsearthmovers/
 
 ### Environment Variables
 
-Create a `.env.local` file in the root directory:
+**Local (`.env.local`):**
 
 ```env
-# Supabase Configuration
 VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-
-# Application Settings
-VITE_APP_NAME=KBS EARTHMOVERS
-VITE_APP_VERSION=1.0.0
+VITE_ADMIN_PASSWORD=your_secure_admin_password
 ```
 
-### Tailwind CSS Configuration
+**Vercel (production):**
 
-The project uses Tailwind CSS with custom configurations:
+| Variable | Required | Notes |
+|----------|----------|-------|
+| `VITE_SUPABASE_URL` | Yes | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Yes | Anon/public key |
+| `VITE_ADMIN_PASSWORD` | Yes | Admin login password |
+| `SUPABASE_URL` | Recommended | Used by `/api/keep-alive` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Recommended | Preferred key for keep-alive queries |
+| `SUPABASE_ANON_KEY` | Optional | Fallback if service role is not set |
+| `KEEP_ALIVE_TABLE` | Optional | Defaults to `work_entries` |
 
-```javascript
-// tailwind.config.js
-module.exports = {
-  content: ["./src/**/*.{js,jsx,ts,tsx}"],
-  theme: {
-    extend: {
-      colors: {
-        amber: {
-          50: '#fffbeb',
-          // ... custom amber palette
-        }
-      },
-      animation: {
-        'fade-in-up': 'fadeInUp 0.5s ease-out',
-        'slide-in-left': 'slideInLeft 0.5s ease-out',
-        'slide-in-right': 'slideInRight 0.5s ease-out',
-      }
-    }
-  },
-  plugins: []
+---
+
+## 💓 Database Keep-Alive
+
+Supabase free-tier projects pause after inactivity. This repo keeps the database awake with:
+
+1. **`/api/keep-alive`** — Vercel serverless function that runs a lightweight `SELECT` against Supabase
+2. **GitHub Actions** (`.github/workflows/keep-alive.yml`) — Runs every 15 minutes and on manual dispatch; pings the endpoint and posts success/failure cards to Microsoft Teams
+
+### GitHub Secrets
+
+| Secret | Purpose |
+|--------|---------|
+| `VERCEL_DEPLOYMENT_URL` | Base URL of the Vercel deployment (e.g. `https://kbsearthmovers.vercel.app`) |
+| `TEAMS_WEBHOOK_URL` | Incoming webhook URL for Teams notifications |
+
+### Manual trigger
+
+In GitHub: **Actions → Keep Supabase Database Active → Run workflow**
+
+### Endpoint
+
+```
+GET https://<your-vercel-url>/api/keep-alive
+```
+
+Success response example:
+
+```json
+{
+  "success": true,
+  "message": "Database keep-alive successful",
+  "timestamp": "2026-08-04T18:00:00.000Z",
+  "table": "work_entries",
+  "keyType": "service_role"
 }
 ```
 
@@ -258,7 +267,8 @@ module.exports = {
 
 ## 📊 Database Schema
 
-### Work Entries Table
+### Work Entries
+
 ```sql
 CREATE TABLE work_entries (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -273,12 +283,14 @@ CREATE TABLE work_entries (
   date DATE NOT NULL,
   time TIME,
   entry_type TEXT NOT NULL DEFAULT 'driver',
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  owner TEXT NOT NULL DEFAULT 'Rohini' CHECK (owner IN ('Rohini', 'Laxmi')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 ```
 
-### Broker Entries Table
+### Broker Entries
+
 ```sql
 CREATE TABLE broker_entries (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -288,109 +300,73 @@ CREATE TABLE broker_entries (
   amount_received DECIMAL(10,2) DEFAULT 0,
   date DATE NOT NULL,
   time TIME,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  owner TEXT NOT NULL DEFAULT 'Rohini' CHECK (owner IN ('Rohini', 'Laxmi')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 ```
 
----
-
-## 🧪 Testing
-
-### Running Tests
-```bash
-# Run all tests
-npm test
-
-# Run tests in watch mode
-npm run test:watch
-
-# Run tests with coverage
-npm run test:coverage
-```
-
-### Test Structure
-```
-src/
-├── 📁 __tests__/           # Test files
-│   ├── 📁 components/      # Component tests
-│   ├── 📁 pages/          # Page tests
-│   └── 📁 utils/          # Utility tests
-```
-
-### Test IDs
-The application includes comprehensive test IDs for all interactive elements:
-- `data-testid="admin-login-page"`
-- `data-testid="driver-entry-form"`
-- `data-testid="submit-entry-button"`
-- And many more...
+Migrations live in `supabase/migrations/`.
 
 ---
 
 ## 🚀 Deployment
 
-### Vercel Deployment
-1. **Connect Repository**
-   - Link your GitHub repository to Vercel
-   - Configure environment variables
+### Vercel
 
-2. **Build Settings**
-   ```bash
+1. Connect the GitHub repo to Vercel
+2. Build settings:
+   ```text
    Build Command: npm run build
    Output Directory: dist
    Install Command: npm install
    ```
+3. Add the environment variables listed above
+4. Ensure `/api/keep-alive` can reach Supabase (service role or anon key)
 
-3. **Environment Variables**
-   - Add Supabase credentials to Vercel dashboard
-   - Configure production environment
+### Manual
 
-### Manual Deployment
 ```bash
-# Build for production
 npm run build
-
-# Preview production build
 npm run preview
-
-# Deploy to your hosting provider
-# Upload dist/ folder contents
+# Deploy the contents of dist/ (and configure the api/ function on your host)
 ```
+
+---
+
+## 📱 Mobile App
+
+The project includes **Capacitor** wrappers for Android and iOS (`android/`, `ios/`).
+
+```bash
+npm run build
+npx cap sync
+npx cap open android   # or ios
+```
+
+See [PLAY_STORE_PUBLISHING_GUIDE.md](PLAY_STORE_PUBLISHING_GUIDE.md) for Play Store publishing notes.
 
 ---
 
 ## 🤝 Contributing
 
-We welcome contributions! Please follow these steps:
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit: `git commit -m 'Add amazing feature'`
+4. Push: `git push origin feature/amazing-feature`
+5. Open a Pull Request
 
-1. **Fork the repository**
-2. **Create a feature branch**
-   ```bash
-   git checkout -b feature/amazing-feature
-   ```
-3. **Commit your changes**
-   ```bash
-   git commit -m 'Add amazing feature'
-   ```
-4. **Push to the branch**
-   ```bash
-   git push origin feature/amazing-feature
-   ```
-5. **Open a Pull Request**
+### Guidelines
 
-### 📋 Contribution Guidelines
 - Follow TypeScript best practices
 - Use meaningful commit messages
-- Add tests for new features
-- Update documentation as needed
-- Follow the existing code style
+- Update documentation when behavior changes
+- Match existing code style
 
 ---
-
-
-
-
 
 <div align="center">
 
 **Made with ❤️ by KBS EARTHMOVERS Team**
+
+</div>
