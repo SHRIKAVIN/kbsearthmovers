@@ -224,6 +224,7 @@ VITE_ADMIN_PASSWORD=your_secure_admin_password
 | `SUPABASE_SERVICE_ROLE_KEY` | Recommended | Preferred key for keep-alive queries |
 | `SUPABASE_ANON_KEY` | Optional | Fallback if service role is not set |
 | `KEEP_ALIVE_TABLE` | Optional | Defaults to `work_entries` |
+| `TEAMS_WEBHOOK_URL` | Optional | Teams alerts for Vercel Cron keep-alive |
 
 ---
 
@@ -232,8 +233,16 @@ VITE_ADMIN_PASSWORD=your_secure_admin_password
 Supabase free-tier projects pause after inactivity. This repo keeps the database awake with:
 
 1. **`/api/keep-alive`** — Vercel serverless function that runs a lightweight `SELECT` against Supabase
-2. **Vercel Cron** (`vercel.json`) — Invokes `/api/keep-alive` once daily at 12:00 UTC (Hobby-compatible)
+2. **Vercel Cron** (`vercel.json`) — Invokes `/api/keep-alive` once daily at 12:00 UTC (Hobby-compatible) and posts success/failure cards to Microsoft Teams
 3. **GitHub Actions** (`.github/workflows/keep-alive.yml`) — Runs every 15 minutes and on manual dispatch; pings the endpoint and posts success/failure cards to Microsoft Teams
+
+### Vercel Environment Variables (keep-alive)
+
+| Variable | Purpose |
+|----------|---------|
+| `SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | Preferred key for keep-alive queries |
+| `TEAMS_WEBHOOK_URL` | Incoming webhook URL for Teams notifications from Vercel Cron |
 
 ### GitHub Secrets
 
