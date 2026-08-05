@@ -233,7 +233,7 @@ VITE_ADMIN_PASSWORD=your_secure_admin_password
 Supabase free-tier projects pause after inactivity. This repo keeps the database awake with:
 
 1. **`/api/keep-alive`** — Vercel serverless function that runs a lightweight `SELECT` against Supabase
-2. **Vercel Cron** (`vercel.json`) — Invokes `/api/keep-alive` once daily at 12:00 UTC (Hobby-compatible) and posts success/failure cards to Microsoft Teams
+2. **Vercel Cron** (`vercel.json`) — Invokes `/api/keep-alive` once daily at 03:00 UTC (Hobby-compatible) and posts success/failure cards to Microsoft Teams
 3. **GitHub Actions** (`.github/workflows/keep-alive.yml`) — Runs every 15 minutes and on manual dispatch; pings the endpoint and posts success/failure cards to Microsoft Teams
 
 ### Vercel Environment Variables (keep-alive)
