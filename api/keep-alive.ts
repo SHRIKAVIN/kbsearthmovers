@@ -6,10 +6,22 @@ function normalizeEnv(value?: string) {
   return trimmed.replace(/^['"]|['"]$/g, '');
 }
 
+function headerValue(
+  headers: Record<string, string | string[] | undefined> | undefined,
+  name: string
+) {
+  const value = headers?.[name] ?? headers?.[name.toLowerCase()];
+  return Array.isArray(value) ? value[0] : value;
+}
+
 function isVercelCron(req: { headers?: Record<string, string | string[] | undefined> }) {
-  const header = req.headers?.['x-vercel-cron'];
-  const value = Array.isArray(header) ? header[0] : header;
-  return value === '1';
+  // Vercel Cron sends User-Agent: vercel-cron/1.0 and x-vercel-cron-schedule.
+  // Older docs also mentioned x-vercel-cron: 1 — accept both.
+  const userAgent = headerValue(req.headers, 'user-agent') || '';
+  if (userAgent.includes('vercel-cron')) return true;
+  if (headerValue(req.headers, 'x-vercel-cron') === '1') return true;
+  if (headerValue(req.headers, 'x-vercel-cron-schedule')) return true;
+  return false;
 }
 
 async function notifyTeams(params: {
@@ -74,6 +86,9 @@ export default async function handler(req: any, res: any) {
   }
 
   const shouldNotifyTeams = isVercelCron(req);
+  const teamsSkipped = shouldNotifyTeams
+    ? undefined
+    : { sent: false, reason: 'Not a Vercel Cron request; Teams notify skipped' };
   const supabaseUrl = normalizeEnv(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL);
   const supabaseKey = normalizeEnv(
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
@@ -89,7 +104,7 @@ export default async function handler(req: any, res: any) {
       'Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (recommended) or anon key in deployment env';
     const teams = shouldNotifyTeams
       ? await notifyTeams({ success: false, timestamp, errorMessage: 'Missing Supabase configuration' })
-      : undefined;
+      : teamsSkipped;
     return res.status(500).json({
       error: 'Missing Supabase configuration',
       message: errorMessage,
@@ -116,7 +131,7 @@ export default async function handler(req: any, res: any) {
             keyType,
             errorMessage,
           })
-        : undefined;
+        : teamsSkipped;
       return res.status(500).json({
         error: 'Database connection failed',
         message: errorMessage,
@@ -133,7 +148,7 @@ export default async function handler(req: any, res: any) {
           table: tableName,
           keyType,
         })
-      : undefined;
+      : teamsSkipped;
 
     return res.status(200).json({
       success: true,
@@ -147,7 +162,7 @@ export default async function handler(req: any, res: any) {
     const errorMessage = error?.message || 'Unknown error occurred';
     const teams = shouldNotifyTeams
       ? await notifyTeams({ success: false, timestamp, errorMessage })
-      : undefined;
+      : teamsSkipped;
     return res.status(500).json({
       error: 'Internal server error',
       message: errorMessage,
