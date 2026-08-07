@@ -1,8 +1,8 @@
 name: Keep Supabase Database Active
 
 on:
-  schedule:
-    - cron: '*/15 * * * *' # every 15 min
+  # schedule:
+  #   - cron: '*/15 * * * *' # every 15 min — disabled; Vercel Cron handles daily ping
   workflow_dispatch:
 
 jobs:
