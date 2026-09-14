@@ -14,6 +14,8 @@ const DriverEntryPage: React.FC = () => {
   // Set after a successful save so we can offer to collect payment for that entry.
   const [savedEntry, setSavedEntry] = useState<{ id: string; balance: number } | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  // The form is only cleared once the driver dismisses a SETTLED payment - see below.
+  const [paymentDone, setPaymentDone] = useState(false);
   const { triggerSuccessHaptic, triggerErrorHaptic } = useMobileOptimizations();
 
   // Prevent scroll jumping on page load
@@ -471,10 +473,20 @@ const DriverEntryPage: React.FC = () => {
       {showPaymentModal && savedEntry && (
         <PaymentQRModal
           workEntryId={savedEntry.id}
-          onClose={() => setShowPaymentModal(false)}
-          onPaid={() => {
-            setSavedEntry(null);
-            setSubmitStatus(null);
+          /*
+           * onPaid must NOT clear savedEntry. This modal renders only while
+           * savedEntry is set, so clearing it on payment unmounted the modal in the
+           * same commit that set phase='paid' - the confirmation screen the driver
+           * shows the customer never got to render. Clearing is deferred to onClose.
+           */
+          onPaid={() => setPaymentDone(true)}
+          onClose={() => {
+            setShowPaymentModal(false);
+            if (paymentDone) {
+              setSavedEntry(null);
+              setSubmitStatus(null);
+              setPaymentDone(false);
+            }
           }}
         />
       )}

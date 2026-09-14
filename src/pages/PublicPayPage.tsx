@@ -23,6 +23,8 @@ const PublicPayPage: React.FC = () => {
   const [error, setError] = useState('');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paidAmount, setPaidAmount] = useState<number | null>(null);
+  // Set on settlement, acted on when the confirmation is dismissed - see the modal below.
+  const [paidPending, setPaidPending] = useState<number | null>(null);
 
   useEffect(() => {
     document.title = 'Pay - KBS Earthmovers & Harvesters';
@@ -63,6 +65,7 @@ const PublicPayPage: React.FC = () => {
     setAmount('');
     setError('');
     setPaidAmount(null);
+    setPaidPending(null);
   };
 
   return (
@@ -280,10 +283,19 @@ const PublicPayPage: React.FC = () => {
           phone={phone}
           amount={numericAmount}
           selfService
-          onClose={() => setShowPaymentModal(false)}
-          onPaid={() => {
-            setPaidAmount(numericAmount);
+          /*
+           * Closing on payment would unmount this in the same commit that shows the
+           * confirmation, so the customer would never see the UPI reference number -
+           * the one detail that lets them check the payment in their own bank app.
+           * The page's own receipt takes over once they dismiss it.
+           */
+          onPaid={() => setPaidPending(numericAmount)}
+          onClose={() => {
             setShowPaymentModal(false);
+            if (paidPending !== null) {
+              setPaidAmount(paidPending);
+              setPaidPending(null);
+            }
           }}
         />
       )}
