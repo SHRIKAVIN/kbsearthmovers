@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { createOrder, createUpiSession } from '../_lib/cashfree.js';
+import { createOrder, createUpiSession, createPaymentLink } from '../_lib/cashfree.js';
 import { normalizePhone } from '../_lib/phone.js';
 import { serviceClient, outstandingForPhone, sumBalances } from '../_lib/supabase.js';
 import { badRequest, methodNotAllowed, readJsonBody, serverError, type Req, type Res } from '../_lib/http.js';
@@ -142,26 +142,77 @@ export default async function handler(req: Req, res: Res) {
     // The driver shows a QR to the customer's phone; a customer who scanned the
     // sticker is holding the only phone there and needs deep links instead.
     const channel = source === 'driver' ? 'qrcode' : 'link';
-    const session = await createUpiSession(paymentSessionId, channel);
 
-    await supabase
-      .from('payments')
-      .update({
+    try {
+      const session = await createUpiSession(paymentSessionId, channel);
+
+      await supabase
+        .from('payments')
+        .update({
+          qr_payload: session.qrPayload,
+          link_url: session.appLinks?.web ?? null,
+          cf_payment_id: session.cfPaymentId,
+        })
+        .eq('id', payment.id);
+
+      return res.status(200).json({
+        payment_id: payment.id,
+        order_id: orderId,
+        amount,
+        max_amount: maxAmount,
+        entries_count: targetEntryIds.length,
         qr_payload: session.qrPayload,
-        link_url: session.appLinks?.web ?? null,
-        cf_payment_id: session.cfPaymentId,
-      })
-      .eq('id', payment.id);
+        upi_links: session.appLinks,
+      });
+    } catch (sessionError) {
+      /*
+       * The server-to-server session API (/orders/sessions) is enabled by default in
+       * sandbox but gated in production - Cashfree answers
+       * "POST/orders/pay is not enabled or approved" until a merchant is approved for it.
+       *
+       * A payment link needs no such approval, so rather than leave a driver standing
+       * in a field unable to take money, fall back to one. The customer gets a QR that
+       * opens Cashfree's hosted checkout instead of their UPI app directly: one more
+       * tap, same outcome, and the webhook settles it identically.
+       *
+       * The link reuses this order's id, so apply_payment() matches it on either
+       * cf_order_id or cf_link_id with no special casing.
+       */
+      console.warn(
+        '[create-qr] UPI session unavailable, falling back to a payment link:',
+        sessionError instanceof Error ? sessionError.message : sessionError
+      );
 
-    return res.status(200).json({
-      payment_id: payment.id,
-      order_id: orderId,
-      amount,
-      max_amount: maxAmount,
-      entries_count: targetEntryIds.length,
-      qr_payload: session.qrPayload,
-      upi_links: session.appLinks,
-    });
+      const link = await createPaymentLink({
+        linkId: orderId,
+        amount,
+        phone,
+        customerName,
+        purpose: `KBS Harvester - ${targetEntryIds.length} job(s)`,
+        notes: { payment_id: payment.id, source },
+      });
+
+      await supabase
+        .from('payments')
+        .update({
+          kind: 'payment_link',
+          cf_link_id: link.linkId,
+          link_url: link.linkUrl,
+          qr_payload: link.linkQrCode,
+        })
+        .eq('id', payment.id);
+
+      return res.status(200).json({
+        payment_id: payment.id,
+        order_id: orderId,
+        amount,
+        max_amount: maxAmount,
+        entries_count: targetEntryIds.length,
+        qr_payload: link.linkQrCode,
+        upi_links: link.linkUrl ? { web: link.linkUrl, default: link.linkUrl } : null,
+        via: 'payment_link',
+      });
+    }
   } catch (error) {
     return serverError(res, error);
   }

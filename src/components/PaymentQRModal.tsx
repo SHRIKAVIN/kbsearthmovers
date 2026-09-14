@@ -321,7 +321,9 @@ const PaymentQRModal: React.FC<Props> = ({
                 <>
                   {qrImage && (
                     <p className="mt-5 text-center text-[15px] font-medium text-gray-300">
-                      Scan with GPay, PhonePe, Paytm or any UPI app
+                      {payment.via === 'payment_link'
+                        ? 'Scan with the phone camera, then pay by UPI'
+                        : 'Scan with GPay, PhonePe, Paytm or any UPI app'}
                     </p>
                   )}
                   {/* A live pulse rather than a spinner: this is a machine waiting for
