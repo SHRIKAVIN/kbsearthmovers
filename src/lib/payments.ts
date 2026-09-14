@@ -57,7 +57,15 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
     body: JSON.stringify(body),
   });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data?.error || `Request failed (${response.status})`);
+  if (!response.ok) {
+    // Validation failures put the whole story in `error` ("Enter a valid 10-digit
+    // mobile number"). Server faults put a generic string there and the cause in
+    // `message` - surface both, or the screen says "Internal server error" while the
+    // real reason sits in the Network tab where nobody in a field will look.
+    const headline = data?.error || `Request failed (${response.status})`;
+    const detail = data?.message && data.message !== headline ? ` - ${data.message}` : '';
+    throw new Error(`${headline}${detail}`);
+  }
   return data as T;
 }
 
