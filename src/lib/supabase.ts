@@ -35,10 +35,15 @@ export const testConnection = async () => {
 export type WorkEntry = {
   id?: string;
   rental_person_name: string;
+  /** E.164 (+919486532856). The key both payment flows look the customer up by. */
+  customer_phone?: string | null;
   driver_name: string;
   broker?: string;
   machine_type: 'JCB' | 'Tractor' | 'Harvester';
+  /** H.MM base-60: 4.30 means 4h 30m, not 4.5 hours. */
   hours_driven: number;
+  /** The rate this job was charged at, from the KBS rate chart. Null on older rows. */
+  hourly_rate?: number | null;
   total_amount: number;
   amount_received: number;
   advance_amount: number;
