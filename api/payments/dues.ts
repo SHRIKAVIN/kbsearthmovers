@@ -50,6 +50,7 @@ export default async function handler(req: Req, res: Res) {
       count: entries.length,
       has_dues: totalDue > 0,
       jobs: entries.map((entry) => ({
+        id: entry.id,
         date: entry.entry_date,
         time: entry.entry_time,
         machine_type: entry.machine_type,

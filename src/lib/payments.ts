@@ -29,6 +29,7 @@ export type CreateQrResponse = {
 };
 
 export type DueJob = {
+  id: string;
   date: string;
   time: string | null;
   machine_type: string;
@@ -93,8 +94,12 @@ export function createQrForEntry(workEntryId: string) {
   return postJson<CreateQrResponse>('/api/payments/create-qr', { work_entry_id: workEntryId });
 }
 
-export function createQrForPhone(phone: string, amount?: number) {
-  return postJson<CreateQrResponse>('/api/payments/create-qr', { phone, amount });
+export function createQrForPhone(phone: string, amount?: number, workEntryIds?: string[]) {
+  return postJson<CreateQrResponse>('/api/payments/create-qr', {
+    phone,
+    amount,
+    work_entry_ids: workEntryIds,
+  });
 }
 
 export function fetchDues(phone: string) {

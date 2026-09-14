@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Phone, Loader2, AlertCircle, CheckCircle, IndianRupee, ArrowLeft } from 'lucide-react';
+import { Phone, Loader2, AlertCircle, CheckCircle, IndianRupee, ArrowLeft, Check } from 'lucide-react';
 import PaymentQRModal from '../components/PaymentQRModal';
 import { fetchDues, isValidIndianMobile, formatRupees, type DuesResponse } from '../lib/payments';
 import { formatHoursMinutes, hmmToDecimalHours, to12Hour } from '../lib/billFormat';
@@ -19,6 +19,9 @@ const PublicPayPage: React.FC = () => {
   const [phone, setPhone] = useState('');
   const [dues, setDues] = useState<DuesResponse | null>(null);
   const [amount, setAmount] = useState('');
+  // Every job starts ticked: the common case is paying the lot, and a customer should
+  // have to opt OUT of settling a bill rather than opt in to it.
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -43,6 +46,7 @@ const PublicPayPage: React.FC = () => {
     try {
       const result = await fetchDues(phone);
       setDues(result);
+      setSelected(new Set((result.jobs || []).map((job) => job.id)));
       setAmount(String(result.total_due));
       setStep(result.has_dues ? 'dues' : 'nothing-due');
     } catch (err: unknown) {
@@ -52,17 +56,38 @@ const PublicPayPage: React.FC = () => {
     }
   };
 
+  const jobs = dues?.jobs || [];
+  const multiple = jobs.length > 1;
+  const chosenJobs = multiple ? jobs.filter((job) => selected.has(job.id)) : jobs;
+  // What is owed on the ticked jobs - the ceiling for this payment.
+  const selectedTotal = chosenJobs.reduce((sum, job) => sum + job.balance, 0);
+
+  const toggleJob = (id: string) => {
+    setSelected((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      // Keep the amount following the selection; they can still edit it down after.
+      const total = jobs
+        .filter((job) => next.has(job.id))
+        .reduce((sum, job) => sum + job.balance, 0);
+      setAmount(total > 0 ? String(total) : '');
+      return next;
+    });
+  };
+
   const numericAmount = Number(amount);
   const amountIsValid =
     Number.isFinite(numericAmount) &&
     numericAmount > 0 &&
-    !!dues &&
-    numericAmount <= dues.total_due;
+    selectedTotal > 0 &&
+    numericAmount <= selectedTotal;
 
   const reset = () => {
     setStep('phone');
     setDues(null);
     setAmount('');
+    setSelected(new Set());
     setError('');
     setPaidAmount(null);
     setPaidPending(null);
@@ -182,21 +207,48 @@ const PublicPayPage: React.FC = () => {
 
               {/* Nobody should be asked to pay a figure they cannot check. Each job
                   shows when it was, the machine, the hours and the rate behind it. */}
-              {dues!.jobs?.length > 0 && (
-                <div data-testid="public-pay-jobs" className="mt-4 space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    What this is for
-                  </p>
-                  {dues!.jobs.map((job, index) => {
-                    const decimalHours = hmmToDecimalHours(job.hours);
-                    const rate = decimalHours > 0 ? Math.round(job.total / decimalHours) : 0;
-                    return (
-                      <div
-                        key={`${job.date}-${index}`}
-                        className="rounded-lg border border-gray-200 bg-white p-3"
+              {jobs.length > 0 && (
+                <div data-testid="public-pay-jobs" className="mt-5">
+                  <div className="flex items-end justify-between">
+                    <p className="rig-label">
+                      {multiple ? 'Choose what to pay' : 'What this is for'}
+                    </p>
+                    {multiple && (
+                      <button
+                        onClick={() =>
+                          setSelected(
+                            selected.size === jobs.length
+                              ? new Set()
+                              : new Set(jobs.map((job) => job.id))
+                          )
+                        }
+                        className="text-[13px] font-semibold text-rig-accent"
                       >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
+                        {selected.size === jobs.length ? 'Clear all' : 'Select all'}
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="mt-2 space-y-2">
+                    {jobs.map((job) => {
+                      const decimalHours = hmmToDecimalHours(job.hours);
+                      const rate = decimalHours > 0 ? Math.round(job.total / decimalHours) : 0;
+                      const ticked = !multiple || selected.has(job.id);
+
+                      const body = (
+                        <div className="flex w-full items-start gap-3">
+                          {multiple && (
+                            <span
+                              className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition ${
+                                ticked
+                                  ? 'border-rig-accent bg-rig-accent text-white'
+                                  : 'border-gray-300 bg-white'
+                              }`}
+                            >
+                              {ticked && <Check className="h-3.5 w-3.5" strokeWidth={3.5} />}
+                            </span>
+                          )}
+                          <div className="min-w-0 flex-1 text-left">
                             <p className="font-semibold text-gray-900">
                               {new Date(job.date).toLocaleDateString('en-IN', {
                                 day: '2-digit',
@@ -211,17 +263,35 @@ const PublicPayPage: React.FC = () => {
                             </p>
                           </div>
                           <div className="shrink-0 text-right">
-                            <p className="font-bold text-gray-900">{formatRupees(job.balance)}</p>
+                            <p className="rig-amount font-bold text-gray-900">
+                              {formatRupees(job.balance)}
+                            </p>
                             {job.balance !== job.total && (
-                              <p className="text-xs text-gray-500">
-                                of {formatRupees(job.total)}
-                              </p>
+                              <p className="text-xs text-gray-500">of {formatRupees(job.total)}</p>
                             )}
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+
+                      return multiple ? (
+                        <button
+                          key={job.id}
+                          type="button"
+                          onClick={() => toggleJob(job.id)}
+                          aria-pressed={ticked}
+                          className={`flex w-full rounded-xl border-2 p-3 text-left transition ${
+                            ticked ? 'border-rig-accent bg-amber-50/60' : 'border-gray-200 bg-white'
+                          }`}
+                        >
+                          {body}
+                        </button>
+                      ) : (
+                        <div key={job.id} className="rounded-xl border border-gray-200 bg-white p-3">
+                          {body}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
@@ -237,20 +307,27 @@ const PublicPayPage: React.FC = () => {
                   type="number"
                   inputMode="decimal"
                   min="1"
-                  max={dues!.total_due}
+                  max={selectedTotal}
                   value={amount}
                   onChange={(event) => setAmount(event.target.value)}
                   className="w-full rounded-r-lg border border-gray-300 px-4 py-3.5 text-lg text-gray-900 focus:border-transparent focus:ring-2 focus:ring-amber-500"
                 />
               </div>
               <p className="mt-2 text-xs text-gray-500">
-                You can pay part of it now. The oldest bills are cleared first.
+                {multiple
+                  ? `Paying ${chosenJobs.length} of ${jobs.length} jobs. You can pay part of it now — the oldest of the ones you picked is cleared first.`
+                  : 'You can pay part of it now.'}
               </p>
 
-              {!amountIsValid && amount !== '' && (
-                <p className="mt-2 text-sm text-red-600">
-                  Enter an amount between Rs.1 and {formatRupees(dues!.total_due)}.
-                </p>
+              {selectedTotal === 0 ? (
+                <p className="mt-2 text-sm text-gray-600">Pick at least one job to pay.</p>
+              ) : (
+                !amountIsValid &&
+                amount !== '' && (
+                  <p className="mt-2 text-sm text-red-600">
+                    Enter an amount between Rs.1 and {formatRupees(selectedTotal)}.
+                  </p>
+                )
               )}
 
               <button
@@ -282,6 +359,7 @@ const PublicPayPage: React.FC = () => {
         <PaymentQRModal
           phone={phone}
           amount={numericAmount}
+          workEntryIds={multiple ? chosenJobs.map((job) => job.id) : undefined}
           selfService
           /*
            * Closing on payment would unmount this in the same commit that shows the

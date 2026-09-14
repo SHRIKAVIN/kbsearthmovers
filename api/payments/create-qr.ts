@@ -30,6 +30,7 @@ export default async function handler(req: Req, res: Res) {
   try {
     const body = await readJsonBody<{
       work_entry_id?: string;
+      work_entry_ids?: string[];
       phone?: string;
       amount?: number;
       source?: string;
@@ -64,15 +65,28 @@ export default async function handler(req: Req, res: Res) {
       );
       targetEntryIds = [entry.id];
     } else {
-      // --- Vehicle QR flow: everything this phone owes, oldest first. ---
+      // --- Vehicle QR flow: what this phone owes, or the part of it they chose. ---
       phone = normalizePhone(body.phone);
       if (!phone) return badRequest(res, 'Enter a valid 10-digit mobile number.');
 
       const entries = await outstandingForPhone(phone);
       if (!entries.length) return badRequest(res, 'Nothing outstanding for this number.');
 
-      maxAmount = round2(sumBalances(entries));
-      targetEntryIds = entries.map((entry) => entry.id);
+      // A customer can choose which jobs to settle, but the choice is only ever a
+      // NARROWING of what this phone actually owes. The ids are intersected with the
+      // server's own list rather than trusted, so a crafted request cannot point a
+      // payment at somebody else's entry or at one already settled.
+      let selected = entries;
+      if (Array.isArray(body.work_entry_ids) && body.work_entry_ids.length) {
+        const chosen = new Set(body.work_entry_ids);
+        selected = entries.filter((entry) => chosen.has(entry.id));
+        if (!selected.length) {
+          return badRequest(res, 'Those jobs are not outstanding for this number.');
+        }
+      }
+
+      maxAmount = round2(sumBalances(selected));
+      targetEntryIds = selected.map((entry) => entry.id);
     }
 
     if (maxAmount <= 0) {

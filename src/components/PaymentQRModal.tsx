@@ -27,6 +27,8 @@ type Props = {
   /** Vehicle-QR flow: settle everything this number owes. */
   phone?: string;
   amount?: number;
+  /** Which jobs this payment should settle. Omitted means everything outstanding. */
+  workEntryIds?: string[];
   /** The customer is holding this device, so show a "pay on this phone" button. */
   selfService?: boolean;
   onClose: () => void;
@@ -50,6 +52,7 @@ const PaymentQRModal: React.FC<Props> = ({
   workEntryId,
   phone,
   amount,
+  workEntryIds,
   selfService = false,
   onClose,
   onPaid,
@@ -102,7 +105,7 @@ const PaymentQRModal: React.FC<Props> = ({
       try {
         const result = workEntryId
           ? await createQrForEntry(workEntryId)
-          : await createQrForPhone(phone!, amount);
+          : await createQrForPhone(phone!, amount, workEntryIds);
         if (cancelled) return;
 
         setPayment(result);
@@ -121,7 +124,7 @@ const PaymentQRModal: React.FC<Props> = ({
     return () => {
       cancelled = true;
     };
-  }, [workEntryId, phone, amount]);
+  }, [workEntryId, phone, amount, workEntryIds]);
 
   // --- Poll for settlement ---
   //
