@@ -96,7 +96,20 @@ export async function createOrder(args: CreateOrderArgs): Promise<{ paymentSessi
 type CashfreeSessionResponse = {
   cf_payment_id?: string | number;
   qrcode?: string;
-  data?: { payload?: { qrcode?: string; qr_code?: string }; url?: string };
+  data?: {
+    payload?: {
+      qrcode?: string;
+      qr_code?: string;
+      // channel 'link' returns one entry per UPI app, plus a browser fallback.
+      default?: string;
+      gpay?: string;
+      phonepe?: string;
+      paytm?: string;
+      bhim?: string;
+      web?: string;
+    };
+    url?: string;
+  };
 };
 
 type CashfreeLinkResponse = {
@@ -105,40 +118,80 @@ type CashfreeLinkResponse = {
   link_qrcode?: string | null;
 };
 
-export type UpiQr = {
-  cfPaymentId: string | null;
-  /** Either a upi:// intent string or a base64/data-URI PNG, depending on account config. */
-  qrPayload: string;
+/** Deep links that open a UPI app on the device the customer is already holding. */
+export type UpiAppLinks = {
+  default?: string;
+  gpay?: string;
+  phonepe?: string;
+  paytm?: string;
+  bhim?: string;
+  web?: string;
 };
 
-export async function createUpiQrSession(paymentSessionId: string): Promise<UpiQr> {
+export type UpiSession = {
+  cfPaymentId: string | null;
+  /** channel 'qrcode': a data:image/png;base64 QR for the customer to scan. */
+  qrPayload: string | null;
+  /** channel 'link': per-app deep links for paying on this same phone. */
+  appLinks: UpiAppLinks | null;
+};
+
+/**
+ * Which channel to ask Cashfree for depends on whose phone is showing the screen.
+ *
+ *   'qrcode' - the DRIVER's phone. The customer points their own camera at it.
+ *   'link'   - the CUSTOMER's phone, after they scanned the sticker on the harvester.
+ *              They cannot scan a QR rendered on the very device they are holding, so
+ *              we need deep links that open GPay/PhonePe/Paytm directly instead.
+ *
+ * Getting this wrong is invisible in testing on two devices and completely blocks the
+ * self-service flow in the field.
+ */
+export type UpiChannel = 'qrcode' | 'link';
+
+export async function createUpiSession(
+  paymentSessionId: string,
+  channel: UpiChannel
+): Promise<UpiSession> {
   const result = await cashfreeFetch<CashfreeSessionResponse>('/orders/sessions', {
     method: 'POST',
     body: {
       payment_session_id: paymentSessionId,
-      payment_method: { upi: { channel: 'qrcode' } },
+      payment_method: { upi: { channel } },
     },
   });
 
-  // Cashfree has shipped this under a few shapes; accept all of them rather than
-  // breaking the moment an account is provisioned slightly differently.
-  const payload =
-    result?.data?.payload?.qrcode ??
-    result?.data?.payload?.qr_code ??
-    result?.data?.url ??
-    result?.qrcode ??
-    null;
+  const payload = result?.data?.payload;
+  const cfPaymentId = result?.cf_payment_id ? String(result.cf_payment_id) : null;
 
-  if (!payload) {
+  if (channel === 'qrcode') {
+    // Accept the shapes Cashfree has shipped this under rather than breaking the
+    // moment an account is provisioned slightly differently.
+    const qr = payload?.qrcode ?? payload?.qr_code ?? result?.data?.url ?? result?.qrcode ?? null;
+    if (!qr) {
+      throw new Error(
+        `Cashfree UPI QR session returned no QR payload: ${JSON.stringify(result).slice(0, 300)}`
+      );
+    }
+    return { cfPaymentId, qrPayload: String(qr), appLinks: null };
+  }
+
+  const appLinks: UpiAppLinks = {
+    default: payload?.default,
+    gpay: payload?.gpay,
+    phonepe: payload?.phonepe,
+    paytm: payload?.paytm,
+    bhim: payload?.bhim,
+    web: payload?.web,
+  };
+
+  if (!Object.values(appLinks).some(Boolean)) {
     throw new Error(
-      `Cashfree UPI QR session returned no QR payload: ${JSON.stringify(result).slice(0, 300)}`
+      `Cashfree UPI link session returned no app links: ${JSON.stringify(result).slice(0, 300)}`
     );
   }
 
-  return {
-    cfPaymentId: result?.cf_payment_id ? String(result.cf_payment_id) : null,
-    qrPayload: String(payload),
-  };
+  return { cfPaymentId, qrPayload: null, appLinks };
 }
 
 // ---------------------------------------------------------------------------

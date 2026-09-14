@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { createOrder, createUpiQrSession } from '../_lib/cashfree.js';
+import { createOrder, createUpiSession } from '../_lib/cashfree.js';
 import { normalizePhone } from '../_lib/phone.js';
 import { serviceClient, outstandingForPhone, sumBalances } from '../_lib/supabase.js';
 import { badRequest, methodNotAllowed, readJsonBody, serverError, type Req, type Res } from '../_lib/http.js';
@@ -125,11 +125,18 @@ export default async function handler(req: Req, res: Res) {
       note: `KBS Harvester - ${targetEntryIds.length} job(s)`,
     });
 
-    const qr = await createUpiQrSession(paymentSessionId);
+    // The driver shows a QR to the customer's phone; a customer who scanned the
+    // sticker is holding the only phone there and needs deep links instead.
+    const channel = source === 'driver' ? 'qrcode' : 'link';
+    const session = await createUpiSession(paymentSessionId, channel);
 
     await supabase
       .from('payments')
-      .update({ qr_payload: qr.qrPayload, cf_payment_id: qr.cfPaymentId })
+      .update({
+        qr_payload: session.qrPayload,
+        link_url: session.appLinks?.web ?? null,
+        cf_payment_id: session.cfPaymentId,
+      })
       .eq('id', payment.id);
 
     return res.status(200).json({
@@ -138,7 +145,8 @@ export default async function handler(req: Req, res: Res) {
       amount,
       max_amount: maxAmount,
       entries_count: targetEntryIds.length,
-      qr_payload: qr.qrPayload,
+      qr_payload: session.qrPayload,
+      upi_links: session.appLinks,
     });
   } catch (error) {
     return serverError(res, error);

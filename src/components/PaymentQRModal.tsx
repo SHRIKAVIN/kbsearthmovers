@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import confetti from 'canvas-confetti';
-import { CheckCircle, AlertCircle, X, Loader2, Smartphone, Send } from 'lucide-react';
+import { CheckCircle, AlertCircle, X, Loader2, Smartphone, Send, ExternalLink } from 'lucide-react';
 import {
   createQrForEntry,
   createQrForPhone,
   fetchPaymentStatus,
   resolveQrImage,
   sendPaymentLink,
-  upiIntentLink,
+  orderedUpiApps,
   formatRupees,
   type CreateQrResponse,
 } from '../lib/payments';
@@ -70,7 +70,8 @@ const PaymentQRModal: React.FC<Props> = ({
         if (cancelled) return;
 
         setPayment(result);
-        setQrImage(await resolveQrImage(result.qr_payload));
+        // Only the driver flow gets a QR; the self-service flow gets app links.
+        setQrImage(result.qr_payload ? await resolveQrImage(result.qr_payload) : null);
         setPhase('awaiting');
         startedAt.current = Date.now();
       } catch (error: unknown) {
@@ -149,7 +150,8 @@ const PaymentQRModal: React.FC<Props> = ({
     }
   };
 
-  const intent = payment ? upiIntentLink(payment.qr_payload) : null;
+  const upiApps = payment?.upi_links ? orderedUpiApps(payment.upi_links) : [];
+  const webFallback = payment?.upi_links?.web ?? null;
   const secondsWaiting = Math.floor(elapsed / 1000);
 
   return (
@@ -240,9 +242,11 @@ const PaymentQRModal: React.FC<Props> = ({
 
               {phase === 'awaiting' && (
                 <>
-                  <p className="mt-4 text-center text-sm font-medium text-gray-700">
-                    Scan with GPay, PhonePe, Paytm or any UPI app
-                  </p>
+                  {qrImage && (
+                    <p className="mt-4 text-center text-sm font-medium text-gray-700">
+                      Scan with GPay, PhonePe, Paytm or any UPI app
+                    </p>
+                  )}
                   <div
                     data-testid="payment-waiting"
                     className="mt-3 flex items-center gap-2 text-sm text-amber-700"
@@ -252,16 +256,52 @@ const PaymentQRModal: React.FC<Props> = ({
                   </div>
 
                   {/* The customer is holding the device that scanned the sticker, so
-                      they cannot scan this QR off their own screen. */}
-                  {selfService && intent && (
-                    <a
-                      data-testid="upi-intent-link"
-                      href={intent}
-                      className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-amber-600 to-orange-600 px-6 py-3.5 font-semibold text-white transition hover:from-amber-700 hover:to-orange-700"
-                    >
-                      <Smartphone className="h-5 w-5" />
-                      Pay on this phone
-                    </a>
+                      they cannot scan a QR off their own screen - these deep links
+                      open their UPI app directly instead. */}
+                  {selfService && upiApps.length > 0 && (
+                    <div data-testid="upi-app-links" className="mt-5 w-full space-y-2">
+                      {upiApps.map((app) =>
+                        app.primary ? (
+                          <a
+                            key={app.key}
+                            href={app.url}
+                            className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-amber-600 to-orange-600 px-6 py-4 text-lg font-semibold text-white transition hover:from-amber-700 hover:to-orange-700"
+                          >
+                            <Smartphone className="h-5 w-5" />
+                            {app.label}
+                          </a>
+                        ) : null
+                      )}
+
+                      {upiApps.some((app) => !app.primary) && (
+                        <div className="grid grid-cols-3 gap-2 pt-1">
+                          {upiApps
+                            .filter((app) => !app.primary)
+                            .map((app) => (
+                              <a
+                                key={app.key}
+                                href={app.url}
+                                className="flex items-center justify-center rounded-lg border-2 border-gray-300 px-2 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                              >
+                                {app.label}
+                              </a>
+                            ))}
+                        </div>
+                      )}
+
+                      {/* Last resort for a desktop browser with no UPI app installed. */}
+                      {webFallback && (
+                        <a
+                          href={webFallback}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex w-full items-center justify-center gap-1.5 py-2 text-sm text-gray-600 hover:text-gray-900"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Pay in browser instead
+                        </a>
+                      )}
+                    </div>
                   )}
                 </>
               )}

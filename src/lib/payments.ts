@@ -6,13 +6,26 @@ import QRCode from 'qrcode';
  * verified Cashfree webhook - the browser can read status, never set it.
  */
 
+/** Deep links that open a UPI app on the device the customer is already holding. */
+export type UpiAppLinks = {
+  default?: string;
+  gpay?: string;
+  phonepe?: string;
+  paytm?: string;
+  bhim?: string;
+  web?: string;
+};
+
 export type CreateQrResponse = {
   payment_id: string;
   order_id: string;
   amount: number;
   max_amount: number;
   entries_count: number;
-  qr_payload: string;
+  /** Present for the driver flow (channel 'qrcode'). */
+  qr_payload: string | null;
+  /** Present for the self-service flow (channel 'link'). */
+  upi_links: UpiAppLinks | null;
 };
 
 export type DuesResponse = {
@@ -92,14 +105,30 @@ export async function resolveQrImage(payload: string): Promise<string> {
 }
 
 /**
- * True when the payload can be handed to the phone's own UPI app.
+ * Order the UPI apps for display on the customer's own phone.
  *
- * This matters on the /pay page: the customer is holding the device that scanned the
- * vehicle sticker, so they cannot scan a QR rendered on their own screen. A upi://
- * deep link opens GPay/PhonePe directly instead.
+ * `default` opens the system UPI chooser and works for everyone, so it leads. The
+ * named apps follow for people who would rather tap a logo they recognise, and `web`
+ * is the last resort for a desktop browser where no UPI app exists.
  */
-export function upiIntentLink(payload: string): string | null {
-  return payload.startsWith('upi://') ? payload : null;
+export function orderedUpiApps(
+  links: UpiAppLinks
+): Array<{ key: keyof UpiAppLinks; label: string; url: string; primary: boolean }> {
+  const catalogue: Array<{ key: keyof UpiAppLinks; label: string; primary: boolean }> = [
+    { key: 'default', label: 'Pay by UPI', primary: true },
+    { key: 'gpay', label: 'Google Pay', primary: false },
+    { key: 'phonepe', label: 'PhonePe', primary: false },
+    { key: 'paytm', label: 'Paytm', primary: false },
+  ];
+
+  const apps = catalogue
+    .filter((app) => !!links[app.key])
+    .map((app) => ({ ...app, url: links[app.key] as string }));
+
+  // If there is no generic chooser, promote the first named app so there is always
+  // exactly one obvious button.
+  if (apps.length && !apps.some((app) => app.primary)) apps[0].primary = true;
+  return apps;
 }
 
 /** Indian mobile, as typed into a form. Server-side normalizePhone is the real gate. */
