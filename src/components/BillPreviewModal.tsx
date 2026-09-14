@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Loader2, Share2, Download, AlertCircle } from 'lucide-react';
-import { renderBillImage, type BillData } from '../lib/billImage';
+import { renderBillImage, variantFor, type BillData, type BillVariant } from '../lib/billImage';
 import { shareBillImage } from '../lib/payments';
 
 /**
@@ -18,6 +18,9 @@ type Props = {
 };
 
 const BillPreviewModal: React.FC<Props> = ({ bill, caption, onClose, onSent }) => {
+  // An advance can be receipted while the rest of the bill is still outstanding, so
+  // both documents are reachable for the same entry - this only picks the default.
+  const [variant, setVariant] = useState<BillVariant>(() => variantFor(bill));
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [blob, setBlob] = useState<Blob | null>(null);
   const [error, setError] = useState('');
@@ -26,8 +29,9 @@ const BillPreviewModal: React.FC<Props> = ({ bill, caption, onClose, onSent }) =
   useEffect(() => {
     let objectUrl: string | null = null;
     let cancelled = false;
+    setImageUrl(null);
 
-    renderBillImage(bill)
+    renderBillImage(bill, variant)
       .then((result) => {
         if (cancelled) return;
         objectUrl = URL.createObjectURL(result);
@@ -47,7 +51,7 @@ const BillPreviewModal: React.FC<Props> = ({ bill, caption, onClose, onSent }) =
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     bill.entryId, bill.customerName, bill.phone, bill.date, bill.time,
-    bill.machineType, bill.hours, bill.total, bill.advance, bill.received,
+    bill.machineType, bill.hours, bill.total, bill.advance, bill.received, variant,
   ]);
 
   const handleShare = async () => {
@@ -92,13 +96,30 @@ const BillPreviewModal: React.FC<Props> = ({ bill, caption, onClose, onSent }) =
             <h2 className="text-lg font-bold text-gray-900">Bill preview</h2>
             <p className="text-xs text-gray-500">{bill.customerName}</p>
           </div>
-          <button
-            onClick={onClose}
-            className="rounded-full p-1.5 text-gray-500 transition hover:bg-gray-100"
-            aria-label="Close"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <div className="flex rounded-lg bg-gray-100 p-1">
+              {(['bill', 'receipt'] as BillVariant[]).map((option) => (
+                <button
+                  key={option}
+                  onClick={() => setVariant(option)}
+                  className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                    variant === option
+                      ? 'bg-white text-gray-900 shadow-sm'
+                      : 'text-gray-500 hover:text-gray-800'
+                  }`}
+                >
+                  {option === 'bill' ? 'Rental Bill' : 'Receipt'}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={onClose}
+              className="rounded-full p-1.5 text-gray-500 transition hover:bg-gray-100"
+              aria-label="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         <div className="min-h-0 flex-1 overflow-auto bg-gray-100 p-4">

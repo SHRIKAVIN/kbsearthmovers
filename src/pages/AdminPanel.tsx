@@ -530,7 +530,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
         entryId: entry.id,
         customerName: entry.rental_person_name,
         phone: entry.customer_phone,
-        date: format(parseISO(entry.date), 'dd-MM-yyyy'),
+        date: format(parseISO(entry.date), 'dd/MM/yyyy'),
         time: entry.time,
         machineType: entry.machine_type,
         hours: entry.hours_driven,
