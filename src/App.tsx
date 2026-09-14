@@ -3,11 +3,14 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
 import ServicesPage from './pages/ServicesPage';
-import DriverEntryPage from './pages/DriverEntryPage';
 import AdminLogin from './pages/AdminLogin';
 import AdminPanel from './pages/AdminPanel';
 import ContactPage from './pages/ContactPage';
 import PublicPayPage from './pages/PublicPayPage';
+import DriverLogin from './pages/DriverLogin';
+import DriverApp from './pages/DriverApp';
+import { loadSession, saveSession, clearSession, type Driver } from './lib/driverAuth';
+import { useManifest } from './lib/useManifest';
 import QrStickerPage from './pages/QrStickerPage';
 
 /**
@@ -15,12 +18,42 @@ import QrStickerPage from './pages/QrStickerPage';
  * a customer who scanned a QR on a harvester should see one decision, not the whole
  * marketing site.
  */
-const CHROMELESS_ROUTES = ['/pay', '/admin/qr-sticker'];
+const CHROMELESS_ROUTES = ['/pay', '/admin/qr-sticker', '/driver', '/driver-entry'];
 
 function Chrome() {
   const { pathname } = useLocation();
   if (CHROMELESS_ROUTES.includes(pathname)) return null;
   return <Navbar />;
+}
+
+/**
+ * The driver app installs as its own home-screen app, scoped to /driver, so a driver
+ * gets a tool rather than the company website with a form inside it.
+ */
+function DriverRoute() {
+  useManifest('/driver-manifest.json');
+  const [driver, setDriver] = useState<Driver | null>(() => loadSession());
+
+  if (!driver) {
+    return (
+      <DriverLogin
+        onSignIn={(signedIn) => {
+          saveSession(signedIn);
+          setDriver(signedIn);
+        }}
+      />
+    );
+  }
+
+  return (
+    <DriverApp
+      driver={driver}
+      onSignOut={() => {
+        clearSession();
+        setDriver(null);
+      }}
+    />
+  );
 }
 
 function App() {
@@ -51,7 +84,10 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/services" element={<ServicesPage />} />
-          <Route path="/driver-entry" element={<DriverEntryPage />} />
+          <Route path="/driver" element={<DriverRoute />} />
+          {/* The old public form: kept so existing bookmarks and the installed app
+              still land somewhere, now behind the same sign-in. */}
+          <Route path="/driver-entry" element={<Navigate to="/driver" replace />} />
           <Route 
             path="/admin-login" 
             element={

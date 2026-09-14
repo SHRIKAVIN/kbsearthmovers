@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import { whatsappBillLink } from '../lib/payments';
 import type { BillData } from '../lib/billImage';
 import BillPreviewModal from '../components/BillPreviewModal';
+import EntryCards from '../components/admin/EntryCards';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -1576,7 +1577,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                 <p className="mt-4 text-gray-600">Loading entries...</p>
               </div>
             ) : (
-              <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
+              <>
+                {/* Phones get cards; the seven-column table only makes sense with room. */}
+                <div className="lg:hidden max-h-[600px] overflow-y-auto">
+                  <EntryCards
+                    entries={filteredEntries}
+                    onEdit={setEditingEntry}
+                    onDelete={deleteEntry}
+                    onBill={openBillPreview}
+                  />
+                </div>
+              <div className="hidden lg:block overflow-x-auto max-h-[600px] overflow-y-auto">
                 <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
                   <thead className="bg-gray-50 sticky top-0 z-10">
                     <tr>
@@ -1600,10 +1611,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                         <td className="w-32 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 truncate-mobile border-r border-gray-200">{entry.broker || '-'}</td>
                         <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{entry.owner}</td>
                         <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{typeof entry.hours_driven === 'number' ? entry.hours_driven.toFixed(2) : entry.hours_driven}</td>
-                        <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 font-semibold border-r border-gray-200">₹{entry.total_amount.toLocaleString('en-IN')}</td>
-                        <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-blue-600 font-semibold border-r border-gray-200">₹{entry.advance_amount.toLocaleString('en-IN')}</td>
-                        <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-green-600 font-semibold border-r border-gray-200">₹{entry.amount_received.toLocaleString('en-IN')}</td>
-                        <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap font-semibold text-xs sm:text-sm border-r border-gray-200">
+                        <td className="rig-amount w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 font-semibold border-r border-gray-200">₹{entry.total_amount.toLocaleString('en-IN')}</td>
+                        <td className="rig-amount w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-blue-600 font-semibold border-r border-gray-200">₹{entry.advance_amount.toLocaleString('en-IN')}</td>
+                        <td className="rig-amount w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-green-600 font-semibold border-r border-gray-200">₹{entry.amount_received.toLocaleString('en-IN')}</td>
+                        <td className="rig-amount w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap font-semibold text-xs sm:text-sm border-r border-gray-200">
                           <span className={entry.total_amount - entry.amount_received - entry.advance_amount > 0 ? 'text-red-600' : 'text-green-600'}>
                             ₹{(entry.total_amount - entry.amount_received - entry.advance_amount).toLocaleString('en-IN')}
                           </span>
@@ -1633,15 +1644,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                     ))}
                   </tbody>
                 </table>
-                
+                </div>
+
+                {/* Outside both views so the empty state shows on phones too. */}
                 {filteredEntries.length === 0 && (
-                  <div className="text-center py-8">
+                  <div className="py-10 text-center">
                     <p className="text-gray-500">
-                      {entries.length === 0 ? 'No entries found. Add your first entry!' : 'No entries found matching your filters.'}
+                      {entries.length === 0 ? 'No entries yet. Add your first entry.' : 'No entries match these filters.'}
                     </p>
                   </div>
                 )}
-              </div>
+              </>
             )}
           </div>
         )}

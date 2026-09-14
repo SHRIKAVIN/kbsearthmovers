@@ -13,6 +13,7 @@ import {
   type CreateQrResponse,
 } from '../lib/payments';
 import { useMobileOptimizations } from '../hooks/useMobileOptimizations';
+import Amount from './Amount';
 
 /** How long to keep the QR on screen before treating it as abandoned. */
 const TIMEOUT_MS = 10 * 60 * 1000;
@@ -37,9 +38,9 @@ const Detail: React.FC<{ label: string; value: string; mono?: boolean }> = ({
   value,
   mono,
 }) => (
-  <div className="flex items-start justify-between gap-3 text-sm">
+  <div className="flex items-start justify-between gap-3 text-[13px]">
     <span className="shrink-0 text-gray-500">{label}</span>
-    <span className={`text-right font-semibold text-gray-900 ${mono ? 'font-mono text-xs' : ''}`}>
+    <span className={`text-right font-semibold text-gray-200 ${mono ? 'rig-amount text-[12px]' : ''}`}>
       {value}
     </span>
   </div>
@@ -200,20 +201,24 @@ const PaymentQRModal: React.FC<Props> = ({
   return (
     <div
       data-testid="payment-qr-modal"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-label="Collect payment"
     >
-      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl animate-professional-scale-in">
-        {/* Header */}
-        <div className="flex items-center justify-between bg-gradient-to-r from-amber-600 to-orange-600 px-5 py-4">
+      {/*
+        Collection is a different act from data entry, so it gets a different surface:
+        a dark terminal. It also makes the white QR read at arm's length in sunlight,
+        which a white card behind a white QR does not.
+      */}
+      <div className="max-h-[94vh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-rig-ink shadow-2xl animate-professional-scale-in sm:rounded-3xl">
+        <div className="flex items-center justify-between border-b border-rig-line px-5 py-4">
           <div>
-            <h2 className="text-lg font-bold text-white">
-              {phase === 'paid' ? 'Payment received' : 'Collect payment'}
-            </h2>
+            <p className="rig-label !text-rig-signal">
+              {phase === 'paid' ? 'Received' : 'Collect payment'}
+            </p>
             {payment && phase !== 'paid' && (
-              <p className="text-sm text-amber-100">
+              <p className="text-[13px] text-gray-500">
                 {payment.entries_count} job{payment.entries_count === 1 ? '' : 's'}
               </p>
             )}
@@ -221,29 +226,26 @@ const PaymentQRModal: React.FC<Props> = ({
           <button
             data-testid="close-payment-modal"
             onClick={onClose}
-            className="rounded-full p-1 text-white/90 transition hover:bg-white/20"
+            className="rounded-xl border border-rig-line p-2 text-gray-400 transition hover:text-white"
             aria-label="Close"
           >
-            <X className="h-6 w-6" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="p-6">
+        <div className="rig-safe-bottom px-5 pt-6">
           {phase === 'loading' && (
             <div className="flex flex-col items-center py-12">
-              <Loader2 className="h-10 w-10 animate-spin text-amber-600" />
-              <p className="mt-4 text-gray-600">Creating payment...</p>
+              <Loader2 className="h-10 w-10 animate-spin text-rig-accent" />
+              <p className="mt-4 text-gray-400">Starting the payment...</p>
             </div>
           )}
 
           {phase === 'error' && (
             <div data-testid="payment-error" className="flex flex-col items-center py-8 text-center">
-              <AlertCircle className="h-12 w-12 text-red-500" />
-              <p className="mt-4 font-medium text-red-700">{errorMessage}</p>
-              <button
-                onClick={onClose}
-                className="mt-6 rounded-lg bg-gray-800 px-6 py-2.5 font-semibold text-white transition hover:bg-gray-900"
-              >
+              <AlertCircle className="h-12 w-12 text-rose-400" />
+              <p className="mt-4 font-medium text-rose-200">{errorMessage}</p>
+              <button onClick={onClose} className="rig-btn-ghost mt-6 !border-rig-line !bg-transparent !text-white">
                 Close
               </button>
             </div>
@@ -254,19 +256,22 @@ const PaymentQRModal: React.FC<Props> = ({
               details their own UPI app would show - reference number included. */}
           {phase === 'paid' && payment && (
             <div data-testid="payment-success" className="flex flex-col items-center">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-100 animate-professional-bounce-in">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-500">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/15 animate-professional-bounce-in">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500">
                   <Check className="h-8 w-8 text-white" strokeWidth={3.5} />
                 </div>
               </div>
 
-              <p className="mt-5 text-4xl font-bold text-gray-900">
-                {formatRupees(settled?.amount_paid || payment.amount)}
-              </p>
-              <p className="mt-1 text-base font-semibold text-green-700">Payment Successful</p>
-              <p className="mt-1 text-xs text-gray-500">{paidAtLabel}</p>
+              <Amount
+                value={settled?.amount_paid || payment.amount}
+                size="hero"
+                tone="onDark"
+                className="mt-5"
+              />
+              <p className="mt-2 text-[15px] font-semibold text-emerald-400">Payment successful</p>
+              <p className="mt-1 text-[12px] text-gray-500">{paidAtLabel}</p>
 
-              <div className="mt-6 w-full space-y-3 rounded-xl bg-gray-50 p-4">
+              <div className="mt-6 w-full space-y-3 rounded-2xl border border-rig-line bg-rig-surface p-4">
                 <Detail label="Paid to" value={settled?.receipt?.paid_to || 'KBS Harvesters'} />
                 {settled?.receipt?.payer && <Detail label="From" value={settled.receipt.payer} />}
                 <Detail label="Payment mode" value={settled?.receipt?.method || 'UPI'} />
@@ -278,14 +283,14 @@ const PaymentQRModal: React.FC<Props> = ({
                 )}
               </div>
 
-              <p className="mt-4 flex items-center gap-1.5 text-xs text-gray-500">
-                <ShieldCheck className="h-3.5 w-3.5 text-green-600" />
+              <p className="mt-4 flex items-center gap-1.5 text-[12px] text-gray-500">
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
                 Show this to the customer as confirmation
               </p>
 
               <button
                 onClick={onClose}
-                className="mt-5 w-full rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-3.5 font-semibold text-white transition hover:from-green-700 hover:to-emerald-700"
+                className="rig-btn mt-5 bg-emerald-600 text-white hover:brightness-110"
               >
                 Done
               </button>
@@ -294,12 +299,12 @@ const PaymentQRModal: React.FC<Props> = ({
 
           {(phase === 'awaiting' || phase === 'timeout') && payment && (
             <div className="flex flex-col items-center">
-              <p className="text-4xl font-bold text-gray-900">{formatRupees(payment.amount)}</p>
+              {/* The amount is the whole conversation in the field, so it is the
+                  largest thing on the screen. */}
+              <Amount value={payment.amount} size="hero" tone="onDark" />
 
-              {/* White card behind the QR: needed for contrast when a phone camera is
-                  pointed at a screen in direct sunlight. */}
               {qrImage && phase === 'awaiting' && (
-                <div className="mt-5 rounded-xl border-4 border-gray-900 bg-white p-3">
+                <div className="mt-6 rounded-2xl bg-white p-3.5 shadow-[0_0_60px_-12px_rgba(242,101,34,0.5)]">
                   <img
                     data-testid="payment-qr-image"
                     src={qrImage}
@@ -312,16 +317,23 @@ const PaymentQRModal: React.FC<Props> = ({
               {phase === 'awaiting' && (
                 <>
                   {qrImage && (
-                    <p className="mt-4 text-center text-sm font-medium text-gray-700">
+                    <p className="mt-5 text-center text-[15px] font-medium text-gray-300">
                       Scan with GPay, PhonePe, Paytm or any UPI app
                     </p>
                   )}
+                  {/* A live pulse rather than a spinner: this is a machine waiting for
+                      money to arrive, not a page loading. */}
                   <div
                     data-testid="payment-waiting"
-                    className="mt-3 flex items-center gap-2 text-sm text-amber-700"
+                    className="mt-4 flex items-center gap-2.5 rounded-full border border-rig-line px-4 py-2"
                   >
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Waiting for payment{secondsWaiting > 5 ? ` (${secondsWaiting}s)` : ''}...
+                    <span className="relative flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rig-signal opacity-75" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-rig-signal" />
+                    </span>
+                    <span className="text-[13px] font-medium text-gray-400">
+                      Waiting for payment{secondsWaiting > 5 ? ` · ${secondsWaiting}s` : ''}
+                    </span>
                   </div>
 
                   {/* The customer is holding the device that scanned the sticker, so
@@ -350,7 +362,7 @@ const PaymentQRModal: React.FC<Props> = ({
                               <a
                                 key={app.key}
                                 href={app.url}
-                                className="flex items-center justify-center rounded-lg border-2 border-gray-300 px-2 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                                className="flex items-center justify-center rounded-xl border-2 border-rig-line px-2 py-3 text-sm font-medium text-gray-300 transition"
                               >
                                 {app.label}
                               </a>
@@ -364,7 +376,7 @@ const PaymentQRModal: React.FC<Props> = ({
                           href={webFallback}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex w-full items-center justify-center gap-1.5 py-2 text-sm text-gray-600 hover:text-gray-900"
+                          className="flex w-full items-center justify-center gap-1.5 py-2 text-sm text-gray-500 hover:text-white"
                         >
                           <ExternalLink className="h-4 w-4" />
                           Pay in browser instead
@@ -377,9 +389,9 @@ const PaymentQRModal: React.FC<Props> = ({
 
               {phase === 'timeout' && (
                 <div className="mt-6 text-center">
-                  <AlertCircle className="mx-auto h-10 w-10 text-amber-500" />
-                  <p className="mt-3 font-medium text-gray-800">No payment received yet.</p>
-                  <p className="mt-1 text-sm text-gray-600">
+                  <AlertCircle className="mx-auto h-10 w-10 text-rig-signal" />
+                  <p className="mt-3 font-medium text-white">No payment received yet.</p>
+                  <p className="mt-1 text-sm text-gray-400">
                     Send the customer a payment link instead - they can pay later and it
                     works over WhatsApp and SMS.
                   </p>
@@ -389,7 +401,7 @@ const PaymentQRModal: React.FC<Props> = ({
               {linkSent ? (
                 <p
                   data-testid="link-sent-confirmation"
-                  className="mt-4 rounded-lg bg-green-50 px-4 py-3 text-center text-sm text-green-800"
+                  className="mt-4 rounded-xl bg-emerald-500/10 px-4 py-3 text-center text-sm text-emerald-300"
                 >
                   Payment link sent over WhatsApp and SMS.
                 </p>
@@ -398,7 +410,7 @@ const PaymentQRModal: React.FC<Props> = ({
                   data-testid="send-link-instead"
                   onClick={handleSendLink}
                   disabled={sendingLink}
-                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-amber-600 px-6 py-3 font-semibold text-amber-700 transition hover:bg-amber-50 disabled:opacity-50"
+                  className="rig-btn mt-5 border-2 border-rig-line text-white disabled:opacity-50"
                 >
                   {sendingLink ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
