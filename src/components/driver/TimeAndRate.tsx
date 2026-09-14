@@ -43,6 +43,17 @@ const TimeAndRate: React.FC<{
     if (taps.current.count >= 5) setUnlocked(true);
   };
 
+  // Picking a rate collapses the list again, so the form returns to showing one
+  // agreed rate - now the chosen one - rather than leaving the full set on screen
+  // for the rest of the entry.
+  const chooseRate = (option: HourlyRate) => {
+    onRate(option);
+    if (rateLocked) {
+      taps.current = { count: 0, last: 0 };
+      setUnlocked(false);
+    }
+  };
+
   const showPicker = !rateLocked || unlocked;
   const total = calculateRentalCost(rate, Number(hours) || 0, Number(minutes) || 0).totalCost;
 
@@ -122,7 +133,7 @@ const TimeAndRate: React.FC<{
               <button
                 key={option}
                 type="button"
-                onClick={() => onRate(option)}
+                onClick={() => chooseRate(option)}
                 aria-pressed={rate === option}
                 className={`rig-amount rounded-xl py-3.5 text-[16px] font-bold transition ${
                   rate === option
