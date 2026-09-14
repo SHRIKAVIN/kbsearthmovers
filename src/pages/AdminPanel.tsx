@@ -3,7 +3,8 @@ import { supabase, type WorkEntry, type BrokerEntry } from '../lib/supabase';
 import { format, parseISO } from 'date-fns';
 import {Download, Filter, Plus, Edit2, Trash2, User, LogOut, Save, X, Users, FileText, RefreshCw, Building2, ChevronDown, ChevronUp, AlertTriangle, Archive, MessageCircle, QrCode } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { whatsappBillLink } from '../lib/payments';
+import { whatsappBillLink, shareBillImage } from '../lib/payments';
+import { renderBillImage } from '../lib/billImage';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -21,6 +22,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   const [filteredBrokerEntries, setFilteredBrokerEntries] = useState<BrokerEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'driver' | 'admin' | 'all' | 'brokers'>('all');
+  const [sharingBillId, setSharingBillId] = useState<string | null>(null);
   const [editingEntry, setEditingEntry] = useState<WorkEntry | null>(null);
   const [editingBrokerEntry, setEditingBrokerEntry] = useState<BrokerEntry | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -509,6 +511,60 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
       setShowDeleteConfirm(false);
       setBrokerEntryToDelete(null);
       setShowBrokerDeleteConfirm(false);
+    }
+  };
+
+  /**
+   * Send a customer their bill as an image.
+   *
+   * wa.me can only pre-fill text, so the image goes through the Web Share API, which
+   * puts a real PNG into WhatsApp. On desktop that API cannot take files, so the bill
+   * downloads and WhatsApp opens with the text version to attach it to.
+   */
+  const shareBill = async (entry: WorkEntry) => {
+    if (!entry.customer_phone || !entry.id) return;
+    setSharingBillId(entry.id);
+
+    try {
+      const details = {
+        phone: entry.customer_phone,
+        customerName: entry.rental_person_name,
+        date: format(parseISO(entry.date), 'dd/MM/yyyy'),
+        machineType: entry.machine_type,
+        hours: entry.hours_driven,
+        total: entry.total_amount,
+        received: entry.amount_received,
+        advance: entry.advance_amount,
+      };
+
+      const blob = await renderBillImage(details);
+      const balance = entry.total_amount - entry.amount_received - entry.advance_amount;
+      const caption =
+        balance > 0
+          ? `Bill from KBS Earthmovers & Harvesters. Balance due: Rs.${balance.toLocaleString('en-IN')}`
+          : 'Bill from KBS Earthmovers & Harvesters. Fully paid - thank you!';
+
+      const outcome = await shareBillImage({
+        blob,
+        customerName: entry.rental_person_name,
+        phone: entry.customer_phone,
+        caption,
+      });
+
+      if (outcome === 'downloaded') {
+        // Desktop: hand them the image, then open the chat so they can attach it.
+        window.open(whatsappBillLink({ ...details, payUrl: `${window.location.origin}/pay` }), '_blank');
+        showToast('Bill image downloaded. Attach it in the WhatsApp tab that just opened.', 'success');
+      } else if (outcome === 'shared') {
+        showToast('Bill image shared.', 'success');
+      }
+    } catch (error: unknown) {
+      showToast(
+        error instanceof Error ? error.message : 'Could not create the bill image.',
+        'error'
+      );
+    } finally {
+      setSharingBillId(null);
     }
   };
 
@@ -1580,25 +1636,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                             {/* Opens WhatsApp with the bill pre-filled - no API, no Meta
                                 approval, you tap send. Hidden when we have no number. */}
                             {entry.customer_phone && (
-                              <a
-                                href={whatsappBillLink({
-                                  phone: entry.customer_phone,
-                                  customerName: entry.rental_person_name,
-                                  date: format(parseISO(entry.date), 'dd/MM/yyyy'),
-                                  machineType: entry.machine_type,
-                                  hours: entry.hours_driven,
-                                  total: entry.total_amount,
-                                  received: entry.amount_received,
-                                  advance: entry.advance_amount,
-                                  payUrl: `${window.location.origin}/pay`,
-                                })}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-green-600 hover:text-green-900 transition-colors mobile-button"
-                                title="Send bill on WhatsApp"
+                              <button
+                                onClick={() => shareBill(entry)}
+                                disabled={sharingBillId === entry.id}
+                                className="text-green-600 transition-colors hover:text-green-900 disabled:opacity-40 mobile-button"
+                                title="Send bill as an image on WhatsApp"
                               >
-                                <MessageCircle className="h-4 w-4" />
-                              </a>
+                                {sharingBillId === entry.id ? (
+                                  <RefreshCw className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <MessageCircle className="h-4 w-4" />
+                                )}
+                              </button>
                             )}
                             <button onClick={() => setEditingEntry(entry)} className="text-amber-600 hover:text-amber-900 transition-colors mobile-button" title="Edit entry">
                               <Edit2 className="h-4 w-4" />

@@ -148,7 +148,57 @@ export function formatRupees(amount: number): string {
   return `Rs.${Number(amount).toLocaleString('en-IN')}`;
 }
 
-/** Pre-filled WhatsApp bill. No API, no approval - the sender taps send. */
+/**
+ * Send the bill to the customer as an IMAGE.
+ *
+ * wa.me links can only pre-fill text - there is no URL scheme that attaches a file.
+ * The only way to put a real image into a WhatsApp chat from a web page is the Web
+ * Share API with a File, which opens the native share sheet with WhatsApp in it.
+ *
+ * That is mobile-only, so on desktop we fall back to downloading the PNG and opening
+ * WhatsApp with the text bill, leaving the sender to attach the image themselves.
+ * Returns which path was taken so the UI can say the right thing.
+ */
+export type ShareOutcome = 'shared' | 'downloaded' | 'cancelled';
+
+export async function shareBillImage(params: {
+  blob: Blob;
+  customerName: string;
+  phone: string;
+  caption: string;
+}): Promise<ShareOutcome> {
+  const file = new File([params.blob], `KBS-bill-${params.customerName.replace(/\s+/g, '-')}.png`, {
+    type: 'image/png',
+  });
+
+  const canShareFile =
+    typeof navigator !== 'undefined' &&
+    typeof navigator.canShare === 'function' &&
+    navigator.canShare({ files: [file] });
+
+  if (canShareFile) {
+    try {
+      await navigator.share({ files: [file], text: params.caption });
+      return 'shared';
+    } catch (error) {
+      // The user dismissing the share sheet throws AbortError - not a failure.
+      if (error instanceof Error && error.name === 'AbortError') return 'cancelled';
+      // Anything else: fall through to the download path rather than dead-ending.
+    }
+  }
+
+  const url = URL.createObjectURL(params.blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = file.name;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+  return 'downloaded';
+}
+
+/** Pre-filled WhatsApp bill as TEXT. Used as the desktop fallback caption. */
 export function whatsappBillLink(params: {
   phone: string;
   customerName: string;
