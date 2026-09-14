@@ -224,7 +224,14 @@ export async function createPaymentLink(args: CreateLinkArgs): Promise<CashfreeL
 
   const result = await cashfreeFetch<CashfreeLinkResponse>('/links', {
     method: 'POST',
-    idempotencyKey: args.linkId,
+    /*
+     * Namespaced, NOT the bare linkId. Cashfree scopes idempotency keys per merchant
+     * rather than per endpoint, and the QR fallback deliberately reuses an order's id
+     * as the link id so settlement can match on either. Sending the raw id here meant
+     * /orders and /links used the same key with different bodies in one request, and
+     * Cashfree rejected the second with "invalid body in request for x-idempotency-key".
+     */
+    idempotencyKey: `link_${args.linkId}`,
     body: {
       link_id: args.linkId,
       link_amount: Number(args.amount.toFixed(2)),
