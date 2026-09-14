@@ -28,10 +28,20 @@ export type CreateQrResponse = {
   upi_links: UpiAppLinks | null;
 };
 
+export type DueJob = {
+  date: string;
+  time: string | null;
+  machine_type: string;
+  hours: number;
+  total: number;
+  balance: number;
+};
+
 export type DuesResponse = {
   total_due: number;
   count: number;
   has_dues: boolean;
+  jobs: DueJob[];
 };
 
 /** The few transaction details a UPI app would show, for the driver's confirmation screen. */

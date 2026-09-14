@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Phone, Loader2, AlertCircle, CheckCircle, IndianRupee, ArrowLeft } from 'lucide-react';
 import PaymentQRModal from '../components/PaymentQRModal';
 import { fetchDues, isValidIndianMobile, formatRupees, type DuesResponse } from '../lib/payments';
+import { formatHoursMinutes, hmmToDecimalHours, to12Hour } from '../lib/billFormat';
 
 /**
  * The page behind the QR sticker on the harvester.
@@ -175,6 +176,51 @@ const PublicPayPage: React.FC = () => {
                   across {dues!.count} job{dues!.count === 1 ? '' : 's'}
                 </p>
               </div>
+
+              {/* Nobody should be asked to pay a figure they cannot check. Each job
+                  shows when it was, the machine, the hours and the rate behind it. */}
+              {dues!.jobs?.length > 0 && (
+                <div data-testid="public-pay-jobs" className="mt-4 space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    What this is for
+                  </p>
+                  {dues!.jobs.map((job, index) => {
+                    const decimalHours = hmmToDecimalHours(job.hours);
+                    const rate = decimalHours > 0 ? Math.round(job.total / decimalHours) : 0;
+                    return (
+                      <div
+                        key={`${job.date}-${index}`}
+                        className="rounded-lg border border-gray-200 bg-white p-3"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="font-semibold text-gray-900">
+                              {new Date(job.date).toLocaleDateString('en-IN', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric',
+                              })}
+                              {job.time ? ` · ${to12Hour(job.time)}` : ''}
+                            </p>
+                            <p className="mt-0.5 text-sm text-gray-600">
+                              {job.machine_type} · {formatHoursMinutes(job.hours)}
+                              {rate > 0 ? ` · ${formatRupees(rate)}/hr` : ''}
+                            </p>
+                          </div>
+                          <div className="shrink-0 text-right">
+                            <p className="font-bold text-gray-900">{formatRupees(job.balance)}</p>
+                            {job.balance !== job.total && (
+                              <p className="text-xs text-gray-500">
+                                of {formatRupees(job.total)}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
 
               <label className="mb-2 mt-6 block text-sm font-medium text-gray-700">
                 Amount to pay now

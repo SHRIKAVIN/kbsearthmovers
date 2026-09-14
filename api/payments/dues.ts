@@ -40,12 +40,23 @@ export default async function handler(req: Req, res: Res) {
     const entries = await outstandingForPhone(phone);
     const totalDue = Math.round(sumBalances(entries) * 100) / 100;
 
-    // Amount and count only. Adding names or dates here would turn a guessed phone
-    // number into a customer's job history.
+    // A customer asked to pay a figure has to be able to check it, so each job is
+    // itemised: when it was, the machine, hours worked and what is still owed on it.
+    // Still no customer name - that is the one field that would confirm to a stranger
+    // WHO a guessed number belongs to, and it tells the actual payer nothing they do
+    // not already know.
     return res.status(200).json({
       total_due: totalDue,
       count: entries.length,
       has_dues: totalDue > 0,
+      jobs: entries.map((entry) => ({
+        date: entry.entry_date,
+        time: entry.entry_time,
+        machine_type: entry.machine_type,
+        hours: entry.hours_driven,
+        total: entry.total_amount,
+        balance: entry.balance,
+      })),
     });
   } catch (error) {
     return serverError(res, error);

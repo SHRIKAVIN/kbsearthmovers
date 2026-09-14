@@ -23,7 +23,10 @@ export function serviceClient(): SupabaseClient {
 export type OutstandingEntry = {
   id: string;
   entry_date: string;
+  entry_time: string | null;
   machine_type: string;
+  hours_driven: number;
+  total_amount: number;
   balance: number;
 };
 
@@ -36,7 +39,10 @@ export async function outstandingForPhone(phone: string): Promise<OutstandingEnt
   return (data || []).map((row: Record<string, unknown>) => ({
     id: String(row.id),
     entry_date: String(row.entry_date),
+    entry_time: row.entry_time ? String(row.entry_time) : null,
     machine_type: String(row.machine_type),
+    hours_driven: Number(row.hours_driven),
+    total_amount: Number(row.total_amount),
     balance: Number(row.balance),
   }));
 }
