@@ -18,6 +18,9 @@ const DriverApp: React.FC<{ driver: Driver; onSignOut: () => void }> = ({ driver
   const [tab, setTab] = useState<Tab>('new');
   const [collecting, setCollecting] = useState<{ id: string; balance: number } | null>(null);
   const [paidPending, setPaidPending] = useState(false);
+  // Which entry just settled, so the form can close its own loop instead of still
+  // offering to collect money that has already arrived.
+  const [settledId, setSettledId] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
@@ -54,8 +57,10 @@ const DriverApp: React.FC<{ driver: Driver; onSignOut: () => void }> = ({ driver
         {tab === 'new' ? (
           <JobForm
             driver={driver}
+            settledEntryId={settledId}
             onSaved={() => setRefreshKey((key) => key + 1)}
             onCollect={(entry) => setCollecting(entry)}
+            onReset={() => setSettledId(null)}
           />
         ) : (
           <JobList
@@ -94,7 +99,10 @@ const DriverApp: React.FC<{ driver: Driver; onSignOut: () => void }> = ({ driver
       {collecting && (
         <PaymentQRModal
           workEntryId={collecting.id}
-          onPaid={() => setPaidPending(true)}
+          onPaid={() => {
+            setPaidPending(true);
+            setSettledId(collecting.id);
+          }}
           onClose={() => {
             setCollecting(null);
             if (paidPending) {

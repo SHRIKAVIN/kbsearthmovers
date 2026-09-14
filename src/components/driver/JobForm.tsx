@@ -12,8 +12,11 @@ type FormValues = Omit<WorkEntry, 'id' | 'created_at' | 'updated_at'> & { broker
 
 type Props = {
   driver: Driver;
+  /** Set once this entry's payment has settled, so the card stops asking for money. */
+  settledEntryId?: string | null;
   onSaved: (entry: { id: string; balance: number }) => void;
   onCollect: (entry: { id: string; balance: number }) => void;
+  onReset?: () => void;
 };
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
@@ -29,7 +32,7 @@ const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title
 const Err: React.FC<{ msg?: string }> = ({ msg }) =>
   msg ? <p className="mt-1.5 text-[13px] font-medium text-rose-600">{msg}</p> : null;
 
-const JobForm: React.FC<Props> = ({ driver, onSaved, onCollect }) => {
+const JobForm: React.FC<Props> = ({ driver, settledEntryId, onSaved, onCollect, onReset }) => {
   const [saving, setSaving] = useState(false);
   const [failed, setFailed] = useState('');
   const [saved, setSaved] = useState<{ id: string; balance: number } | null>(null);
@@ -101,7 +104,37 @@ const JobForm: React.FC<Props> = ({ driver, onSaved, onCollect }) => {
     }
   };
 
+  // The payment for this job has landed, so the card closes the loop rather than
+  // still offering to collect what has already been collected.
+  const settled = saved !== null && settledEntryId === saved.id;
+
+  const startAnother = () => {
+    setSaved(null);
+    onReset?.();
+  };
+
   if (saved) {
+    if (settled) {
+      return (
+        <div className="rig-card p-6 text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-500">
+              <Check className="h-6 w-6 text-white" strokeWidth={3.5} />
+            </div>
+          </div>
+          <p className="mt-4 text-lg font-bold text-rig-ink">Payment received</p>
+          <p className="mt-4 rig-label">Collected</p>
+          <Amount value={saved.balance} size="xl" tone="positive" className="mt-1" />
+          <p className="mt-3 text-[14px] text-gray-500">
+            Nothing left to collect on this job.
+          </p>
+          <button onClick={startAnother} className="rig-btn-primary mt-6">
+            Record another job
+          </button>
+        </div>
+      );
+    }
+
     return (
       <div className="rig-card p-6 text-center">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100">
@@ -119,7 +152,7 @@ const JobForm: React.FC<Props> = ({ driver, onSaved, onCollect }) => {
                 <QrCode className="h-5 w-5" />
                 Collect payment
               </button>
-              <button onClick={() => setSaved(null)} className="rig-btn-ghost">
+              <button onClick={startAnother} className="rig-btn-ghost">
                 <Clock4 className="h-5 w-5" />
                 They'll pay later
               </button>
@@ -131,7 +164,7 @@ const JobForm: React.FC<Props> = ({ driver, onSaved, onCollect }) => {
         ) : (
           <>
             <p className="mt-2 text-[15px] text-gray-600">Nothing left to collect.</p>
-            <button onClick={() => setSaved(null)} className="rig-btn-ghost mt-5">
+            <button onClick={startAnother} className="rig-btn-ghost mt-5">
               Record another job
             </button>
           </>
@@ -203,9 +236,17 @@ const JobForm: React.FC<Props> = ({ driver, onSaved, onCollect }) => {
               inputMode="decimal"
               className="rig-field rig-amount"
               placeholder="4.30"
-              {...register('hours_driven', { min: 0 })}
+              {...register('hours_driven', {
+                required: 'Enter the hours worked',
+                // Hours drive the rate printed on every bill, so a zero here would put
+                // a meaningless figure on a document the customer keeps.
+                validate: (v) => Number(v) > 0 || 'Hours must be more than zero',
+              })}
             />
-            <p className="mt-1.5 text-[13px] text-gray-500">4.30 means 4h 30m</p>
+            <Err msg={errors.hours_driven?.message as string | undefined} />
+            {!errors.hours_driven && (
+              <p className="mt-1.5 text-[13px] text-gray-500">4.30 means 4h 30m</p>
+            )}
           </div>
           <div>
             <label className="rig-label mb-2 block">Owner</label>
