@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
 import { Check, Loader2, QrCode, Clock4, AlertCircle } from 'lucide-react';
@@ -7,6 +7,13 @@ import { isValidIndianMobile } from '../../lib/payments';
 import { useMobileOptimizations } from '../../hooks/useMobileOptimizations';
 import type { Driver } from '../../lib/driverAuth';
 import Amount from '../Amount';
+import TimeAndRate from './TimeAndRate';
+import {
+  DRIVER_RATE,
+  calculateRentalCost,
+  toHoursMinutesValue,
+  type HourlyRate,
+} from '../../lib/rateChart';
 
 type FormValues = Omit<WorkEntry, 'id' | 'created_at' | 'updated_at'> & { broker?: string };
 
@@ -36,6 +43,13 @@ const JobForm: React.FC<Props> = ({ driver, settledEntryId, onSaved, onCollect, 
   const [saving, setSaving] = useState(false);
   const [failed, setFailed] = useState('');
   const [saved, setSaved] = useState<{ id: string; balance: number } | null>(null);
+  // Time and rate live outside react-hook-form: they are two inputs producing one
+  // stored value (H.MM) plus a computed total, which is awkward to express as fields.
+  const [hours, setHours] = useState<number | ''>('');
+  const [minutes, setMinutes] = useState<number | ''>('');
+  // Drivers work at the agreed rate and do not pick it; the value is shown, not chosen.
+  const [rate] = useState<HourlyRate>(DRIVER_RATE);
+  const [timeError, setTimeError] = useState('');
   const { triggerSuccessHaptic, triggerErrorHaptic } = useMobileOptimizations();
 
   const defaults: Partial<FormValues> = {
@@ -53,8 +67,16 @@ const JobForm: React.FC<Props> = ({ driver, settledEntryId, onSaved, onCollect, 
     broker: '',
   };
 
-  const { register, handleSubmit, reset, watch, formState: { errors } } =
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } =
     useForm<FormValues>({ defaultValues: defaults as FormValues });
+
+  const computedTotal = calculateRentalCost(rate, Number(hours) || 0, Number(minutes) || 0).totalCost;
+
+  // The total follows the time and rate, but stays editable - a driver may settle on a
+  // different figure at the roadside, and the agreed number is the one that counts.
+  useEffect(() => {
+    setValue('total_amount', computedTotal || (undefined as unknown as number));
+  }, [computedTotal, setValue]);
 
   const w = watch();
   // The live readout: what the customer still owes, updating as the driver types.
@@ -63,6 +85,12 @@ const JobForm: React.FC<Props> = ({ driver, settledEntryId, onSaved, onCollect, 
     (Number(w.total_amount) || 0) - (Number(w.advance_amount) || 0) - (Number(w.amount_received) || 0);
 
   const onSubmit = async (data: FormValues) => {
+    const totalMinutes = (Number(hours) || 0) * 60 + (Number(minutes) || 0);
+    if (totalMinutes <= 0) {
+      setTimeError('Enter how long the machine ran');
+      return;
+    }
+    setTimeError('');
     setSaving(true);
     setFailed('');
 
@@ -75,7 +103,8 @@ const JobForm: React.FC<Props> = ({ driver, settledEntryId, onSaved, onCollect, 
           customer_phone: `+91${digits.slice(-10)}`,
           driver_name: driver.name,
           driver_code: driver.code,
-          hours_driven: data.hours_driven || 0,
+          hours_driven: toHoursMinutesValue(Number(hours) || 0, Number(minutes) || 0),
+          hourly_rate: rate,
           total_amount: data.total_amount || 0,
           advance_amount: data.advance_amount || 0,
           amount_received: data.amount_received || 0,
@@ -96,6 +125,8 @@ const JobForm: React.FC<Props> = ({ driver, settledEntryId, onSaved, onCollect, 
       onSaved(settled);
       triggerSuccessHaptic();
       reset(defaults as FormValues);
+      setHours('');
+      setMinutes('');
     } catch (error: unknown) {
       setFailed(error instanceof Error ? error.message : 'Could not save the job.');
       triggerErrorHaptic();
@@ -225,36 +256,21 @@ const JobForm: React.FC<Props> = ({ driver, settledEntryId, onSaved, onCollect, 
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="rig-label mb-2 block">Hours (h.mm)</label>
-            <input
-              data-testid="hours-driven"
-              type="number"
-              step="0.01"
-              min="0"
-              inputMode="decimal"
-              className="rig-field rig-amount"
-              placeholder="4.30"
-              {...register('hours_driven', {
-                required: 'Enter the hours worked',
-                // Hours drive the rate printed on every bill, so a zero here would put
-                // a meaningless figure on a document the customer keeps.
-                validate: (v) => Number(v) > 0 || 'Hours must be more than zero',
-              })}
-            />
-            <Err msg={errors.hours_driven?.message as string | undefined} />
-            {!errors.hours_driven && (
-              <p className="mt-1.5 text-[13px] text-gray-500">4.30 means 4h 30m</p>
-            )}
-          </div>
-          <div>
-            <label className="rig-label mb-2 block">Owner</label>
-            <select className="rig-field" {...register('owner', { required: true })}>
-              <option value="Rohini">Rohini</option>
-              <option value="Laxmi">Laxmi</option>
-            </select>
-          </div>
+        <TimeAndRate
+          hours={hours}
+          minutes={minutes}
+          rate={rate}
+          onHours={setHours}
+          onMinutes={setMinutes}
+          error={timeError}
+        />
+
+        <div>
+          <label className="rig-label mb-2 block">Owner</label>
+          <select className="rig-field" {...register('owner', { required: true })}>
+            <option value="Rohini">Rohini</option>
+            <option value="Laxmi">Laxmi</option>
+          </select>
         </div>
 
         <div>
@@ -267,7 +283,7 @@ const JobForm: React.FC<Props> = ({ driver, settledEntryId, onSaved, onCollect, 
 
       <Section title="Money">
         {[
-          ['total_amount', 'Total amount'],
+          ['total_amount', 'Total amount (from hours × rate)'],
           ['advance_amount', 'Advance taken'],
           ['amount_received', 'Received now'],
         ].map(([field, label]) => (

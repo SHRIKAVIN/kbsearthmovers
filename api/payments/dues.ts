@@ -55,6 +55,7 @@ export default async function handler(req: Req, res: Res) {
         time: entry.entry_time,
         machine_type: entry.machine_type,
         hours: entry.hours_driven,
+        hourly_rate: entry.hourly_rate,
         total: entry.total_amount,
         balance: entry.balance,
       })),

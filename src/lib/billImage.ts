@@ -23,6 +23,8 @@ export type BillData = {
   time?: string;
   machineType: string;
   hours: number;
+  /** The rate actually charged. Falls back to total/hours on rows recorded before it. */
+  hourlyRate?: number | null;
   total: number;
   advance: number;
   received: number;

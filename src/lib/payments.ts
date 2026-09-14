@@ -30,6 +30,7 @@ export type CreateQrResponse = {
 
 export type DueJob = {
   id: string;
+  hourly_rate: number | null;
   date: string;
   time: string | null;
   machine_type: string;

@@ -231,8 +231,12 @@ const PublicPayPage: React.FC = () => {
 
                   <div className="mt-2 space-y-2">
                     {jobs.map((job) => {
+                      // Prefer the rate the job was actually charged at; older rows
+                      // have none on file, so derive it as before.
                       const decimalHours = hmmToDecimalHours(job.hours);
-                      const rate = decimalHours > 0 ? Math.round(job.total / decimalHours) : 0;
+                      const rate =
+                        job.hourly_rate ??
+                        (decimalHours > 0 ? Math.round(job.total / decimalHours) : 0);
                       const ticked = !multiple || selected.has(job.id);
 
                       const body = (

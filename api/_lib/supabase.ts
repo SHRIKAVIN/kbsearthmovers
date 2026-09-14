@@ -26,6 +26,7 @@ export type OutstandingEntry = {
   entry_time: string | null;
   machine_type: string;
   hours_driven: number;
+  hourly_rate: number | null;
   total_amount: number;
   balance: number;
 };
@@ -42,6 +43,7 @@ export async function outstandingForPhone(phone: string): Promise<OutstandingEnt
     entry_time: row.entry_time ? String(row.entry_time) : null,
     machine_type: String(row.machine_type),
     hours_driven: Number(row.hours_driven),
+    hourly_rate: row.hourly_rate == null ? null : Number(row.hourly_rate),
     total_amount: Number(row.total_amount),
     balance: Number(row.balance),
   }));
