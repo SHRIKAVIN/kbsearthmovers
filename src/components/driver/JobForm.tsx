@@ -48,7 +48,7 @@ const JobForm: React.FC<Props> = ({ driver, settledEntryId, onSaved, onCollect, 
   const [hours, setHours] = useState<number | ''>('');
   const [minutes, setMinutes] = useState<number | ''>('');
   // Drivers work at the agreed rate and do not pick it; the value is shown, not chosen.
-  const [rate] = useState<HourlyRate>(DRIVER_RATE);
+  const [rate, setRate] = useState<HourlyRate>(DRIVER_RATE);
   const [timeError, setTimeError] = useState('');
   const { triggerSuccessHaptic, triggerErrorHaptic } = useMobileOptimizations();
 
@@ -262,6 +262,8 @@ const JobForm: React.FC<Props> = ({ driver, settledEntryId, onSaved, onCollect, 
           rate={rate}
           onHours={setHours}
           onMinutes={setMinutes}
+          onRate={setRate}
+          rateLocked
           error={timeError}
         />
 

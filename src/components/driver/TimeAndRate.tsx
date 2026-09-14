@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { Clock, Tag } from 'lucide-react';
 import { hourlyRateOptions, calculateRentalCost, type HourlyRate } from '../../lib/rateChart';
 import Amount from '../Amount';
@@ -20,14 +20,30 @@ const TimeAndRate: React.FC<{
   rate: HourlyRate;
   onHours: (value: number | '') => void;
   onMinutes: (value: number | '') => void;
+  onRate: (rate: HourlyRate) => void;
   /**
-   * Omitted for drivers, who work at one agreed rate and have no business choosing
-   * it at the roadside - the same split the calculator makes between its admin and
-   * regular views. Passing it back renders the full picker.
+   * Drivers see one agreed rate rather than choosing one at the roadside - the same
+   * split the calculator makes between its admin and regular views. Tapping the rate
+   * five times reveals the full set, for the occasional job priced differently,
+   * without putting that choice in front of them on every entry.
    */
-  onRate?: (rate: HourlyRate) => void;
+  rateLocked?: boolean;
   error?: string;
-}> = ({ hours, minutes, rate, onHours, onMinutes, onRate, error }) => {
+}> = ({ hours, minutes, rate, onHours, onMinutes, onRate, rateLocked = false, error }) => {
+  const [unlocked, setUnlocked] = useState(false);
+  const taps = useRef({ count: 0, last: 0 });
+
+  const handleRateTap = () => {
+    if (!rateLocked || unlocked) return;
+    const now = Date.now();
+    // Taps have to be deliberate: a pause restarts the count, so stray taps over a
+    // long form-fill never add up to an unlock.
+    taps.current.count = now - taps.current.last > 1500 ? 1 : taps.current.count + 1;
+    taps.current.last = now;
+    if (taps.current.count >= 5) setUnlocked(true);
+  };
+
+  const showPicker = !rateLocked || unlocked;
   const total = calculateRentalCost(rate, Number(hours) || 0, Number(minutes) || 0).totalCost;
 
   return (
@@ -98,7 +114,7 @@ const TimeAndRate: React.FC<{
           <span className="text-[17px] font-bold text-rig-ink">Rate per hour</span>
         </div>
 
-        {onRate ? (
+        {showPicker ? (
           /* Tappable chips rather than a dropdown: every rate is visible at once and
              each is a full-size target for a hand in a field. */
           <div className="grid grid-cols-3 gap-2">
@@ -121,9 +137,14 @@ const TimeAndRate: React.FC<{
         ) : (
           /* Fixed rate, shown the way the calculator shows it to a regular user. */
           <div>
-            <div className="rig-amount w-full rounded-2xl bg-gray-100 px-5 py-4 text-2xl font-bold text-rig-ink">
+            <button
+              type="button"
+              onClick={handleRateTap}
+              aria-label={`Rate ${rate} rupees per hour`}
+              className="rig-amount w-full rounded-2xl bg-gray-100 px-5 py-4 text-left text-2xl font-bold text-rig-ink"
+            >
               ₹{rate.toLocaleString('en-IN')}
-            </div>
+            </button>
             <p className="rig-label mt-2 px-1">Per hour</p>
           </div>
         )}
