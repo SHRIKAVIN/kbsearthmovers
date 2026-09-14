@@ -240,6 +240,7 @@ VITE_ADMIN_PASSWORD=your_secure_admin_password
 | `CASHFREE_API_VERSION` | Optional | Defaults to `2026-01-01` |
 | `PUBLIC_BASE_URL` | Recommended | Origin for Cashfree `return_url` / `notify_url` |
 | `CRON_SECRET` | Recommended | Lets you trigger the reminder sweep manually |
+| `VERCEL_AUTOMATION_BYPASS_SECRET` | Preview only | Lets Cashfree's webhook through a preview that has Vercel Authentication on. Leave unset in production. |
 
 ---
 

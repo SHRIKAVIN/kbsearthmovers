@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { normalizeEnv, requireEnv, optionalEnv, publicBaseUrl } from './env.js';
+import { normalizeEnv, requireEnv, optionalEnv, publicBaseUrl, withProtectionBypass } from './env.js';
 import { toCashfreePhone } from './phone.js';
 
 const API_VERSION = optionalEnv('CASHFREE_API_VERSION') || '2026-01-01';
@@ -73,7 +73,7 @@ export async function createOrder(args: CreateOrderArgs): Promise<{ paymentSessi
       ...(args.customerName ? { customer_name: args.customerName } : {}),
     },
     order_meta: {
-      notify_url: `${publicBaseUrl()}/api/webhooks/cashfree`,
+      notify_url: withProtectionBypass(`${publicBaseUrl()}/api/webhooks/cashfree`),
       return_url: `${publicBaseUrl()}/pay?order_id=${encodeURIComponent(args.orderId)}`,
     },
     order_tags: args.tags,
@@ -186,7 +186,7 @@ export async function createPaymentLink(args: CreateLinkArgs): Promise<CashfreeL
       link_partial_payments: true,
       link_expiry_time: expiry.toISOString(),
       link_meta: {
-        notify_url: `${publicBaseUrl()}/api/webhooks/cashfree`,
+        notify_url: withProtectionBypass(`${publicBaseUrl()}/api/webhooks/cashfree`),
         return_url: `${publicBaseUrl()}/pay`,
       },
       ...(args.notes ? { link_notes: args.notes } : {}),

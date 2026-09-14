@@ -24,6 +24,23 @@ export function optionalEnv(name: string, ...fallbacks: string[]): string {
   }
 }
 
+/**
+ * Append Vercel's automation-bypass secret to a URL when one is configured.
+ *
+ * Preview deployments sit behind Vercel Authentication, which answers 401 to anything
+ * without a Vercel session - including Cashfree's webhook servers. Without this a test
+ * payment succeeds at Cashfree but never settles here, and the QR screen spins forever.
+ *
+ * Setting VERCEL_AUTOMATION_BYPASS_SECRET lets the webhook through while the preview
+ * stays private to humans. Production ignores this (the secret is simply not set there).
+ */
+export function withProtectionBypass(url: string): string {
+  const secret = optionalEnv('VERCEL_AUTOMATION_BYPASS_SECRET');
+  if (!secret) return url;
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}x-vercel-protection-bypass=${encodeURIComponent(secret)}`;
+}
+
 /** Public origin used to build return_url / notify_url for Cashfree. */
 export function publicBaseUrl(): string {
   const explicit = optionalEnv('PUBLIC_BASE_URL');
