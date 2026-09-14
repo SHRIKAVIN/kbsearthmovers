@@ -116,7 +116,7 @@ export async function renderBillImage(bill: BillData, variant?: BillVariant): Pr
   const [logo, machineImg, stamp] = await Promise.all([
     loadImage('/Logo for KBS Earthmovers - Bold Industrial Design.png'),
     loadImage(MACHINE_IMAGES[bill.machineType] || MACHINE_IMAGES.Harvester),
-    loadImage('/stamp.png'),
+    loadImage('/signature_stamp.png'),
   ]);
 
   const scale = 2; // stays sharp when WhatsApp scales it
@@ -401,10 +401,19 @@ export async function renderBillImage(bill: BillData, variant?: BillVariant): Pr
   ctx.fillText('For KBS HARVESTERS', signCx, signY);
 
   if (stamp) {
-    const size = Math.min(126, footY - signY - 44);
-    if (size > 40) {
-      ctx.drawImage(stamp, signCx - size / 2, signY + 12, size, size);
-      signY += size + 12;
+    const maxH = Math.min(132, footY - signY - 44);
+    if (maxH > 40) {
+      // The stamp PNG has no alpha channel - it is ink on a white rectangle. Drawn
+      // normally that rectangle shows as a pale box over the bill. 'multiply' keeps
+      // the dark ink and lets white drop out, which is how a real stamp sits on paper.
+      const ratio = stamp.width / stamp.height;
+      const h = maxH;
+      const w = h * ratio;
+      ctx.save();
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.drawImage(stamp, signCx - w / 2, signY + 10, w, h);
+      ctx.restore();
+      signY += h + 10;
     }
   } else {
     // No stamp file present: leave clean space rather than drawing a fake seal.
