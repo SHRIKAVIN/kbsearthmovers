@@ -3,8 +3,9 @@ import { supabase, type WorkEntry, type BrokerEntry } from '../lib/supabase';
 import { format, parseISO } from 'date-fns';
 import {Download, Filter, Plus, Edit2, Trash2, User, LogOut, Save, X, Users, FileText, RefreshCw, Building2, ChevronDown, ChevronUp, AlertTriangle, Archive, MessageCircle, QrCode } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { whatsappBillLink, shareBillImage } from '../lib/payments';
-import { renderBillImage } from '../lib/billImage';
+import { whatsappBillLink } from '../lib/payments';
+import type { BillData } from '../lib/billImage';
+import BillPreviewModal from '../components/BillPreviewModal';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -22,7 +23,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   const [filteredBrokerEntries, setFilteredBrokerEntries] = useState<BrokerEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'driver' | 'admin' | 'all' | 'brokers'>('all');
-  const [sharingBillId, setSharingBillId] = useState<string | null>(null);
+  const [previewBill, setPreviewBill] = useState<{ bill: BillData; caption: string } | null>(null);
   const [editingEntry, setEditingEntry] = useState<WorkEntry | null>(null);
   const [editingBrokerEntry, setEditingBrokerEntry] = useState<BrokerEntry | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -515,57 +516,33 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   };
 
   /**
-   * Send a customer their bill as an image.
+   * Open the bill for review before it is sent.
    *
-   * wa.me can only pre-fill text, so the image goes through the Web Share API, which
-   * puts a real PNG into WhatsApp. On desktop that API cannot take files, so the bill
-   * downloads and WhatsApp opens with the text version to attach it to.
+   * The preview does the sending; this only assembles the data. Amounts on a bill are
+   * what get argued about later, so they get looked at once before they leave.
    */
-  const shareBill = async (entry: WorkEntry) => {
-    if (!entry.customer_phone || !entry.id) return;
-    setSharingBillId(entry.id);
+  const openBillPreview = (entry: WorkEntry) => {
+    if (!entry.customer_phone) return;
+    const balance = entry.total_amount - entry.amount_received - entry.advance_amount;
 
-    try {
-      const details = {
-        phone: entry.customer_phone,
+    setPreviewBill({
+      bill: {
+        entryId: entry.id,
         customerName: entry.rental_person_name,
-        date: format(parseISO(entry.date), 'dd/MM/yyyy'),
+        phone: entry.customer_phone,
+        date: format(parseISO(entry.date), 'dd-MM-yyyy'),
+        time: entry.time,
         machineType: entry.machine_type,
         hours: entry.hours_driven,
         total: entry.total_amount,
-        received: entry.amount_received,
         advance: entry.advance_amount,
-      };
-
-      const blob = await renderBillImage(details);
-      const balance = entry.total_amount - entry.amount_received - entry.advance_amount;
-      const caption =
+        received: entry.amount_received,
+      },
+      caption:
         balance > 0
-          ? `Bill from KBS Earthmovers & Harvesters. Balance due: Rs.${balance.toLocaleString('en-IN')}`
-          : 'Bill from KBS Earthmovers & Harvesters. Fully paid - thank you!';
-
-      const outcome = await shareBillImage({
-        blob,
-        customerName: entry.rental_person_name,
-        phone: entry.customer_phone,
-        caption,
-      });
-
-      if (outcome === 'downloaded') {
-        // Desktop: hand them the image, then open the chat so they can attach it.
-        window.open(whatsappBillLink({ ...details, payUrl: `${window.location.origin}/pay` }), '_blank');
-        showToast('Bill image downloaded. Attach it in the WhatsApp tab that just opened.', 'success');
-      } else if (outcome === 'shared') {
-        showToast('Bill image shared.', 'success');
-      }
-    } catch (error: unknown) {
-      showToast(
-        error instanceof Error ? error.message : 'Could not create the bill image.',
-        'error'
-      );
-    } finally {
-      setSharingBillId(null);
-    }
+          ? `Bill from KBS Harvesters. Balance due: Rs.${balance.toLocaleString('en-IN')}`
+          : 'Bill from KBS Harvesters. Fully paid - thank you!',
+    });
   };
 
   const saveEntry = async (entry: Partial<WorkEntry>) => {
@@ -1637,16 +1614,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                                 approval, you tap send. Hidden when we have no number. */}
                             {entry.customer_phone && (
                               <button
-                                onClick={() => shareBill(entry)}
-                                disabled={sharingBillId === entry.id}
-                                className="text-green-600 transition-colors hover:text-green-900 disabled:opacity-40 mobile-button"
-                                title="Send bill as an image on WhatsApp"
+                                onClick={() => openBillPreview(entry)}
+                                className="text-green-600 transition-colors hover:text-green-900 mobile-button"
+                                title="Preview and send the bill on WhatsApp"
                               >
-                                {sharingBillId === entry.id ? (
-                                  <RefreshCw className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <MessageCircle className="h-4 w-4" />
-                                )}
+                                <MessageCircle className="h-4 w-4" />
                               </button>
                             )}
                             <button onClick={() => setEditingEntry(entry)} className="text-amber-600 hover:text-amber-900 transition-colors mobile-button" title="Edit entry">
@@ -1673,6 +1645,39 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
             )}
           </div>
         )}
+
+      {previewBill && (
+        <BillPreviewModal
+          bill={previewBill.bill}
+          caption={previewBill.caption}
+          onClose={() => setPreviewBill(null)}
+          onSent={(outcome) => {
+            showToast(
+              outcome === 'shared'
+                ? 'Bill sent.'
+                : 'Bill image saved. Attach it in WhatsApp to send it.',
+              'success'
+            );
+            if (outcome === 'downloaded') {
+              window.open(
+                whatsappBillLink({
+                  phone: previewBill.bill.phone,
+                  customerName: previewBill.bill.customerName,
+                  date: previewBill.bill.date,
+                  machineType: previewBill.bill.machineType,
+                  hours: Number(previewBill.bill.hours),
+                  total: previewBill.bill.total,
+                  received: previewBill.bill.received,
+                  advance: previewBill.bill.advance,
+                  payUrl: `${window.location.origin}/pay`,
+                }),
+                '_blank'
+              );
+            }
+            setPreviewBill(null);
+          }}
+        />
+      )}
 
         {/* Modals */}
         {showAddForm && (
