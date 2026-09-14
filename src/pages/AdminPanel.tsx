@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase, type WorkEntry, type BrokerEntry } from '../lib/supabase';
 import { format, parseISO } from 'date-fns';
-import {Download, Filter, Plus, Edit2, Trash2, User, LogOut, Save, X, Users, FileText, RefreshCw, Building2, ChevronDown, ChevronUp, AlertTriangle, Archive } from 'lucide-react';
+import {Download, Filter, Plus, Edit2, Trash2, User, LogOut, Save, X, Users, FileText, RefreshCw, Building2, ChevronDown, ChevronUp, AlertTriangle, Archive, MessageCircle, QrCode } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { whatsappBillLink } from '../lib/payments';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -519,6 +521,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
           .from('work_entries')
           .update({
             rental_person_name: entry.rental_person_name,
+            customer_phone: entry.customer_phone || null,
             driver_name: entry.driver_name,
             broker: entry.broker || '',
             machine_type: entry.machine_type,
@@ -550,6 +553,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
           .from('work_entries')
           .insert([{
             rental_person_name: entry.rental_person_name,
+            customer_phone: entry.customer_phone || null,
             driver_name: entry.driver_name,
             broker: entry.broker || '',
             machine_type: entry.machine_type,
@@ -758,6 +762,30 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                   placeholder="Enter rental person's name"
                   required
                 />
+              </div>
+
+              {/* Also the backfill path: entries created before payments existed have no
+                  number, and without one they can never be collected on or reminded. */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Customer Mobile</label>
+                <div className="flex">
+                  <span className="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-600">
+                    +91
+                  </span>
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={10}
+                    value={(formData.customer_phone || '').replace(/^\+91/, '')}
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
+                      setFormData({ ...formData, customer_phone: digits ? `+91${digits}` : null });
+                    }}
+                    className="w-full rounded-r-md border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-amber-500"
+                    placeholder="9486532856"
+                  />
+                </div>
+                <p className="mt-1 text-xs text-gray-500">Required for payments and reminders.</p>
               </div>
 
               <div>
@@ -1095,6 +1123,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                 <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
                 Refresh
               </button>
+              <Link
+                to="/admin/qr-sticker"
+                className="flex items-center rounded-lg bg-gray-800 px-4 py-2 text-white transition-all duration-300 hover:scale-105 hover:bg-gray-900"
+                title="Printable payment QR for the harvester"
+              >
+                <QrCode className="mr-2 h-4 w-4" />
+                QR Sticker
+              </Link>
               <button
                 data-testid="logout-button"
                 onClick={onLogout}
@@ -1541,6 +1577,29 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                         </td>
                         <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                           <div className="flex space-x-2">
+                            {/* Opens WhatsApp with the bill pre-filled - no API, no Meta
+                                approval, you tap send. Hidden when we have no number. */}
+                            {entry.customer_phone && (
+                              <a
+                                href={whatsappBillLink({
+                                  phone: entry.customer_phone,
+                                  customerName: entry.rental_person_name,
+                                  date: format(parseISO(entry.date), 'dd/MM/yyyy'),
+                                  machineType: entry.machine_type,
+                                  hours: entry.hours_driven,
+                                  total: entry.total_amount,
+                                  received: entry.amount_received,
+                                  advance: entry.advance_amount,
+                                  payUrl: `${window.location.origin}/pay`,
+                                })}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-green-600 hover:text-green-900 transition-colors mobile-button"
+                                title="Send bill on WhatsApp"
+                              >
+                                <MessageCircle className="h-4 w-4" />
+                              </a>
+                            )}
                             <button onClick={() => setEditingEntry(entry)} className="text-amber-600 hover:text-amber-900 transition-colors mobile-button" title="Edit entry">
                               <Edit2 className="h-4 w-4" />
                             </button>

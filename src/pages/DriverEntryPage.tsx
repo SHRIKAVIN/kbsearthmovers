@@ -2,13 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
 import { supabase, type WorkEntry } from '../lib/supabase';
-import { CheckCircle, AlertCircle, Truck, Clock, DollarSign, Calendar, Timer, User } from 'lucide-react';
+import { CheckCircle, AlertCircle, Truck, Clock, DollarSign, Calendar, Timer, User, Phone, QrCode, Clock4 } from 'lucide-react';
 import { useMobileOptimizations } from '../hooks/useMobileOptimizations';
+import PaymentQRModal from '../components/PaymentQRModal';
+import { isValidIndianMobile, formatRupees } from '../lib/payments';
 
 const DriverEntryPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'success' | 'error' | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
+  // Set after a successful save so we can offer to collect payment for that entry.
+  const [savedEntry, setSavedEntry] = useState<{ id: string; balance: number } | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const { triggerSuccessHaptic, triggerErrorHaptic } = useMobileOptimizations();
 
   // Prevent scroll jumping on page load
@@ -28,6 +33,7 @@ const DriverEntryPage: React.FC = () => {
   const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<Omit<WorkEntry, 'id' | 'created_at' | 'updated_at'> & { broker?: string }>({
     defaultValues: {
       rental_person_name: '',
+      customer_phone: '',
       driver_name: 'Sakthi / Manoj',
       broker: '',
       machine_type: 'Harvester',
@@ -53,6 +59,8 @@ const DriverEntryPage: React.FC = () => {
       // Convert undefined values to 0 for database insertion
       const submitData = {
         ...data,
+        // Store E.164 so it matches what Cashfree returns and what the dues lookup joins on.
+        customer_phone: `+91${String(data.customer_phone || '').replace(/\D/g, '').replace(/^(0+|91)/, '').slice(-10)}`,
         hours_driven: data.hours_driven || 0,
         total_amount: data.total_amount || 0,
         amount_received: data.amount_received || 0,
@@ -61,9 +69,12 @@ const DriverEntryPage: React.FC = () => {
         broker: data.broker || '',
       };
 
-      const { error } = await supabase
+      // Select the id back: the payment flow needs it to look up this entry's balance.
+      const { data: inserted, error } = await supabase
         .from('work_entries')
-        .insert([submitData]);
+        .insert([submitData])
+        .select('id, total_amount, amount_received, advance_amount')
+        .single();
 
       if (error) {
         throw error;
@@ -71,10 +82,20 @@ const DriverEntryPage: React.FC = () => {
 
       setSubmitStatus('success');
       triggerSuccessHaptic();
-      
-      
+
+      if (inserted) {
+        setSavedEntry({
+          id: inserted.id,
+          balance:
+            Number(inserted.total_amount) -
+            Number(inserted.amount_received) -
+            Number(inserted.advance_amount),
+        });
+      }
+
       reset({
         rental_person_name: '',
+        customer_phone: '',
         driver_name: 'Sakthi / Manoj',
         broker: '',
         machine_type: 'Harvester',
@@ -126,6 +147,43 @@ const DriverEntryPage: React.FC = () => {
               />
               {errors.rental_person_name && (
                 <p data-testid="rental-person-name-error" className="mt-1 text-sm text-red-600 animate-shake">{errors.rental_person_name.message}</p>
+              )}
+            </div>
+
+            {/* Customer Mobile - required, because it is the key both payment flows
+                and every reminder look the customer up by. */}
+            <div className="animate-professional-slide-in-right">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <Phone className="inline h-4 w-4 mr-1" />
+                Customer Mobile *
+              </label>
+              <div className="flex">
+                <span className="inline-flex items-center rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-600">
+                  +91
+                </span>
+                <input
+                  data-testid="customer-phone"
+                  type="tel"
+                  inputMode="numeric"
+                  maxLength={10}
+                  {...register('customer_phone', {
+                    required: 'Customer mobile number is required',
+                    validate: (value) =>
+                      isValidIndianMobile(String(value ?? '')) ||
+                      'Enter a valid 10-digit mobile number',
+                  })}
+                  className="w-full rounded-r-lg border border-gray-300 px-3 sm:px-4 py-2 sm:py-3 focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base bg-white text-gray-900"
+                  placeholder="9486532856"
+                />
+              </div>
+              {errors.customer_phone ? (
+                <p data-testid="customer-phone-error" className="mt-1 text-sm text-red-600 animate-shake">
+                  {String(errors.customer_phone.message)}
+                </p>
+              ) : (
+                <p className="mt-1 text-xs text-gray-500">
+                  Needed to collect payment and send reminders.
+                </p>
               )}
             </div>
 
@@ -355,9 +413,49 @@ const DriverEntryPage: React.FC = () => {
 
           {/* Status Messages */}
           {submitStatus === 'success' && (
-            <div data-testid="success-message" className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center animate-professional-bounce-in">
-              <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-              <span className="text-green-700">Entry submitted successfully!</span>
+            <div data-testid="success-message" className="mt-6 rounded-lg border border-green-200 bg-green-50 p-4 animate-professional-bounce-in">
+              <div className="flex items-center">
+                <CheckCircle className="mr-2 h-5 w-5 text-green-500" />
+                <span className="font-medium text-green-700">Entry submitted successfully!</span>
+              </div>
+
+              {savedEntry && savedEntry.balance > 0 && (
+                <div className="mt-4 border-t border-green-200 pt-4">
+                  <p className="text-sm text-gray-700">
+                    Balance due:{' '}
+                    <span className="font-bold text-gray-900">{formatRupees(savedEntry.balance)}</span>
+                  </p>
+                  <p className="mt-1 text-xs text-gray-600">Is the customer paying now?</p>
+
+                  <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <button
+                      data-testid="collect-payment-now"
+                      type="button"
+                      onClick={() => setShowPaymentModal(true)}
+                      className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-amber-600 to-orange-600 px-4 py-3 font-semibold text-white transition-all duration-300 hover:from-amber-700 hover:to-orange-700 hover:shadow-lg"
+                    >
+                      <QrCode className="h-5 w-5" />
+                      Collect Payment Now
+                    </button>
+                    <button
+                      data-testid="pay-later"
+                      type="button"
+                      onClick={() => {
+                        setSavedEntry(null);
+                        setSubmitStatus(null);
+                      }}
+                      className="flex items-center justify-center gap-2 rounded-lg border-2 border-gray-300 px-4 py-3 font-semibold text-gray-700 transition-all duration-300 hover:bg-gray-50"
+                    >
+                      <Clock4 className="h-5 w-5" />
+                      Pay Later
+                    </button>
+                  </div>
+                  <p className="mt-2 text-xs text-gray-500">
+                    Pay Later keeps it as unpaid. A payment link goes out automatically
+                    over WhatsApp and SMS if it stays unpaid.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -369,6 +467,17 @@ const DriverEntryPage: React.FC = () => {
           )}
         </div>
       </div>
+
+      {showPaymentModal && savedEntry && (
+        <PaymentQRModal
+          workEntryId={savedEntry.id}
+          onClose={() => setShowPaymentModal(false)}
+          onPaid={() => {
+            setSavedEntry(null);
+            setSubmitStatus(null);
+          }}
+        />
+      )}
     </div>
   );
 };

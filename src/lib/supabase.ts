@@ -35,6 +35,8 @@ export const testConnection = async () => {
 export type WorkEntry = {
   id?: string;
   rental_person_name: string;
+  /** E.164 (+919486532856). The key both payment flows look the customer up by. */
+  customer_phone?: string | null;
   driver_name: string;
   broker?: string;
   machine_type: 'JCB' | 'Tractor' | 'Harvester';

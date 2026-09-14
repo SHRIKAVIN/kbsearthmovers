@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
 import ServicesPage from './pages/ServicesPage';
@@ -7,6 +7,21 @@ import DriverEntryPage from './pages/DriverEntryPage';
 import AdminLogin from './pages/AdminLogin';
 import AdminPanel from './pages/AdminPanel';
 import ContactPage from './pages/ContactPage';
+import PublicPayPage from './pages/PublicPayPage';
+import QrStickerPage from './pages/QrStickerPage';
+
+/**
+ * The customer-facing payment page and the printable sticker are standalone sheets -
+ * a customer who scanned a QR on a harvester should see one decision, not the whole
+ * marketing site.
+ */
+const CHROMELESS_ROUTES = ['/pay', '/admin/qr-sticker'];
+
+function Chrome() {
+  const { pathname } = useLocation();
+  if (CHROMELESS_ROUTES.includes(pathname)) return null;
+  return <Navbar />;
+}
 
 function App() {
   const [adminUser, setAdminUser] = useState<string | null>(null);
@@ -32,7 +47,7 @@ function App() {
   return (
     <BrowserRouter>
       <div data-testid="app-container" className="min-h-screen bg-gray-50">
-        <Navbar />
+        <Chrome />
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/services" element={<ServicesPage />} />
@@ -54,6 +69,12 @@ function App() {
             } 
           />
           <Route path="/contact" element={<ContactPage />} />
+          {/* Public: reached by scanning the QR sticker on the harvester. */}
+          <Route path="/pay" element={<PublicPayPage />} />
+          <Route
+            path="/admin/qr-sticker"
+            element={adminUser ? <QrStickerPage /> : <Navigate to="/admin-login" replace />}
+          />
         </Routes>
       </div>
     </BrowserRouter>

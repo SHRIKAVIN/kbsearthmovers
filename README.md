@@ -221,10 +221,72 @@ VITE_ADMIN_PASSWORD=your_secure_admin_password
 | `VITE_SUPABASE_ANON_KEY` | Yes | Anon/public key |
 | `VITE_ADMIN_PASSWORD` | Yes | Admin login password |
 | `SUPABASE_URL` | Recommended | Used by `/api/keep-alive` |
-| `SUPABASE_SERVICE_ROLE_KEY` | Recommended | Preferred key for keep-alive queries |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Yes** | Required by all payment endpoints; also preferred for keep-alive |
 | `SUPABASE_ANON_KEY` | Optional | Fallback if service role is not set |
 | `KEEP_ALIVE_TABLE` | Optional | Defaults to `work_entries` |
-| `TEAMS_WEBHOOK_URL` | Optional | Teams alerts for Vercel Cron keep-alive |
+| `TEAMS_WEBHOOK_URL` | Optional | Teams alerts for keep-alive and for every payment received |
+
+**Cashfree payments (server-side only):**
+
+> ⚠️ None of these may be prefixed with `VITE_`. Vite inlines every `VITE_*` variable
+> into the browser bundle, which would publish your Cashfree secret to every visitor.
+
+| Variable | Required | Notes |
+|----------|----------|-------|
+| `CASHFREE_CLIENT_ID` | Yes | Cashfree App ID |
+| `CASHFREE_CLIENT_SECRET` | Yes | Cashfree Secret Key |
+| `CASHFREE_ENV` | Yes | `sandbox` or `production` |
+| `CASHFREE_WEBHOOK_SECRET` | Optional | Defaults to `CASHFREE_CLIENT_SECRET` |
+| `CASHFREE_API_VERSION` | Optional | Defaults to `2026-01-01` |
+| `PUBLIC_BASE_URL` | Recommended | Origin for Cashfree `return_url` / `notify_url` |
+| `CRON_SECRET` | Recommended | Lets you trigger the reminder sweep manually |
+
+---
+
+## 💳 Payments
+
+Two ways a customer can pay, both settling into the same ledger.
+
+**1. Driver collects on site.** The driver saves an entry (customer mobile is now
+required), taps **Collect Payment Now**, and a dynamic UPI QR for the exact balance
+appears. The customer scans it with GPay / PhonePe / Paytm. The screen flips to *Paid*
+on its own, and the balance drops live in the admin panel.
+
+**2. The QR sticker on the harvester.** Print it from **Admin → QR Sticker**, laminate
+it, and fix it to the machine. A customer scans it, enters their mobile on `/pay`, sees
+what they owe, and pays in full or in part. The sticker encodes a static URL, so it
+never expires.
+
+**Unpaid bills chase themselves.** A daily cron at 09:30 IST finds entries older than
+3 days with a balance, and sends one Cashfree payment link per customer over WhatsApp
+and SMS. Cashfree's own auto-reminders take it from there, so nobody gets more than one
+new link a week.
+
+**You get told immediately.** Every successful payment posts a card to Teams with the
+amount, the customer and how it was collected.
+
+### How the money is kept correct
+
+| Concern | How it is handled |
+|---------|-------------------|
+| Can a browser fake a payment? | No. `payments` has RLS on with zero policies and no `anon` grants. Only the verified webhook, running as service-role, writes payment state. |
+| Can someone underpay by tampering with the request? | No. Every endpoint recomputes the balance from the database. A client-supplied amount is only honoured as a *cap* for partial payment. |
+| What if Cashfree sends the same webhook twice? | `apply_payment()` returns early when the payment is already `paid`, so a replay credits nothing. |
+| What if a customer pays part of what they owe? | Oldest job settles first (FIFO), with each allocation recorded in `payment_allocations`. |
+| What if the webhook is spoofed? | The signature is checked (`HMAC-SHA256` over `timestamp + raw body`) before anything else. No valid signature means no database write. |
+
+Payments credit the existing `amount_received` column, so the admin totals, the Excel
+and PDF exports, and the live realtime updates all keep working unchanged.
+
+### Cashfree setup
+
+1. In the Cashfree dashboard, add a webhook pointing at
+   `https://<your-domain>/api/webhooks/cashfree` and subscribe it to the payment
+   success and failure events.
+2. Set the environment variables above, starting with `CASHFREE_ENV=sandbox`.
+3. Run the migration in `supabase/migrations/20260914000000_add_payments.sql`.
+4. Test end to end against sandbox, then switch `CASHFREE_ENV=production` and repoint
+   the webhook.
 
 ---
 
