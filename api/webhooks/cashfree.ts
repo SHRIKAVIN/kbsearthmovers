@@ -1,6 +1,5 @@
 import { verifyWebhookSignature } from '../_lib/cashfree.js';
 import { serviceClient } from '../_lib/supabase.js';
-import { notifyPaymentReceived } from '../_lib/teams.js';
 import { headerValue, methodNotAllowed, readRawBody, type Req, type Res } from '../_lib/http.js';
 
 /**
@@ -158,22 +157,10 @@ export default async function handler(req: Req, res: Res) {
       return res.status(200).json({ received: true, duplicate: true });
     }
 
-    const { data: payment } = await supabase
-      .from('payments')
-      .select('source, customer_phone, target_entry_ids')
-      .or(`cf_order_id.eq.${orderId},cf_link_id.eq.${orderId}`)
-      .single();
-
-    // A failed notification must never undo a settled payment, so this is fire-and-forget.
-    await notifyPaymentReceived({
-      amount,
-      phone: result.customer_phone || payment?.customer_phone || 'unknown',
-      source: payment?.source || 'driver',
-      entriesSettled: payment?.target_entry_ids?.length ?? 0,
-      cfPaymentId: extractPaymentId(payload),
-      orderId,
-      unallocated: Number(result.unallocated || 0),
-    }).catch((err) => console.error('[cashfree-webhook] Teams notify failed:', err));
+    // Settlement is deliberately silent - no Teams card when a payment lands. The
+    // record is the payments row and the updated balance in the admin panel, so this
+    // log line is the only trace of which order settled if one ever needs chasing.
+    console.info('[cashfree-webhook] settled', orderId, 'allocated', result.allocated);
 
     return res.status(200).json({
       received: true,

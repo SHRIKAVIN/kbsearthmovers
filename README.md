@@ -259,13 +259,14 @@ it, and fix it to the machine. A customer scans it, enters their mobile on `/pay
 what they owe, and pays in full or in part. The sticker encodes a static URL, so it
 never expires.
 
-**Unpaid bills chase themselves.** A daily cron at 09:30 IST finds entries older than
-3 days with a balance, and sends one Cashfree payment link per customer over WhatsApp
-and SMS. Cashfree's own auto-reminders take it from there, so nobody gets more than one
-new link a week.
+**Reminders are off.** `api/cron/payment-reminders.ts` still exists and can send one
+Cashfree payment link per customer over WhatsApp and SMS, but it is not scheduled - it
+was removed from `vercel.json`. Trigger it by hand with `CRON_SECRET`, or re-add the
+cron entry to turn it back on.
 
-**You get told immediately.** Every successful payment posts a card to Teams with the
-amount, the customer and how it was collected.
+**Payments settle silently.** No Teams card is sent when money arrives; the record is
+the `payments` row and the balance dropping in the admin panel. Only the keep-alive job
+posts to Teams.
 
 ### How the money is kept correct
 
