@@ -51,6 +51,22 @@ const PaymentQRModal: React.FC<Props> = ({
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startedAt = useRef<number>(Date.now());
 
+  // Creating an order charges nothing, but it does mint a real Cashfree order and a
+  // payments row every time. This effect must run exactly once per modal open, so it
+  // is guarded by a ref rather than trusting a dependency array to stay stable.
+  const createdRef = useRef(false);
+
+  // Callbacks live in refs so the effects below never list them as dependencies.
+  // An unstable identity here previously re-ran the create effect on every render.
+  const onPaidRef = useRef(onPaid);
+  const successHapticRef = useRef(triggerSuccessHaptic);
+  const errorHapticRef = useRef(triggerErrorHaptic);
+  useEffect(() => {
+    onPaidRef.current = onPaid;
+    successHapticRef.current = triggerSuccessHaptic;
+    errorHapticRef.current = triggerErrorHaptic;
+  });
+
   const stopPolling = useCallback(() => {
     if (pollRef.current) {
       clearInterval(pollRef.current);
@@ -60,6 +76,9 @@ const PaymentQRModal: React.FC<Props> = ({
 
   // --- Create the order and render the QR ---
   useEffect(() => {
+    if (createdRef.current) return;
+    createdRef.current = true;
+
     let cancelled = false;
 
     (async () => {
@@ -78,14 +97,14 @@ const PaymentQRModal: React.FC<Props> = ({
         if (cancelled) return;
         setErrorMessage(error instanceof Error ? error.message : 'Could not start the payment.');
         setPhase('error');
-        triggerErrorHaptic();
+        errorHapticRef.current();
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [workEntryId, phone, amount, triggerErrorHaptic]);
+  }, [workEntryId, phone, amount]);
 
   // --- Poll for settlement ---
   //
@@ -110,9 +129,9 @@ const PaymentQRModal: React.FC<Props> = ({
         if (status.status === 'paid') {
           stopPolling();
           setPhase('paid');
-          triggerSuccessHaptic();
+          successHapticRef.current();
           confetti({ particleCount: 120, spread: 75, origin: { y: 0.6 } });
-          onPaid?.();
+          onPaidRef.current?.();
         } else if (status.status === 'failed' || status.status === 'expired') {
           stopPolling();
           setErrorMessage(
@@ -121,7 +140,7 @@ const PaymentQRModal: React.FC<Props> = ({
               : 'The payment did not go through. Please try again.'
           );
           setPhase('error');
-          triggerErrorHaptic();
+          errorHapticRef.current();
         }
         // 'awaiting_confirmation' means Cashfree has the money but the webhook has not
         // landed yet. Keep polling; the next tick usually flips it to paid.
@@ -132,7 +151,7 @@ const PaymentQRModal: React.FC<Props> = ({
     }, POLL_MS);
 
     return stopPolling;
-  }, [phase, payment, stopPolling, triggerSuccessHaptic, triggerErrorHaptic, onPaid]);
+  }, [phase, payment, stopPolling]);
 
   const handleSendLink = async () => {
     setSendingLink(true);
