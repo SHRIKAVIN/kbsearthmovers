@@ -34,12 +34,22 @@ export type DuesResponse = {
   has_dues: boolean;
 };
 
+/** The few transaction details a UPI app would show, for the driver's confirmation screen. */
+export type PaymentReceipt = {
+  reference: string | null;
+  method: string;
+  payer: string | null;
+  paid_to: string;
+};
+
 export type PaymentStatus = {
   payment_id: string;
   status: 'created' | 'paid' | 'failed' | 'expired' | 'awaiting_confirmation';
   amount: number;
   amount_paid: number;
   paid_at: string | null;
+  cf_payment_id: string | null;
+  receipt: PaymentReceipt | null;
 };
 
 export type CreateLinkResponse = {

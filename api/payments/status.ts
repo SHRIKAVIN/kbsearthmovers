@@ -10,6 +10,42 @@ import { badRequest, methodNotAllowed, serverError, type Req, type Res } from '.
  * few seconds instead. It returns the minimum needed to drive the UI - never the
  * customer's other entries or the raw webhook.
  */
+type Receipt = {
+  reference: string | null;
+  method: string;
+  payer: string | null;
+  paid_to: string;
+};
+
+/** Mask all but the last four digits, the way a payment app shows a payer. */
+function maskPhone(phone: string | null): string | null {
+  if (!phone) return null;
+  const local = phone.replace(/^\+91/, '').replace(/\D/g, '');
+  return local.length >= 4 ? `••••• ${local.slice(-5)}` : null;
+}
+
+type WebhookPayment = {
+  bank_reference?: string | number;
+  payment_group?: string;
+  payment_method?: { upi?: { upi_id?: string } };
+};
+
+function extractReceipt(raw: unknown, phone: string | null): Receipt {
+  const payload = (raw || {}) as { data?: { payment?: WebhookPayment } };
+  const payment: WebhookPayment = payload?.data?.payment ?? {};
+  const upiId = payment?.payment_method?.upi?.upi_id ?? null;
+  const group = String(payment?.payment_group || 'upi').toUpperCase();
+
+  return {
+    // Cashfree calls the UTR bank_reference; it is what a customer can look up
+    // in their own bank or UPI app statement.
+    reference: payment?.bank_reference ? String(payment.bank_reference) : null,
+    method: upiId ? `${group} · ${upiId}` : group,
+    payer: maskPhone(phone),
+    paid_to: 'KBS Harvesters',
+  };
+}
+
 export default async function handler(req: Req, res: Res) {
   if (req.method !== 'GET') return methodNotAllowed(res, 'GET');
 
@@ -21,7 +57,7 @@ export default async function handler(req: Req, res: Res) {
     const supabase = serviceClient();
     const { data: payment, error } = await supabase
       .from('payments')
-      .select('id, cf_order_id, status, amount, amount_paid, paid_at')
+      .select('id, cf_order_id, cf_payment_id, customer_phone, status, amount, amount_paid, paid_at, raw_webhook')
       .eq('id', paymentId)
       .single();
 
@@ -42,12 +78,20 @@ export default async function handler(req: Req, res: Res) {
       }
     }
 
+    // The driver shows this screen to the customer as proof, so a settled payment
+    // carries the same details a UPI app would display. Only these few fields are
+    // lifted out of raw_webhook - never the payload itself, which holds far more.
+    const receipt =
+      status === 'paid' ? extractReceipt(payment.raw_webhook, payment.customer_phone) : null;
+
     return res.status(200).json({
       payment_id: payment.id,
       status,
       amount: Number(payment.amount),
       amount_paid: Number(payment.amount_paid),
       paid_at: payment.paid_at,
+      cf_payment_id: status === 'paid' ? payment.cf_payment_id : null,
+      receipt,
     });
   } catch (error) {
     return serverError(res, error);

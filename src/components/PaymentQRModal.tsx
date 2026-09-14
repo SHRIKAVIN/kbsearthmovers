@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import confetti from 'canvas-confetti';
-import { CheckCircle, AlertCircle, X, Loader2, Smartphone, Send, ExternalLink } from 'lucide-react';
+import { AlertCircle, X, Loader2, Smartphone, Send, ExternalLink, Check, ShieldCheck } from 'lucide-react';
 import {
+  type PaymentStatus,
   createQrForEntry,
   createQrForPhone,
   fetchPaymentStatus,
@@ -31,6 +32,19 @@ type Props = {
   onPaid?: () => void;
 };
 
+const Detail: React.FC<{ label: string; value: string; mono?: boolean }> = ({
+  label,
+  value,
+  mono,
+}) => (
+  <div className="flex items-start justify-between gap-3 text-sm">
+    <span className="shrink-0 text-gray-500">{label}</span>
+    <span className={`text-right font-semibold text-gray-900 ${mono ? 'font-mono text-xs' : ''}`}>
+      {value}
+    </span>
+  </div>
+);
+
 const PaymentQRModal: React.FC<Props> = ({
   workEntryId,
   phone,
@@ -46,6 +60,8 @@ const PaymentQRModal: React.FC<Props> = ({
   const [linkSent, setLinkSent] = useState<string | null>(null);
   const [sendingLink, setSendingLink] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  // Kept so the success screen can show real transaction details, not just a tick.
+  const [settled, setSettled] = useState<PaymentStatus | null>(null);
 
   const { triggerSuccessHaptic, triggerErrorHaptic } = useMobileOptimizations();
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -128,6 +144,7 @@ const PaymentQRModal: React.FC<Props> = ({
         const status = await fetchPaymentStatus(payment.payment_id);
         if (status.status === 'paid') {
           stopPolling();
+          setSettled(status);
           setPhase('paid');
           successHapticRef.current();
           confetti({ particleCount: 120, spread: 75, origin: { y: 0.6 } });
@@ -169,6 +186,13 @@ const PaymentQRModal: React.FC<Props> = ({
     }
   };
 
+  const paidAtLabel = new Date(settled?.paid_at || Date.now()).toLocaleString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
   const upiApps = payment?.upi_links ? orderedUpiApps(payment.upi_links) : [];
   const webFallback = payment?.upi_links?.web ?? null;
   const secondsWaiting = Math.floor(elapsed / 1000);
@@ -225,17 +249,43 @@ const PaymentQRModal: React.FC<Props> = ({
             </div>
           )}
 
+          {/* Deliberately shaped like a GPay / PhonePe confirmation. The driver holds
+              this up to the customer as proof the money moved, so it carries the same
+              details their own UPI app would show - reference number included. */}
           {phase === 'paid' && payment && (
-            <div data-testid="payment-success" className="flex flex-col items-center py-8 text-center">
-              <CheckCircle className="h-16 w-16 text-green-500 animate-professional-bounce-in" />
-              <p className="mt-4 text-3xl font-bold text-gray-900">{formatRupees(payment.amount)}</p>
-              <p className="mt-1 text-green-700">Paid successfully</p>
-              <p className="mt-4 text-xs text-gray-500">
-                The balance has been updated. A confirmation has been sent to the owner.
+            <div data-testid="payment-success" className="flex flex-col items-center">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-100 animate-professional-bounce-in">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-500">
+                  <Check className="h-8 w-8 text-white" strokeWidth={3.5} />
+                </div>
+              </div>
+
+              <p className="mt-5 text-4xl font-bold text-gray-900">
+                {formatRupees(settled?.amount_paid || payment.amount)}
               </p>
+              <p className="mt-1 text-base font-semibold text-green-700">Payment Successful</p>
+              <p className="mt-1 text-xs text-gray-500">{paidAtLabel}</p>
+
+              <div className="mt-6 w-full space-y-3 rounded-xl bg-gray-50 p-4">
+                <Detail label="Paid to" value={settled?.receipt?.paid_to || 'KBS Harvesters'} />
+                {settled?.receipt?.payer && <Detail label="From" value={settled.receipt.payer} />}
+                <Detail label="Payment mode" value={settled?.receipt?.method || 'UPI'} />
+                {settled?.receipt?.reference && (
+                  <Detail label="UPI Ref. No." value={settled.receipt.reference} mono />
+                )}
+                {settled?.cf_payment_id && (
+                  <Detail label="Transaction ID" value={settled.cf_payment_id} mono />
+                )}
+              </div>
+
+              <p className="mt-4 flex items-center gap-1.5 text-xs text-gray-500">
+                <ShieldCheck className="h-3.5 w-3.5 text-green-600" />
+                Show this to the customer as confirmation
+              </p>
+
               <button
                 onClick={onClose}
-                className="mt-6 w-full rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-3 font-semibold text-white transition hover:from-green-700 hover:to-emerald-700"
+                className="mt-5 w-full rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-3.5 font-semibold text-white transition hover:from-green-700 hover:to-emerald-700"
               >
                 Done
               </button>
