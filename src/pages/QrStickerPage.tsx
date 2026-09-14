@@ -1,17 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import QRCode from 'qrcode';
-import { Printer, Loader2 } from 'lucide-react';
+import { Printer, Loader2, AlertTriangle, Link2 } from 'lucide-react';
 
 /**
  * Printable "Scan to Pay" sheet for the harvester.
  *
- * The QR encodes a plain static URL, so it never expires and the same laminated
- * sticker keeps working forever - the amount is decided on the page, not baked into
- * the code.
+ * The QR MUST encode the production URL, never window.location.origin. This sheet gets
+ * laminated onto a machine and stays there for years, so a preview URL baked into it
+ * would die the moment that deployment is removed - and nobody would notice until a
+ * customer standing in a field could not pay.
+ *
+ * Preview deployments are also SSO-protected, so a QR pointing at one just shows the
+ * scanner a Vercel login page.
  */
+
+const PRODUCTION_URL = (
+  import.meta.env.VITE_PUBLIC_SITE_URL || 'https://kbsearthmovers.vercel.app'
+).replace(/\/+$/, '');
+
 const QrStickerPage: React.FC = () => {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
-  const payUrl = `${window.location.origin}/pay`;
+  // Off by default: what you print must always point at production.
+  const [testMode, setTestMode] = useState(false);
+
+  const currentOrigin = window.location.origin;
+  const isOnProduction = currentOrigin === PRODUCTION_URL;
+  const payUrl = `${testMode ? currentOrigin : PRODUCTION_URL}/pay`;
 
   useEffect(() => {
     QRCode.toDataURL(payUrl, {
@@ -35,17 +49,65 @@ const QrStickerPage: React.FC = () => {
         }
       `}</style>
 
-      <div className="no-print mx-auto mb-6 max-w-md px-4 text-center">
-        <h1 className="text-xl font-bold text-gray-900">Payment QR sticker</h1>
-        <p className="mt-1 text-sm text-gray-600">
+      <div className="no-print mx-auto mb-6 max-w-md px-4">
+        <h1 className="text-center text-xl font-bold text-gray-900">Payment QR sticker</h1>
+        <p className="mt-1 text-center text-sm text-gray-600">
           Print this, laminate it, and fix it where customers can reach it on the harvester.
         </p>
+
+        {/* Exactly what the QR points at, in text, so it can be checked before printing. */}
+        <div className="mt-4 rounded-lg border border-gray-200 bg-white p-3">
+          <div className="flex items-start gap-2">
+            <Link2 className="mt-0.5 h-4 w-4 shrink-0 text-gray-500" />
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-gray-700">This QR opens:</p>
+              <p className="break-all font-mono text-xs text-gray-900">{payUrl}</p>
+            </div>
+          </div>
+        </div>
+
+        {!isOnProduction && (
+          <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-3">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+              <div className="text-xs text-amber-900">
+                <p className="font-semibold">You are on a preview deployment.</p>
+                <p className="mt-1">
+                  The QR still points at production, so it is safe to print. Preview URLs
+                  are login-protected and disappear, so one must never end up on a sticker.
+                </p>
+
+                <label className="mt-3 flex cursor-pointer items-start gap-2">
+                  <input
+                    type="checkbox"
+                    checked={testMode}
+                    onChange={(event) => setTestMode(event.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-amber-400"
+                  />
+                  <span>
+                    <span className="font-semibold">Point at this preview instead</span> — for
+                    scanning during testing only. Do not print while this is ticked.
+                  </span>
+                </label>
+
+                {testMode && (
+                  <p className="mt-2 rounded bg-amber-100 px-2 py-1 font-semibold text-amber-900">
+                    Testing only. You will still need to be signed in to Vercel on the
+                    phone that scans it.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         <button
           onClick={() => window.print()}
-          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-amber-600 to-orange-600 px-6 py-3 font-semibold text-white transition hover:from-amber-700 hover:to-orange-700"
+          disabled={testMode}
+          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-amber-600 to-orange-600 px-6 py-3 font-semibold text-white transition hover:from-amber-700 hover:to-orange-700 disabled:from-gray-400 disabled:to-gray-500"
         >
           <Printer className="h-5 w-5" />
-          Print sticker
+          {testMode ? 'Untick test mode to print' : 'Print sticker'}
         </button>
       </div>
 

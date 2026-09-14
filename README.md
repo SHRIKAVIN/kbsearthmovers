@@ -241,6 +241,7 @@ VITE_ADMIN_PASSWORD=your_secure_admin_password
 | `PUBLIC_BASE_URL` | Recommended | Origin for Cashfree `return_url` / `notify_url` |
 | `CRON_SECRET` | Recommended | Lets you trigger the reminder sweep manually |
 | `VERCEL_AUTOMATION_BYPASS_SECRET` | Preview only | Lets Cashfree's webhook through a preview that has Vercel Authentication on. Leave unset in production. |
+| `VITE_PUBLIC_SITE_URL` | Recommended | Production origin encoded into the printed QR sticker. Defaults to `https://kbsearthmovers.vercel.app`. Never set this to a preview URL. |
 
 ---
 
