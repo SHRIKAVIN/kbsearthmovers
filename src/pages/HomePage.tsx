@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Truck, Tractor, Wheat, Phone, Mail, Clock, Shield, Users, Star, Settings, User } from 'lucide-react';
 import StatsSection from '../components/StatsSection';
+import Footer from '../components/Footer';
 
 const HomePage: React.FC = () => {
   const services = [
@@ -265,6 +266,8 @@ const HomePage: React.FC = () => {
           </div>
         </div>
       </section>
+
+      <Footer />
     </div>
   );
 };
