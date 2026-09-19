@@ -1,12 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase, type WorkEntry, type BrokerEntry } from '../lib/supabase';
 import { format, parseISO } from 'date-fns';
-import {Download, Filter, Plus, Edit2, Trash2, User, LogOut, Save, X, Users, FileText, RefreshCw, Building2, ChevronDown, ChevronUp, AlertTriangle, Archive, MessageCircle, QrCode } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { whatsappBillLink } from '../lib/payments';
-import type { BillData } from '../lib/billImage';
-import BillPreviewModal from '../components/BillPreviewModal';
-import EntryCards from '../components/admin/EntryCards';
+import {Download, Filter, Plus, Edit2, Trash2, User, LogOut, Save, X, Users, FileText, RefreshCw, Building2, ChevronDown, ChevronUp, AlertTriangle, Archive } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -24,7 +19,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
   const [filteredBrokerEntries, setFilteredBrokerEntries] = useState<BrokerEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'driver' | 'admin' | 'all' | 'brokers'>('all');
-  const [previewBill, setPreviewBill] = useState<{ bill: BillData; caption: string } | null>(null);
   const [editingEntry, setEditingEntry] = useState<WorkEntry | null>(null);
   const [editingBrokerEntry, setEditingBrokerEntry] = useState<BrokerEntry | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -516,36 +510,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
     }
   };
 
-  /**
-   * Open the bill for review before it is sent.
-   *
-   * The preview does the sending; this only assembles the data. Amounts on a bill are
-   * what get argued about later, so they get looked at once before they leave.
-   */
-  const openBillPreview = (entry: WorkEntry) => {
-    if (!entry.customer_phone) return;
-    const balance = entry.total_amount - entry.amount_received - entry.advance_amount;
-
-    setPreviewBill({
-      bill: {
-        entryId: entry.id,
-        customerName: entry.rental_person_name,
-        phone: entry.customer_phone,
-        date: format(parseISO(entry.date), 'dd/MM/yyyy'),
-        time: entry.time,
-        machineType: entry.machine_type,
-        hours: entry.hours_driven,
-        total: entry.total_amount,
-        advance: entry.advance_amount,
-        received: entry.amount_received,
-      },
-      caption:
-        balance > 0
-          ? `Bill from KBS Harvesters. Balance due: Rs.${balance.toLocaleString('en-IN')}`
-          : 'Bill from KBS Harvesters. Fully paid - thank you!',
-    });
-  };
-
   const saveEntry = async (entry: Partial<WorkEntry>) => {
     try {
       if (entry.id) {
@@ -555,7 +519,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
           .from('work_entries')
           .update({
             rental_person_name: entry.rental_person_name,
-            customer_phone: entry.customer_phone || null,
             driver_name: entry.driver_name,
             broker: entry.broker || '',
             machine_type: entry.machine_type,
@@ -587,7 +550,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
           .from('work_entries')
           .insert([{
             rental_person_name: entry.rental_person_name,
-            customer_phone: entry.customer_phone || null,
             driver_name: entry.driver_name,
             broker: entry.broker || '',
             machine_type: entry.machine_type,
@@ -796,30 +758,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                   placeholder="Enter rental person's name"
                   required
                 />
-              </div>
-
-              {/* Also the backfill path: entries created before payments existed have no
-                  number, and without one they can never be collected on or reminded. */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Customer Mobile</label>
-                <div className="flex">
-                  <span className="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-gray-50 px-3 text-sm text-gray-600">
-                    +91
-                  </span>
-                  <input
-                    type="tel"
-                    inputMode="numeric"
-                    maxLength={10}
-                    value={(formData.customer_phone || '').replace(/^\+91/, '')}
-                    onChange={(e) => {
-                      const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
-                      setFormData({ ...formData, customer_phone: digits ? `+91${digits}` : null });
-                    }}
-                    className="w-full rounded-r-md border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-amber-500"
-                    placeholder="9486532856"
-                  />
-                </div>
-                <p className="mt-1 text-xs text-gray-500">Required for payments and reminders.</p>
               </div>
 
               <div>
@@ -1157,14 +1095,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                 <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
                 Refresh
               </button>
-              <Link
-                to="/admin/qr-sticker"
-                className="flex items-center rounded-lg bg-gray-800 px-4 py-2 text-white transition-all duration-300 hover:scale-105 hover:bg-gray-900"
-                title="Printable payment QR for the harvester"
-              >
-                <QrCode className="mr-2 h-4 w-4" />
-                QR Sticker
-              </Link>
               <button
                 data-testid="logout-button"
                 onClick={onLogout}
@@ -1577,17 +1507,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                 <p className="mt-4 text-gray-600">Loading entries...</p>
               </div>
             ) : (
-              <>
-                {/* Phones get cards; the seven-column table only makes sense with room. */}
-                <div className="lg:hidden max-h-[600px] overflow-y-auto">
-                  <EntryCards
-                    entries={filteredEntries}
-                    onEdit={setEditingEntry}
-                    onDelete={deleteEntry}
-                    onBill={openBillPreview}
-                  />
-                </div>
-              <div className="hidden lg:block overflow-x-auto max-h-[600px] overflow-y-auto">
+              <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
                 <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
                   <thead className="bg-gray-50 sticky top-0 z-10">
                     <tr>
@@ -1611,27 +1531,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                         <td className="w-32 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 truncate-mobile border-r border-gray-200">{entry.broker || '-'}</td>
                         <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{entry.owner}</td>
                         <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 border-r border-gray-200">{typeof entry.hours_driven === 'number' ? entry.hours_driven.toFixed(2) : entry.hours_driven}</td>
-                        <td className="rig-amount w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 font-semibold border-r border-gray-200">₹{entry.total_amount.toLocaleString('en-IN')}</td>
-                        <td className="rig-amount w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-blue-600 font-semibold border-r border-gray-200">₹{entry.advance_amount.toLocaleString('en-IN')}</td>
-                        <td className="rig-amount w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-green-600 font-semibold border-r border-gray-200">₹{entry.amount_received.toLocaleString('en-IN')}</td>
-                        <td className="rig-amount w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap font-semibold text-xs sm:text-sm border-r border-gray-200">
+                        <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900 font-semibold border-r border-gray-200">₹{entry.total_amount.toLocaleString('en-IN')}</td>
+                        <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-blue-600 font-semibold border-r border-gray-200">₹{entry.advance_amount.toLocaleString('en-IN')}</td>
+                        <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-green-600 font-semibold border-r border-gray-200">₹{entry.amount_received.toLocaleString('en-IN')}</td>
+                        <td className="w-28 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap font-semibold text-xs sm:text-sm border-r border-gray-200">
                           <span className={entry.total_amount - entry.amount_received - entry.advance_amount > 0 ? 'text-red-600' : 'text-green-600'}>
                             ₹{(entry.total_amount - entry.amount_received - entry.advance_amount).toLocaleString('en-IN')}
                           </span>
                         </td>
                         <td className="w-20 px-2 sm:px-3 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                           <div className="flex space-x-2">
-                            {/* Opens WhatsApp with the bill pre-filled - no API, no Meta
-                                approval, you tap send. Hidden when we have no number. */}
-                            {entry.customer_phone && (
-                              <button
-                                onClick={() => openBillPreview(entry)}
-                                className="text-green-600 transition-colors hover:text-green-900 mobile-button"
-                                title="Preview and send the bill on WhatsApp"
-                              >
-                                <MessageCircle className="h-4 w-4" />
-                              </button>
-                            )}
                             <button onClick={() => setEditingEntry(entry)} className="text-amber-600 hover:text-amber-900 transition-colors mobile-button" title="Edit entry">
                               <Edit2 className="h-4 w-4" />
                             </button>
@@ -1644,53 +1553,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
                     ))}
                   </tbody>
                 </table>
-                </div>
-
-                {/* Outside both views so the empty state shows on phones too. */}
+                
                 {filteredEntries.length === 0 && (
-                  <div className="py-10 text-center">
+                  <div className="text-center py-8">
                     <p className="text-gray-500">
-                      {entries.length === 0 ? 'No entries yet. Add your first entry.' : 'No entries match these filters.'}
+                      {entries.length === 0 ? 'No entries found. Add your first entry!' : 'No entries found matching your filters.'}
                     </p>
                   </div>
                 )}
-              </>
+              </div>
             )}
           </div>
         )}
-
-      {previewBill && (
-        <BillPreviewModal
-          bill={previewBill.bill}
-          caption={previewBill.caption}
-          onClose={() => setPreviewBill(null)}
-          onSent={(outcome) => {
-            showToast(
-              outcome === 'shared'
-                ? 'Bill sent.'
-                : 'Bill image saved. Attach it in WhatsApp to send it.',
-              'success'
-            );
-            if (outcome === 'downloaded') {
-              window.open(
-                whatsappBillLink({
-                  phone: previewBill.bill.phone,
-                  customerName: previewBill.bill.customerName,
-                  date: previewBill.bill.date,
-                  machineType: previewBill.bill.machineType,
-                  hours: Number(previewBill.bill.hours),
-                  total: previewBill.bill.total,
-                  received: previewBill.bill.received,
-                  advance: previewBill.bill.advance,
-                  payUrl: `${window.location.origin}/pay`,
-                }),
-                '_blank'
-              );
-            }
-            setPreviewBill(null);
-          }}
-        />
-      )}
 
         {/* Modals */}
         {showAddForm && (
