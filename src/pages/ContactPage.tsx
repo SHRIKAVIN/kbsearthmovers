@@ -1,7 +1,14 @@
 import React from 'react';
 import { Phone, Mail, MapPin, Clock, User, MessageSquare } from 'lucide-react';
+import { useSEO } from '../hooks/useSEO';
 
 const ContactPage: React.FC = () => {
+  useSEO({
+    title: 'Contact KBS Earthmovers & Harvester - Pathur, Koradacheri, Thiruvarur',
+    description: 'Contact KBS Earthmovers & Harvester at 2/559, North Street, Pathur, Koradacheri, Thiruvarur - 613703, Tamil Nadu. Call 9486532856 / 9943915881 or email skmbhaskaran@gmail.com for JCB, tractor and harvester rental.',
+    path: '/contact',
+  });
+
   const contactInfo = [
     {
       icon: User,
@@ -26,6 +33,12 @@ const ContactPage: React.FC = () => {
       title: 'Working Hours',
       content: '24/7 Available',
       subtitle: 'Emergency services available'
+    },
+    {
+      icon: MapPin,
+      title: 'Location',
+      content: '2/559, North Street, Pathur',
+      subtitle: 'Koradacheri, Thiruvarur - 613703, Tamil Nadu'
     }
   ];
 
@@ -106,6 +119,14 @@ const ContactPage: React.FC = () => {
                     <h4 className="font-semibold text-gray-900">Service Hours</h4>
                     <p className="text-gray-700">24/7 Available</p>
                     <p className="text-gray-500 text-sm">Emergency services available</p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <MapPin className="h-6 w-6 text-amber-600 mt-1 mr-3" />
+                  <div>
+                    <h4 className="font-semibold text-gray-900">Address</h4>
+                    <p className="text-gray-700">2/559, North Street, Pathur</p>
+                    <p className="text-gray-700">Koradacheri, Thiruvarur - 613703, Tamil Nadu</p>
                   </div>
                 </div>
               </div>

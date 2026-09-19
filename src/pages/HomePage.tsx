@@ -3,8 +3,15 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Truck, Tractor, Wheat, Phone, Mail, Clock, Shield, Users, Star, Settings, User } from 'lucide-react';
 import StatsSection from '../components/StatsSection';
 import Footer from '../components/Footer';
+import { useSEO } from '../hooks/useSEO';
 
 const HomePage: React.FC = () => {
+  useSEO({
+    title: 'KBS Earthmovers & Harvester - JCB, Tractor & Harvester Rental in Thiruvarur, Tamil Nadu',
+    description: 'KBS Earthmovers & Harvester is a 24/7 JCB, tractor and harvester rental service based in Pathur, Koradacheri, Thiruvarur, Tamil Nadu. Experienced operators, reliable machinery. Call 9486532856 / 9943915881.',
+    path: '/',
+  });
+
   const services = [
     {
       icon: Truck,
