@@ -5,6 +5,7 @@ import {Download, Filter, Plus, Edit2, Trash2, User, LogOut, Save, X, Users, Fil
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { useSEO } from '../hooks/useSEO';
 
 interface AdminPanelProps {
   adminUser: string;
@@ -12,6 +13,12 @@ interface AdminPanelProps {
 }
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ adminUser, onLogout }) => {
+  useSEO({
+    title: 'Admin Panel - KBS Earthmovers & Harvester',
+    description: 'Internal admin panel for KBS Earthmovers & Harvester staff.',
+    path: '/admin',
+    noindex: true,
+  });
 
   const [entries, setEntries] = useState<WorkEntry[]>([]);
   const [brokerEntries, setBrokerEntries] = useState<BrokerEntry[]>([]);

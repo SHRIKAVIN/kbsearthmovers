@@ -44,24 +44,33 @@ const Footer: React.FC = () => (
           <ul className="mt-4 space-y-3 text-sm">
             <li className="flex items-center gap-3 text-white">
               <User className="h-4 w-4 shrink-0 text-amber-500" />
-              <span className="font-semibold">BASKARAN ROHINI</span>
+              <span className="font-semibold">BHASKARAN K</span>
             </li>
             <li>
               <a
-                href="tel:9965278945"
+                href="tel:9486532856"
                 className="flex items-center gap-3 transition-colors duration-300 hover:text-white"
               >
                 <Phone className="h-4 w-4 shrink-0 text-amber-500" />
-                9965278945
+                9486532856
               </a>
             </li>
             <li>
               <a
-                href="mailto:shrikavinkbs@gmail.com"
+                href="tel:9943915881"
+                className="flex items-center gap-3 transition-colors duration-300 hover:text-white"
+              >
+                <Phone className="h-4 w-4 shrink-0 text-amber-500" />
+                9943915881
+              </a>
+            </li>
+            <li>
+              <a
+                href="mailto:skmbhaskaran@gmail.com"
                 className="flex items-center gap-3 break-all transition-colors duration-300 hover:text-white"
               >
                 <Mail className="h-4 w-4 shrink-0 text-amber-500" />
-                shrikavinkbs@gmail.com
+                skmbhaskaran@gmail.com
               </a>
             </li>
             <li className="flex items-start gap-3">

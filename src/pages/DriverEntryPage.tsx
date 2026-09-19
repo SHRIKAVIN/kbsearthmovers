@@ -4,8 +4,16 @@ import { format } from 'date-fns';
 import { supabase, type WorkEntry } from '../lib/supabase';
 import { CheckCircle, AlertCircle, Truck, Clock, DollarSign, Calendar, Timer, User } from 'lucide-react';
 import { useMobileOptimizations } from '../hooks/useMobileOptimizations';
+import { useSEO } from '../hooks/useSEO';
 
 const DriverEntryPage: React.FC = () => {
+  useSEO({
+    title: 'Driver Entry - KBS Earthmovers & Harvester',
+    description: 'Internal work entry form for KBS Earthmovers & Harvester drivers.',
+    path: '/driver-entry',
+    noindex: true,
+  });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'success' | 'error' | null>(null);
   const [errorMessage, setErrorMessage] = useState('');

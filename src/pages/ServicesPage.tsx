@@ -1,8 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Truck, Tractor, Wheat, ArrowRight, CheckCircle } from 'lucide-react';
+import { useSEO } from '../hooks/useSEO';
 
 const ServicesPage: React.FC = () => {
+  useSEO({
+    title: 'JCB, Tractor & Harvester Rental Services in Thiruvarur | KBS Earthmovers',
+    description: 'Explore KBS Earthmovers & Harvester services: JCB excavation, tractor rental for farming, and harvester rental for crop harvesting in Pathur, Koradacheri, Thiruvarur, Tamil Nadu. Experienced operators included.',
+    path: '/services',
+  });
+
   const services = [
     {
       icon: Truck,

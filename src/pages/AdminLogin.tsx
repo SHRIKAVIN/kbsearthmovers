@@ -2,12 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, User, Eye, EyeOff } from 'lucide-react';
 import Lottie from 'lottie-react';
+import { useSEO } from '../hooks/useSEO';
 
 interface AdminLoginProps {
   onLogin: (username: string) => void;
 }
 
 const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
+  useSEO({
+    title: 'Admin Login - KBS Earthmovers & Harvester',
+    description: 'Internal admin login for KBS Earthmovers & Harvester staff.',
+    path: '/admin-login',
+    noindex: true,
+  });
+
   const [credentials, setCredentials] = useState({
     username: '',
     password: ''
