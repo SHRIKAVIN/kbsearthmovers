@@ -38,6 +38,82 @@
   }
 }
 
+@layer components {
+  /*
+   * Instrument-panel primitives.
+   *
+   * The driver uses this standing in a field: bright sun, dust, one hand free,
+   * customer waiting. Targets are 56px because a real thumb on a cheap Android is
+   * not a mouse pointer, and every numeral is monospaced so amounts line up and
+   * read like a machine readout rather than prose.
+   */
+
+  .rig-label {
+    @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-rig-muted;
+  }
+
+  .rig-field {
+    @apply w-full rounded-xl border-2 border-gray-200 bg-white px-4 text-[17px] font-medium
+           text-rig-ink transition-colors placeholder:font-normal placeholder:text-gray-400
+           focus:border-rig-accent focus:outline-none focus:ring-4 focus:ring-rig-accent/10;
+    min-height: 56px;
+  }
+
+  .rig-field-dark {
+    @apply w-full rounded-xl border-2 border-rig-line bg-rig-ink px-4 text-[17px] font-medium
+           text-white transition-colors placeholder:text-gray-600
+           focus:border-rig-accent focus:outline-none focus:ring-4 focus:ring-rig-accent/20;
+    min-height: 56px;
+  }
+
+  /* Section headers that name what the driver is doing, not what the form contains. */
+  .rig-section {
+    @apply flex items-center gap-2.5 pb-3;
+  }
+  .rig-section-bar {
+    @apply h-4 w-1 rounded-full bg-rig-accent;
+  }
+
+  .rig-card {
+    @apply rounded-2xl border border-gray-200 bg-white;
+  }
+
+  .rig-btn {
+    @apply flex w-full items-center justify-center gap-2 rounded-xl px-5 text-[16px] font-semibold
+           transition-all active:scale-[0.985] disabled:opacity-45 disabled:active:scale-100;
+    min-height: 56px;
+  }
+  .rig-btn-primary {
+    @apply rig-btn bg-rig-accent text-white shadow-[0_6px_20px_-6px_rgba(242,101,34,0.65)]
+           hover:brightness-[1.06];
+  }
+  .rig-btn-ghost {
+    @apply rig-btn border-2 border-gray-200 bg-white text-rig-ink hover:bg-gray-50;
+  }
+
+  /* Status of a job, said in the driver's words rather than the database's. */
+  .rig-chip {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold
+           uppercase tracking-wider;
+  }
+}
+
+@layer utilities {
+  /*
+   * The signature: every amount in the app. Tabular figures so columns align, tight
+   * tracking so large numbers stay compact on a narrow screen.
+   */
+  .rig-amount {
+    font-family: '"IBM Plex Mono"', ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+
+  .rig-safe-bottom {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
+  }
+}
+
 @layer utilities {
   .animate-fade-in-up {
     animation: fadeInUp 1s ease-out;

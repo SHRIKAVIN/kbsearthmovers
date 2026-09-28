@@ -26,7 +26,7 @@ const Navbar: React.FC = () => {
   const navigation = [
     { name: 'Home', path: '/' },
     { name: 'Services', path: '/services' },
-    { name: 'Driver Entry', path: '/driver-entry' },
+    { name: 'Driver App', path: '/driver' },
     { name: 'Admin Login', path: '/admin-login' },
     { name: 'Contact Us', path: '/contact' },
   ];

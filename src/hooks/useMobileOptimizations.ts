@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Keyboard } from '@capacitor/keyboard';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
@@ -27,7 +27,10 @@ export const useMobileOptimizations = () => {
     }
   }, []);
 
-  const triggerHapticFeedback = async (style: ImpactStyle = ImpactStyle.Medium) => {
+  // These are memoised because callers put them in effect dependency arrays. Returning
+  // a fresh identity each render made any such effect re-run on every render - which in
+  // the payment modal meant a new Cashfree order per render, in a loop.
+  const triggerHapticFeedback = useCallback(async (style: ImpactStyle = ImpactStyle.Medium) => {
     if (Capacitor.isNativePlatform()) {
       try {
         await Haptics.impact({ style });
@@ -35,10 +38,16 @@ export const useMobileOptimizations = () => {
         console.log('Haptic feedback not available:', error);
       }
     }
-  };
+  }, []);
 
-  const triggerSuccessHaptic = () => triggerHapticFeedback(ImpactStyle.Light);
-  const triggerErrorHaptic = () => triggerHapticFeedback(ImpactStyle.Heavy);
+  const triggerSuccessHaptic = useCallback(
+    () => triggerHapticFeedback(ImpactStyle.Light),
+    [triggerHapticFeedback]
+  );
+  const triggerErrorHaptic = useCallback(
+    () => triggerHapticFeedback(ImpactStyle.Heavy),
+    [triggerHapticFeedback]
+  );
 
   return {
     triggerHapticFeedback,

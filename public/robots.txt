@@ -1,11 +1,8 @@
 User-agent: *
 Allow: /
-Disallow: /admin
-Disallow: /admin-login
-Disallow: /driver-entry
 
 # Sitemap
-Sitemap: https://kbsearthmovers.site/sitemap.xml
+Sitemap: https://kbsearthmovers.vercel.app/sitemap.xml
 
 # Crawl-delay
-Crawl-delay: 1
+Crawl-delay: 1 
