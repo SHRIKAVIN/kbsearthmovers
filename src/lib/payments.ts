@@ -26,8 +26,9 @@ export type CreateQrResponse = {
   qr_payload: string | null;
   /** Present for the self-service flow (channel 'link'). */
   upi_links: UpiAppLinks | null;
-  /** Set when the UPI session API was unavailable and a payment link was used. */
-  via?: 'payment_link';
+  /** URL the customer opens to pay - rendered as a QR for the driver's screen. */
+  checkout_url?: string | null;
+  via?: 'payment_link' | 'checkout';
 };
 
 export type DueJob = {

@@ -7,6 +7,7 @@ import AdminLogin from './pages/AdminLogin';
 import AdminPanel from './pages/AdminPanel';
 import ContactPage from './pages/ContactPage';
 import PublicPayPage from './pages/PublicPayPage';
+import CheckoutPage from './pages/CheckoutPage';
 import DriverLogin from './pages/DriverLogin';
 import DriverApp from './pages/DriverApp';
 import { loadSession, saveSession, clearSession, type Driver } from './lib/driverAuth';
@@ -18,7 +19,7 @@ import QrStickerPage from './pages/QrStickerPage';
  * a customer who scanned a QR on a harvester should see one decision, not the whole
  * marketing site.
  */
-const CHROMELESS_ROUTES = ['/pay', '/admin/qr-sticker', '/driver', '/driver-entry'];
+const CHROMELESS_ROUTES = ['/pay', '/checkout', '/admin/qr-sticker', '/driver', '/driver-entry'];
 
 function Chrome() {
   const { pathname } = useLocation();
@@ -107,6 +108,8 @@ function App() {
           <Route path="/contact" element={<ContactPage />} />
           {/* Public: reached by scanning the QR sticker on the harvester. */}
           <Route path="/pay" element={<PublicPayPage />} />
+          {/* Where a scanned QR lands: opens Cashfree Checkout for one payment. */}
+          <Route path="/checkout" element={<CheckoutPage />} />
           <Route
             path="/admin/qr-sticker"
             element={adminUser ? <QrStickerPage /> : <Navigate to="/admin-login" replace />}

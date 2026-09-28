@@ -109,8 +109,19 @@ const PaymentQRModal: React.FC<Props> = ({
         if (cancelled) return;
 
         setPayment(result);
-        // Only the driver flow gets a QR; the self-service flow gets app links.
-        setQrImage(result.qr_payload ? await resolveQrImage(result.qr_payload) : null);
+
+        /*
+         * The driver's screen shows a QR of the checkout URL for the customer to scan
+         * with their camera. The customer on /pay is holding the only phone there, so
+         * they get sent straight to checkout instead of a code they cannot scan.
+         */
+        if (result.checkout_url && selfService) {
+          window.location.href = result.checkout_url;
+          return;
+        }
+
+        const qrSource = result.checkout_url || result.qr_payload;
+        setQrImage(qrSource ? await resolveQrImage(qrSource) : null);
         setPhase('awaiting');
         startedAt.current = Date.now();
       } catch (error: unknown) {
@@ -124,7 +135,7 @@ const PaymentQRModal: React.FC<Props> = ({
     return () => {
       cancelled = true;
     };
-  }, [workEntryId, phone, amount, workEntryIds]);
+  }, [workEntryId, phone, amount, workEntryIds, selfService]);
 
   // --- Poll for settlement ---
   //
@@ -321,9 +332,7 @@ const PaymentQRModal: React.FC<Props> = ({
                 <>
                   {qrImage && (
                     <p className="mt-5 text-center text-[15px] font-medium text-gray-300">
-                      {payment.via === 'payment_link'
-                        ? 'Scan with the phone camera, then pay by UPI'
-                        : 'Scan with GPay, PhonePe, Paytm or any UPI app'}
+                      Scan with the phone camera, then pay by UPI
                     </p>
                   )}
                   {/* A live pulse rather than a spinner: this is a machine waiting for

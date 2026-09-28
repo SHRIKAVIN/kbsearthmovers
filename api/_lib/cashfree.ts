@@ -210,6 +210,17 @@ export type CreateLinkArgs = {
   purpose: string;
   notes?: Record<string, string>;
   expiryDays?: number;
+  /**
+   * Restrict the link to UPI and send the payer straight into their UPI app.
+   *
+   * Used for the QR flows, where the customer is standing next to a harvester and
+   * wants to scan and pay - a page offering cards and netbanking is noise there.
+   *
+   * Deliberately NOT the default. Reminder links go out over WhatsApp days later and
+   * may be opened on a desktop; narrowing those to UPI could stop someone paying a
+   * bill they are trying to settle.
+   */
+  upiOnly?: boolean;
 };
 
 export type CashfreeLink = {
@@ -243,11 +254,29 @@ export async function createPaymentLink(args: CreateLinkArgs): Promise<CashfreeL
       },
       link_notify: { send_sms: true, send_whatsapp: true, send_email: false },
       link_auto_reminders: true,
-      link_partial_payments: true,
+      /*
+       * Partial payment is for reminder links only, and Cashfree rejects the request
+       * outright unless a minimum accompanies it.
+       *
+       * The QR flows must not offer it: the customer has already chosen which jobs they
+       * are settling and for how much, so a second "pay part of this" control on
+       * Cashfree's page would let them pay less than the driver is standing there
+       * expecting, and the allocation would stop matching what was agreed.
+       */
+      ...(args.upiOnly
+        ? { link_partial_payments: false }
+        : {
+            link_partial_payments: true,
+            link_minimum_partial_amount: Math.max(1, Math.floor(args.amount * 0.1)),
+          }),
       link_expiry_time: expiry.toISOString(),
       link_meta: {
         notify_url: withProtectionBypass(`${publicBaseUrl()}/api/webhooks/cashfree`),
         return_url: `${publicBaseUrl()}/pay`,
+        // Verified against the API: with both set, opening the link on a phone
+        // redirects twice with no interaction and lands in the UPI app chooser,
+        // skipping the payment-method page entirely.
+        ...(args.upiOnly ? { payment_methods: 'upi', upi_intent: true } : {}),
       },
       ...(args.notes ? { link_notes: args.notes } : {}),
     },
